@@ -38,7 +38,9 @@ BANSHEE = $(banshee_bindir)/banshee.exe
 
 STEENSGAARD = steensgaard_terms
 
-TARGETS =  steensgaard.o $(STEENSGAARD).h $(STEENSGAARD).c $(STEENSGAARD).o
+STEENSGAARD_NOTAG = steensgaard_terms_notag
+
+TARGETS = steensgaard.o steensgaard_notag.o $(STEENSGAARD).h $(STEENSGAARD).c $(STEENSGAARD).o $(STEENSGAARD_NOTAG).h $(STEENSGAARD_NOTAG).c $(STEENSGAARD_NOTAG).o
 
 TAGFILES = *.c *.h
 
@@ -55,12 +57,23 @@ endif
 all: $(TARGETS)
 
 steensgaard.o: $(STEENSGAARD).h
+	$(CC) $(CFLAGS) -c -o steensgaard.o steensgaard.c
+
+steensgaard_notag.o: $(STEENSGAARD_NOTAG).h
+	$(CC) $(CFLAGS) -DNOTAG -c -o steensgaard_notag.o steensgaard.c
 
 $(STEENSGAARD).c: $(STEENSGAARD).bsp $(BANSHEE)
 	$(BANSHEE) $(STEENSGAARD).bsp $(STEENSGAARD)
 	indent -npsl $@
 
 $(STEENSGAARD).h: $(STEENSGAARD).c
+	indent -npsl $@
+
+$(STEENSGAARD_NOTAG).c: $(STEENSGAARD_NOTAG).bsp $(BANSHEE)
+	$(BANSHEE) $(STEENSGAARD_NOTAG).bsp $(STEENSGAARD_NOTAG)
+	indent -npsl $@
+
+$(STEENSGAARD_NOTAG).h: $(STEENSGAARD_NOTAG).c
 	indent -npsl $@
 
 TAGS: $(TAGFILES)

@@ -39,7 +39,7 @@ endif
 
 EXTRA_OBJS =  
 
-all: parser.exe parser_st.exe parser_ns.exe parser_sg.exe
+all: parser.exe parser_st.exe parser_ns.exe parser_sg.exe parser_sg_nt.exe
 
 include Makefile.base
 
@@ -55,6 +55,9 @@ parser_ns.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
 parser_sg.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
 	$(CC) $(CFLAGS_SG) -o parser_sg.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms.o ../steensgaard/steensgaard.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
 
+parser_sg_nt.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
+	$(CC) $(CFLAGS_SG) -o parser_sg_nt.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms_notag.o ../steensgaard/steensgaard_notag.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
+
 
 clean:
-	rm -f $(OBJS) parser.exe parser_st.exe *~
+	rm -f $(OBJS) parser.exe parser_st.exe parser_sg.exe parser_sg_nt.exe *~

@@ -32,7 +32,11 @@
 #include "utils.h"
 #include "regions.h"
 
+#ifdef NOTAG
+#include "steensgaard_terms_notag.h"
+#else
 #include "steensgaard_terms.h"
+#endif /* NOTAG */
 
 /* Implements the interface defined in pta.h */
 
@@ -151,29 +155,46 @@ static argT fun_rec_T(T_list args)
 }
 
 void pta_init() {
+#ifdef NOTAG
+  steensgaard_terms_notag_init();
+#else
   steensgaard_terms_init();
+#endif
   flag_hash_cons = FALSE;
   bottom = T_zero();
 }
 
 void pta_reset() {
+#ifdef NOTAG
+  steensgaard_terms_notag_reset();
+#else
   steensgaard_terms_reset();
+#endif
 }
 
 /* ref(l,id_ptr, id_fun) */
 T pta_make_ref(const char *id) {
-  alabel_t loc, tag;
+  alabel_t loc;
+
+#ifndef NOTAG
+  alabel_t tag;
+#endif
   T ptr;
   L fun;
-  
-  tag = alabel_t_fresh(id);
-  loc = alabel_t_constant(id);
+
+#ifndef NOTAG  
+  tag = alabel_t_constant(id);
+#endif
+  loc = alabel_t_fresh(id);
   
   ptr = T_fresh(id);
   fun = L_fresh(id);
-  
-  alabel_t_inclusion(loc, tag);
-  return ref(tag, ptr, fun);  
+
+#ifndef NOTAG
+  alabel_t_inclusion(tag, loc);
+#endif
+
+  return ref(loc, ptr, fun);  
 }
 
 /* The no information case  */
@@ -307,6 +328,9 @@ static void pr_tag_elem(alabel_t t) {
 
 /* TODO : doesn't print or count fun ptrs */
 void pta_pr_ptset(contents_type c) {
+#ifdef NOTAG
+  return; 
+#else
   int size = 0;  
   region scratch_rgn = newregion();
 
@@ -328,38 +352,56 @@ void pta_pr_ptset(contents_type c) {
   }
   printf("}(%d)", size);
   deleteregion(scratch_rgn);
+#endif /* NOTAG */
 }
 
 /* TODO : doesn't count fun ptrs */
 int pta_get_ptsize(contents_type c) {
+#ifndef NOTAG
   T ptr_rep = T_ecr(c->ptr);
   if (T_is_ref(ptr_rep)) {
     alabel_t_list tags = alabel_t_tlb(ref_decon(ptr_rep).f0);
     return alabel_t_list_length(tags);
   }
-
+#endif
   return 0;
 }
 
 void pta_serialize(FILE *f, hash_table *entry_points, unsigned long sz)
 { 
   assert(f);
+#ifdef NOTAG
+  steensgaard_terms_notag_serialize(f, entry_points, sz);
+#else
   steensgaard_terms_serialize(f,entry_points,sz);
+#endif
 }
 
 hash_table *pta_deserialize(FILE *f)
 {
   assert(f);
+#ifdef NOTAG
+  return steensgaard_terms_notag_deserialize(f);
+#else
   return steensgaard_terms_deserialize(f);
+#endif
 }
 
 void pta_region_serialize(FILE *f)
 {
+#ifdef NOTAG
+  steensgaard_terms_notag_region_serialize(f);
+#else
   steensgaard_terms_region_serialize(f);
+#endif
 }
 
 void pta_region_deserialize(translation t, FILE *f)
 {
+#ifdef NOTAG
+  steensgaard_terms_notag_region_deserialize(t, f);
+#else
   steensgaard_terms_region_deserialize(t, f);
+#endif
 }
 
