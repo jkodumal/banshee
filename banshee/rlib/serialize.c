@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define SHIFT 13
 
 /*
   The region allocator keeps pages in two lists: REGULAR single page
@@ -44,6 +43,7 @@ struct page_state {
   enum page_kinds pkind;      /* regular or big page? */
   int size;                   /* page size in bytes */
   struct page *old_address;   /* the address of the page before serialization */
+  int actual_size;            /* the number of bytes allocated on the page when the page was serialized. */
 };
 
 struct page_list {
@@ -92,7 +92,7 @@ file (see description of page_state).
      
     The size of the page in bytes. 
 */
-void serialize_pages(struct page_list *pgs, int data, int state, int first_page, int last_page, enum allocator_kinds akind, enum page_kinds pkind, int size) {
+void serialize_pages(struct page_list *pgs, int data, int state, int first_page, int last_page, enum allocator_kinds akind, enum page_kinds pkind, int size, struct allocator *a) {
   struct page_state ps;
   int numbytes;
   for (; pgs != NULL; pgs = pgs->next) {
@@ -103,6 +103,18 @@ void serialize_pages(struct page_list *pgs, int data, int state, int first_page,
     ps.akind = akind;
     ps.pkind = pkind;
     ps.size = size  * ((pkind == BIG) ? pgs->pg->pagecount : 1);
+
+    ps.actual_size = ps.size;
+
+    if (a != NULL) {
+      if ((a->page.base == (char *) pgs->pg) && (a->page.allocfrom < ((char *) pgs->pg) + ps.size))
+	ps.actual_size = ((char *) a->page.allocfrom) - ((char *) pgs->pg);
+      if ((a->superpage.base == (char *) pgs->pg) && (a->superpage.allocfrom < ((char *) pgs->pg) + ps.size))
+	ps.actual_size = ((char *) a->superpage.allocfrom) - ((char *) pgs->pg);
+      if ((a->hyperpage.base == (char *) pgs->pg) && (a->hyperpage.allocfrom < ((char *) pgs->pg) + ps.size))
+	ps.actual_size = ((char *) a->hyperpage.allocfrom) - ((char *) pgs->pg);
+    }
+
     numbytes = write(data, pgs->pg, ps.size);
     if (numbytes != ps.size) {
       fprintf(stderr,"Serialization failed: Could not write full page.\n");
@@ -128,10 +140,10 @@ int serialize_region(region r, int data, int state) {
   struct page_list *big_normal = make_page_list(r->normal.bigpages, temp);
   struct page_list *big_atomic = make_page_list(r->atomic.bigpages, temp);
 
-  serialize_pages(normal, data, state, 1,     (atomic == NULL) && (big_normal == NULL) && (big_atomic == NULL), NORMAL, REGULAR, RPAGESIZE);
-  serialize_pages(atomic, data, state, 0,     (atomic != NULL) && (big_normal == NULL) && (big_atomic == NULL), NORMAL, REGULAR, RPAGESIZE);
-  serialize_pages(big_normal, data, state, 0, (big_normal != NULL) && (big_atomic == NULL), NORMAL, BIG, RPAGESIZE);
-  serialize_pages(big_atomic, data, state, 0, (big_atomic != NULL), NORMAL, BIG, RPAGESIZE);
+  serialize_pages(normal, data, state, 1,     (atomic == NULL) && (big_normal == NULL) && (big_atomic == NULL), NORMAL, REGULAR, RPAGESIZE, &(r->normal));
+  serialize_pages(atomic, data, state, 0,     (atomic != NULL) && (big_normal == NULL) && (big_atomic == NULL), NORMAL, REGULAR, RPAGESIZE, &(r->atomic));
+  serialize_pages(big_normal, data, state, 0, (big_normal != NULL) && (big_atomic == NULL), NORMAL, BIG, RPAGESIZE, NULL);
+  serialize_pages(big_atomic, data, state, 0, (big_atomic != NULL), NORMAL, BIG, RPAGESIZE, NULL);
   
   deleteregion(temp);
   return 0;
@@ -361,7 +373,7 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
        If this is the last page in the region, move to the next update function for the next region. 
     */
     if (update != NULL) {
-      update_page(mem, ((char *) newp) + ps.size, map, *update);
+      update_page(mem, ((char *) newp) + ps.actual_size, map, *update);
       if (ps.last_page) update++;
     }
 

@@ -252,8 +252,11 @@ extern translation deserialize(char *, char *, Updater *, region);
 extern void update_pointer(translation, void **);
 extern void *translate_pointer(translation, void *);
 
-EXTERN_C_END
+#define SHIFT 13
+#define TRANSLATEPOINTER(m,a) ((*(m->map + (((unsigned int) a) >> SHIFT))) + (((unsigned int) a) & 0x00001FFF))
+#define UPDATEPOINTER(map,loc) *(loc) = TRANSLATEPOINTER(map,loc)
 
+EXTERN_C_END
 #endif
 
 

@@ -45,7 +45,8 @@ int region_main(int argc, char *argv[]) {
   for(i = 0; i < ASIZE; i++) {
     if ((p == p2) || ((p+i)->i != (p2+i)->i) || (p2->next - p->next) != ((p2+i)->next - (p+i)->next)) {
       printf("FAIL: iteration %d: %d %d %d \n", i, p == p2, ((p+i)->i != (p2+i)->i), (p2->next - p->next) != ((p2+i)->next - (p+i)->next));
-      printf("(p+i)->i %d    (p2+i)->i %d",(p+i)->i, (p2+i)->i); 
+      printf("(p+i)->i %d    (p2+i)->i %d\n",(p+i)->i, (p2+i)->i); 
+      printf("(p2+i)->next - p->next %x    (p2+i)->next - (p+i)->next %x\n",(p2->next - p->next),((p2+i)->next - (p+i)->next));
       exit(1);
     }
   }

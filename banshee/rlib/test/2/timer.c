@@ -10,7 +10,7 @@ struct pair {
 
 
 int update_pair(translation t, void *m) {
-  update_pointer(t, (void **) &((struct pair *) m)->next);
+  UPDATEPOINTER(t, (void **) &((struct pair *) m)->next);
   return(sizeof(struct pair));
 }
 
