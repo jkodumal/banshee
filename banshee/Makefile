@@ -76,6 +76,7 @@ check:
 	$(MAKE) -C tests -f ibanshee_test.mk
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-bt
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-persist
+	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-rpersist
 	@echo "SUCCESS: All check targets passed."
 
 perf:

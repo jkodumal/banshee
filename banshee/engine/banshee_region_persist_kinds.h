@@ -32,7 +32,7 @@
 
 EXTERN_C_BEGIN
 
-#define NUM_REGIONS 33
+#define NUM_REGIONS 34
 
 /*****************************************************************************
  *                                                                           *
@@ -78,6 +78,7 @@ extern region banshee_ptr_region;
 extern region bucket_region;	
 extern region table_region;	
 extern region bucketptr_region; 
+extern region keystrbucket_region;
 
 /* Regions for list.c */
 extern region list_header_region;
@@ -143,6 +144,7 @@ int update_hash_table(translation t, void *m);
 int update_bucket(translation t, void *m);
 int update_strbucket(translation t, void *m);
 int update_bucketptr(translation t, void *m);
+int update_keystrbucket(translation t, void *m);
 
 /* Update functions for list.c */
 int update_list_header(translation t, void *m);

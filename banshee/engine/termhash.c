@@ -70,7 +70,7 @@ struct term_bucket
 struct term_hash_
 {
   bool persistent;
-  term_bucket * term_buckets;
+  term_bucket *term_buckets;
   region tb_rgn;
   region he_rgn;
   region tba_rgn;
@@ -396,6 +396,7 @@ void term_hash_reset()
 
 int update_hash_entry(translation t, void *m) 
 {
+  /* TODO -- check! */
   update_pointer(t, (void **)&((hash_entry)m)->stamps);
   return sizeof(struct hash_entry);
 }
@@ -412,6 +413,7 @@ int update_term_bucket(translation t, void *m)
 
 int update_term_hash(translation t, void *m)
 {
+  /* TODO -- check! */
   update_pointer(t, (void **)&((term_hash)m)->term_buckets);
   return sizeof(struct term_hash_);
 }

@@ -47,7 +47,7 @@ struct bucket_
 #define BUCKETPTR_REGION bucketptr_region
 /* #define BUCKETPTR_REGION banshee_ptr_region */
 
-#define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region)
+
 
 /* TODO -- switch this back */
 /* #define bucket_region(t) bucket_region */
@@ -76,6 +76,17 @@ region bucket_region = NULL;
 region table_region = NULL;
 region strbucket_region = NULL;
 region bucketptr_region = NULL;
+region keystrbucket_region = NULL;
+
+/* #define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region) */
+
+/* #define bucket_region(t) t->r ? t->r : (t->data_persist_kind && t->key_persist_kind ? bucket_region : (t->data_persist_kind ? keystrbucket_region : (t->key_persist_kind ? strbucket_region : NULL))) */
+
+static region get_bucket_region(hash_table t)
+{
+  return (t->r ? t->r : (t->data_persist_kind && t->key_persist_kind ? bucket_region : (t->data_persist_kind ? keystrbucket_region : (t->key_persist_kind ? strbucket_region : NULL))));
+}
+
 
 static void rehash(hash_table ht);
 
@@ -238,7 +249,7 @@ bool hash_table_insert(hash_table ht, hash_key k, hash_data d)
 	}
       cur = &(*cur)->next;
     }
-  *cur = ralloc(bucket_region(ht), struct bucket_);
+  *cur = ralloc(get_bucket_region(ht), struct bucket_);
   (*cur)->key = k;
   (*cur)->data = d;
   (*cur)->next = NULL;
@@ -287,7 +298,7 @@ hash_table hash_table_copy(region r, hash_table ht)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(bucket_region(ht), struct bucket_);
+	  newbucket = ralloc(get_bucket_region(ht), struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = cur->data;
 	  newbucket->next = NULL;
@@ -387,7 +398,7 @@ hash_table hash_table_map(region r, hash_table ht, hash_map_fn f, void *arg)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket =  ralloc(bucket_region(ht), struct bucket_);
+	  newbucket =  ralloc(get_bucket_region(ht), struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = f(cur->key, cur->data, arg);
 	  newbucket->next = NULL;
@@ -564,17 +575,21 @@ int update_hash_table(translation t, void *m)
   hash_table tab = (hash_table)m;
   
   assert(fn_ptr_table);
-  assert(tab->hash_fn_id < num_fn_ptrs);
-  assert(tab->keyeq_fn_id < num_fn_ptrs);
+  //assert(tab->hash_fn_id < num_fn_ptrs);
+  //assert(tab->keyeq_fn_id < num_fn_ptrs);
   
-  tab->hash = update_funptr_data(tab->hash_fn_id);
-  hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
-		    (hash_data*)&tab->hash_fn_id);
+  if (tab->hash_fn_id < num_fn_ptrs) {
+    tab->hash = update_funptr_data(tab->hash_fn_id);
+    hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
+		      (hash_data*)&tab->hash_fn_id);
+  }
 
-  tab->cmp = update_funptr_data(tab->keyeq_fn_id);
-  hash_table_lookup(fn_ptr_table, (hash_key)tab->cmp,
-		    (hash_data*)&tab->keyeq_fn_id);
-
+  if (tab->keyeq_fn_id < num_fn_ptrs) {
+    tab->cmp = update_funptr_data(tab->keyeq_fn_id);
+    hash_table_lookup(fn_ptr_table, (hash_key)tab->cmp,
+		      (hash_data*)&tab->keyeq_fn_id);
+  }
+      
   update_pointer(t, (void **) &tab->table);
 
   return (sizeof(struct Hash_table));
@@ -600,6 +615,13 @@ int update_strbucket(translation t, void *m)
   return(sizeof(struct bucket_));
 }
 
+int update_keystrbucket(translation t, void *m)
+{
+  update_pointer(t, (void **) &((struct bucket_ *) m)->data);
+  update_pointer(t, (void **) &((struct bucket_ *) m)->next);
+  return(sizeof(struct bucket_));
+}
+
 int update_bucketptr(translation t, void *m)
 {
   update_pointer(t, m);
@@ -612,6 +634,7 @@ void hash_table_init()
   bucket_region = newregion();
   strbucket_region = newregion();
   bucketptr_region = newregion();
+  keystrbucket_region = newregion();
 }
 
 /* void hash_table_reset() */

@@ -112,14 +112,15 @@ def next_log_entry(logfile):
 
 def run_checkout(repository, version, project):
     if (use_bitkeeper):
-	os.system("bk export -r%s %s &>/dev/null" % (version, repository, project)
+	os.system("bk export -r%s %s %s &>/dev/null" % (version, repository, project))
+	os.system("chmod -R %s +w &>/dev/null" % project)
     else:
 	os.system("cvs -d %s co -D \"%s\" %s &>/dev/null" % (repository, version, project))
 
 
 # Get a list of the files with a given extension that have been
 # modified in dir_b as compared to dir_a. The directory name will be
-# the project name originally checked out, w/o _odd or _even
+# the project name originally checked out
 def get_modified_files_simple(dir_a, dir_b, extension):
     result = []
     b_files = os.popen("find %s -name *%s" % (dir_b,extension))
