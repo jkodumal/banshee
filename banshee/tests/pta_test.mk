@@ -53,7 +53,7 @@ pta-done:; @echo "PTA tests pass"
 
 pta-large/%:
 	$(PTA_EXEC) $(PTA_DIR)/$*/*.c 2> /dev/null | grep "Number of things pointed to" > $(PTA_DIR)/$*.out
-	diff -u $(COR_DIR)/$*.cor $(PTA_DIR)/$*.out
+	diff $(COR_DIR)/$*.cor $(PTA_DIR)/$*.out
 
 $(PARSER_DIR)/parser.exe: 
 	$(MAKE) -C ../ points-to	
