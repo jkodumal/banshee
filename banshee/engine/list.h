@@ -60,6 +60,7 @@ struct list *list_app(struct list *a,app_fn app);
 void *list_find(struct list *a,eq_fn eq);
 void *list_head(struct list *a);
 struct list *list_tail(struct list *a);
+void list_drop(struct list *a, eq_fn eq);
 struct list *list_filter(region r,struct list *a,eq_fn eq);
 struct list *list_filter2(struct list *a,eq_fn eq);
 struct list *list_keep(struct list *a,eq_fn eq);
@@ -94,6 +95,7 @@ name name ## _app(name a, name ## _app_fn app); \
 type name ## _find(name a, name ## _eq_fn eq); \
 type name ## _head(name a); \
 name name ## _tail(name a); \
+void name ## _drop(name a, name ## _eq_fn eq); \
 name name ## _filter(region r,name a, name ## _eq_fn eq); \
 name name ## _filter2(name a, name ## _eq_fn eq); \
 name name ## _keep(name a, name ## _eq_fn eq); \
@@ -140,6 +142,10 @@ name name ## _tail(name a) \
 type name ## _head(name a) \
 { \
  return (type)list_head((struct list *)a); \
+} \
+void name ## _drop(name a, name ## _eq_fn eq) \
+{ \
+ list_drop((struct list *)a, (eq_fn) eq); \
 } \
 name name ## _filter(region r,name a, name ## _eq_fn eq) \
 { \

@@ -1228,16 +1228,25 @@ void setif_print_constraint_graph(FILE *f)
   */
 }
 
-/* TODO */
+static gen_e current_expr;
+static bool expr_eq_fn(const gen_e e)
+{
+  return setif_eq(current_expr, e);
+}
+
 void setif_rollback(banshee_rollback_info info)
 {
   
   hash_table_scanner hash_scan;
   stamp_list_scanner stamp_scan;
   bounds next_bounds;
+  gen_e_list next_ub_projs;
   stamp_list next_edges;
   stamp next_stamp;
-
+  gen_e_list next_exprs;
+  gen_e_list_scanner expr_scan;
+  gen_e next_expr;
+  
   setif_rollback_info tinfo = (setif_rollback_info)info;
   
   assert(tinfo->kind = setif_sort);
@@ -1252,4 +1261,15 @@ void setif_rollback(banshee_rollback_info info)
       bounds_remove(next_bounds,next_stamp);
     }
   }
+  
+  hash_table_scan(tinfo->added_ub_projs, &hash_scan);
+  while (hash_table_next(&hash_scan,(hash_key *)&next_ub_projs,
+			 (hash_data *)&next_exprs)) {
+    gen_e_list_scan(next_exprs, &expr_scan);
+    while(gen_e_list_next(&expr_scan,&next_expr)) {
+      current_expr = next_expr;
+      gen_e_list_drop(next_ub_projs,expr_eq_fn);
+    }
+  }
+
 }

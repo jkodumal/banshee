@@ -193,6 +193,36 @@ void *list_head(struct list *l)
   return l->head->data;
 }
 
+/* Drop the first list element satisfying eq */
+void list_drop(struct list *l, eq_fn eq)
+{
+  list_node prev, n;
+  assert(l);
+  
+  if (l->head == NULL) return;
+  else if (eq(l->head->data)) {
+    l->head = l->head->next;
+    l->length--;
+    return;
+  }
+  else {
+    prev = l->head;
+    
+    scan_node(l->head->next,n) 
+      {
+	if (eq(n->data)) {
+	  prev->next = n->next;
+	  l->length--;
+	  return;
+	}
+	else prev = n;
+      }
+    
+  }
+  
+  
+}
+
 struct list *list_filter(region r,struct list *l,eq_fn eq)
 {
   struct list *result;
@@ -218,13 +248,16 @@ struct list *list_keep(struct list *l, eq_fn eq)
   while (l->head && !eq(l->head->data))
     {
       l->head = l->head->next;
+      l->length--;
     }
 
   prev = l->head;
   scan_node(l->head->next,n)
     {
-      if (!eq(n->data))
+      if (!eq(n->data)) {
 	  prev->next = n->next;
+	  l->length--;
+      }
       else prev = n;
     }
   return l;
