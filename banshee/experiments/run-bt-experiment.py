@@ -10,15 +10,16 @@ long_options=['start-with=','end-with=','analysis=',"help"]
 # Default values for command line options
 project = "cqual"
 #repository = ":pserver:anonymous@cvs.sourceforge.net:/cvsroot/" + project
-repository = "/Users/jkodumal/work/local_repositories/" + project
+repository = "~jkodumal/work/local_repositories/" + project
 logfilename = "logs/" + project + ".log"
 outfilename = "out/" + project 
 statefilename = "state/" + project
 start_with_entry = 0
-end_with_entry = 1
+end_with_entry = 100
 compilescript = "./default_compile.sh"
 analysis = "../cparser/parser_ns.exe"
 simfilename = "simulations/" + project + ".sim"
+modfilename = "simulations/" + project + ".mod"
 
 # Print a usage message and exit
 def usage():
@@ -97,6 +98,13 @@ def get_modified_files(dir_a, dir_b, extension):
 	    result.append(project + file[len(dir_b):])
     return result
 
+def get_removed_files(modified, candidates):
+    result = []
+    for file in candidates:
+	if (not (file in modified)):
+	    result.append(file)
+    return result
+
 # Read the list of banshee times 
 def get_banshee_state(statefile):
     result = []
@@ -161,27 +169,27 @@ def compute_time(file, state):
 
 # Compute the new list of files to analyze, given that we are rolling
 # back to file
-def compute_stack(modified, file, state, time):
+def compute_stack(modified, removed, file, state, time):
     # First, take the prefix of the list up to file
     prefix = state[:state.index((file,time))]
     # Next, take the suffix of filelist starting with file, but filtering out
     # any modifieds
-    suffix = [elem for elem,_ in state[state.index((file,time)):] if (not elem in modified)]
+    suffix = [elem for elem,_ in state[state.index((file,time)):] if (not (elem in modified or elem in removed))]
     return (suffix + modified),prefix
 
 # Given the list of modified files, the new file list, and the old
 # analysis state, compute a new filelist (stack) and the rollback time
-def get_new_stack_and_time(modified, state):
+def get_new_stack_and_time(modified, removed, state):
     for file,nexttime in state:
-	if file in modified:
+	if (file in modified) or (file in removed):
 	    time = compute_time(file, state)
-	    stack,prefix = compute_stack(modified, file, state, nexttime)
+	    stack,prefix = compute_stack(modified, removed, file, state, nexttime)
 	    return (time,stack, prefix)
     # TODO-- what if we just added a file, so it's not in state?
-    print "Warning: failed to compute rollback time and new stack; presumably the commit just added some files..."
+    print "Warning: failed to compute rollback time and new stack; presumably the commit just added some files or didn't modify any sources..."
     return (state[-1][1], modified, state)
 
-def write_simulation_data(modified, files, prefix,simfile):
+def write_simulation_data(modified, files, prefix,simfile,modfile):
     prefiles = []
     for (file,_) in prefix:
 	prefiles.append(file)
@@ -193,14 +201,15 @@ def write_simulation_data(modified, files, prefix,simfile):
 	preanalyzed_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(prefiles)).readlines()[0].split()[0])
     else:
 	preanalyzed_size = 0
-    simfile.write("modified files: %s\n" % list_to_string_nolf(modified) )
-    simfile.write("analyzed files: %s\n" % list_to_string_nolf(files) )
+    modfile.write("modified files: %s\n" % list_to_string_nolf(modified) )
+    modfile.write("analyzed files: %s\n" % list_to_string_nolf(files) )
     simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + preanalyzed_size, float(reanalysis_size) / float(reanalysis_size + preanalyzed_size)))
 
 # Entry point 
 def main():
     parse_options()
     simfile = open(simfilename, "w")
+    modfile = open(modfilename, "w")
     logfile = open(logfilename, "r")
     #skip the initial blank
     logfile.readline()
@@ -243,21 +252,26 @@ def main():
 	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, date, project))
 	build_error = os.system("%s %s" % (compilescript, project))
 	if (build_error):
-	    print "Build error"
-	    sys.exit(1)
+	    print "Build error -- skipping this commit"
+	    os.system("cp %s %s" % (statefilename + str(current-1) , statefilename + str(current)) )
+	    os.system("echo Build error > %s" % (outfilename + str(current)))
+	    os.system("rm -rf %s" % project)
+	    continue
 	modified = get_modified_files(project_prev,project,".i")
-	time,files,prefix = get_new_stack_and_time(modified,banshee_state)
+	removed = get_removed_files(modified, get_modified_files(project, project_prev,".i"))
+	time,files,prefix = get_new_stack_and_time(modified,removed, banshee_state)
 	print "Backtracking to : %s" % time
 	cmd = "%s -fserialize-constraints -fdeserialize-constraints -fback%s %s 2>/dev/null" % (analysis, time, list_to_string_nolf(files))
 	print cmd
 	output = os.popen(cmd).readlines()
 	process_andersen_output(current,output,prefix)
-	write_simulation_data(modified, files, prefix, simfile)
+	write_simulation_data(modified, files, prefix, simfile, modfile)
   	os.system("rm -rf %s" % project_prev)
 	os.system("mv %s %s" % (project, project_prev))
 
     logfile.close()
     simfile.close()
+    modfile.close()
     os.system("rm -rf %s" % project)
     os.system("rm -rf %s" % project_prev)
     os.system("rm -f andersen.out")

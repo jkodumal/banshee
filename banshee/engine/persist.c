@@ -50,7 +50,7 @@ typedef struct persist_entry_ {
 } *persist_entry;
 
 DECLARE_LIST(persist_entry_queue, persist_entry);
-DEFINE_NONPERSISTENT_LIST(persist_entry_queue, persist_entry);
+DEFINE_NONPTR_LIST(persist_entry_queue, persist_entry);
 
 /* Globals */
 static persist_state current_state = persist_raw;
@@ -214,9 +214,14 @@ bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[],
   create_objects(f, deserialize_obj, length);
   set_object_fields(set_fields, length);
 
-  deleteregion(persist_rgn);
-
   return TRUE;
+}
+
+void deserialize_end(void)
+{
+  object_map = NULL;
+  deleteregion(persist_rgn);
+  current_state = persist_raw;
 }
 
 void *deserialize_get_obj(void *old_field)

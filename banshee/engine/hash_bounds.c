@@ -38,34 +38,17 @@
 #include "banshee_persist_kinds.h"
 
 struct bounds_ {
+  stamp st;
   hash_table table;
 };
 
-/* Taken from here: http://www.concentric.net/~Ttwang/tech/inthash.htm  */
-unsigned long stamp_hash(hash_key key)
-{
-  unsigned long keyval = (unsigned long)key;
-  keyval += (keyval << 12);
-  keyval ^= (keyval >> 22);
-  keyval += (keyval << 4);
-  keyval ^= (keyval >> 9);
-  keyval += (keyval << 10);
-  keyval ^= (keyval >> 2);
-  keyval += (keyval << 7);
-  keyval ^= (keyval >> 12);
-  return keyval;
-}
-
-bool stamp_eq(hash_key s1, hash_key s2)
-{
-  return s1 == s2;
-}
 
 bounds bounds_create(region r)
 {
   bounds result;
   result = ralloc(r, struct bounds_);
-  
+
+  result->st = stamp_fresh();
   result->table = make_persistent_hash_table(r, 8, stamp_hash, stamp_eq,
 					     BANSHEE_PERSIST_KIND_nonptr,
 					     BANSHEE_PERSIST_KIND_gen_e);
@@ -137,8 +120,7 @@ bool bounds_serialize(FILE *f, void *obj)
   assert(f);
   assert(obj);
 
-  fwrite((void *)&b->table, sizeof (hash_table), 1, f);
-  
+  fwrite(b, sizeof(struct bounds_), 1, f);
   serialize_banshee_object(b->table, hash_table);
   
   return TRUE;
@@ -149,7 +131,7 @@ void *bounds_deserialize(FILE *f)
   bounds b = ralloc(permanent, struct bounds_);
 
   assert(f);
-  fread((void *)&b->table, sizeof(hash_table), 1, f);
+  fread(b, sizeof(struct bounds_), 1, f);
 
   return b;
 }
@@ -161,5 +143,43 @@ bool bounds_set_fields(void *obj)
 
   deserialize_set_obj((void **)&b->table);
 
+  return TRUE;
+}
+
+stamp bounds_stamp(bounds b)
+{
+  return b->st;
+}
+
+bool added_edge_info_serialize(FILE *f, void *obj)
+{
+  added_edge_info info = (added_edge_info)obj;
+  assert(f);
+
+  fwrite(info, sizeof(struct added_edge_info_), 1, f);
+
+  serialize_banshee_object(info->b, bounds);
+  serialize_banshee_object(info->sl, list);
+
+  return TRUE;  
+}
+
+void *added_edge_info_deserialize(FILE *f)
+{
+  added_edge_info info = 
+    ralloc(banshee_rollback_region, struct added_edge_info_);
+
+  assert(f);
+  fread(info, sizeof(struct added_edge_info_), 1, f);
+
+  return info;
+}
+
+bool added_edge_info_set_fields(void *obj)
+{
+  added_edge_info info = (added_edge_info)obj;
+  deserialize_set_obj((void **)&info->b);
+  deserialize_set_obj((void **)&info->sl);
+  
   return TRUE;
 }

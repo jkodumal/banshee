@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "banshee_persist_kinds.h"
 
+
 struct list_node_
 {  
   void *data;
@@ -44,11 +45,14 @@ struct list_node_
 struct list 
 {
   region sameregion r;
+  int st;
   int length;
   int persist_kind;
   list_node sameregion head;
   list_node sameregion tail;
 };
+
+int stamp_fresh();
 
 struct list *new_list(region r, int persist_kind)
 {
@@ -62,6 +66,7 @@ struct list *new_list(region r, int persist_kind)
   result->length = 0;
   result->head = NULL;
   result->tail = NULL;
+  result->st = stamp_fresh();
 
   return result;
 }
@@ -349,6 +354,29 @@ struct list *list_copy(region r, struct list *l)
  
   return list_reverse(result);
 }
+
+struct list *list_copy_upto(region r, struct list *l, int len)
+{
+
+  struct list *result;
+  list_node n = NULL;
+  int count = 0;
+  assert(l);
+
+  result = new_list(r, l->persist_kind);
+  
+  scan_node(l->head,n)
+    {
+      if (count > len) break; 
+      list_append_tail(n->data,result);
+      count++;
+      assert(count <= l->length);
+    }
+ 
+  return result;
+}
+
+
 /* A Linked-List Memory Sort
    by Philip J. Erdelsky
    pje@acm.org
@@ -548,8 +576,9 @@ bool list_serialize(FILE *f, void *obj)
   assert(f);
   assert(obj);
 
-  fwrite((void *)&l->length, sizeof(int), 1, f);
-  fwrite((void *)&l->persist_kind, sizeof(int), 1, f);
+/*   fwrite((void *)&l->length, sizeof(int), 1, f); */
+/*   fwrite((void *)&l->persist_kind, sizeof(int), 1, f); */
+  fwrite(&l->st, 3 *sizeof(int), 1 ,f);
 
   scan_node(l->head, n) {
     fwrite((void *)&n->data, sizeof(void *), 1, f);
@@ -565,23 +594,27 @@ bool list_serialize(FILE *f, void *obj)
 void *list_deserialize(FILE *f)
 {
   struct list *result = NULL;
-  int length, persist_kind, i;
+  int length, persist_kind, i,st;
   assert(f);
 
+  /* Read in the stamp */
+  fread(&st, sizeof(int), 1, f);
+  
   /* Read in the length */
-  fread((void *)&length, sizeof(int), 1, f);
+  fread(&length, sizeof(int), 1, f);
   
   /* Read in the persist kind */
-  fread((void *)&persist_kind, sizeof(int), 1, f);
+  fread(&persist_kind, sizeof(int), 1, f);
   
   result = new_list(permanent, persist_kind);
   
   for (i = 0; i < length; i++) {
     void *data = NULL;
     fread((void *)&data, sizeof(void *), 1, f);
-    list_cons(data, result);
+    list_append_tail(data, result);
   }
   
+  result->st = st;
   assert(result->length == length);
 
   return result;
@@ -600,6 +633,9 @@ bool list_set_fields(void *obj)
   return TRUE;
 }
 
-
+int list_stamp(struct list *l)
+{
+  return l->st;
+}
 
 

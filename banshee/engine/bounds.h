@@ -45,6 +45,11 @@ EXTERN_C_BEGIN
 
 typedef struct bounds_ *bounds;
 
+typedef struct added_edge_info_ {
+  bounds b;
+  stamp_list sl;
+} *added_edge_info;
+
 /* Hack: throw in all the necessary scanner implementations */
 struct bounds_scanner_ {
   struct list_scanner ls;
@@ -80,6 +85,8 @@ void bounds_delete(bounds);
 void bounds_set(bounds, gen_e_list);
 
 int bounds_size(bounds);
+
+stamp bounds_stamp(bounds);
 
 EXTERN_C_END
 

@@ -96,7 +96,7 @@ typedef struct cons_group_ *cons_group;
 DECLARE_LIST(cons_group_list,cons_group);
 DEFINE_LIST(cons_group_list,cons_group);
 DECLARE_LIST(sig_elt_list, sig_elt_ptr);
-DEFINE_NONPERSISTENT_LIST(sig_elt_list, sig_elt_ptr);
+DEFINE_NONPTR_LIST(sig_elt_list, sig_elt_ptr);
 
 struct constructor_
 {
@@ -2306,6 +2306,8 @@ hash_table *deserialize_cs(FILE *f)
 
   /* Finally, close the file */
   fclose(f);
+  
+  banshee_deserialize_end();
 
   return entry_points;
 }

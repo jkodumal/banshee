@@ -432,25 +432,28 @@ bool hash_table_serialize(FILE *f, void *obj)
   assert(f);
   assert(obj);
 
-  fwrite((void *)&ht->hash, sizeof(void *), 1, f);
-  fwrite((void *)&ht->cmp, sizeof(void *), 1, f);
-  fwrite((void *)&ht->size, sizeof(unsigned long), 1, f);
-  fwrite((void *)&ht->log2size, sizeof(unsigned long), 1, f);
-  fwrite((void *)&ht->used, sizeof(unsigned long), 1, f);
+/*   fwrite((void *)&ht->hash, sizeof(void *), 1, f); */
+/*   fwrite((void *)&ht->cmp, sizeof(void *), 1, f); */
+/*   fwrite((void *)&ht->size, sizeof(unsigned long), 1, f); */
+/*   fwrite((void *)&ht->log2size, sizeof(unsigned long), 1, f); */
+/*   fwrite((void *)&ht->used, sizeof(unsigned long), 1, f); */
   
-  fwrite((void *)&ht->key_persist_kind, sizeof(int), 1, f);
-  fwrite((void *)&ht->data_persist_kind, sizeof(int), 1, f);
-
+/*   fwrite((void *)&ht->key_persist_kind, sizeof(int), 1, f); */
+/*   fwrite((void *)&ht->data_persist_kind, sizeof(int), 1, f); */
+  fwrite(&ht->hash, sizeof(void *) * 2 + sizeof(unsigned long) * 3 + 
+	 sizeof(int) *2, 1, f);
+  
   serialize_object(ht->hash, 1);
   serialize_object(ht->cmp, 1);
 
   /* Write out all the key/value pairs */
   for (i = 0; i < ht->size; i++) {
     unsigned long num_buckets = get_num_buckets(ht->table[i]);
-    fwrite((void *)&num_buckets, sizeof(unsigned long), 1, f); 
+    fwrite(&num_buckets, sizeof(unsigned long), 1, f); 
     scan_bucket(ht->table[i], cur) {
-      fwrite((void *)&cur->key, sizeof(hash_key), 1, f);
-      fwrite((void *)&cur->data, sizeof(hash_data), 1, f);
+      /* fwrite((void *)&cur->key, sizeof(hash_key), 1, f); */
+      /* fwrite((void *)&cur->data, sizeof(hash_data), 1, f); */
+      fwrite(&cur->key, sizeof(hash_key) + sizeof(hash_data), 1, f);
       serialize_object(cur->key,ht->key_persist_kind);
       serialize_object(cur->data, ht->data_persist_kind);
     }
@@ -469,28 +472,22 @@ void *hash_table_deserialize(FILE *f)
   assert(f);
 
   ht = ralloc(permanent, struct Hash_table);
-  ht->r = persist_rgn;
+  /* ht->r = persist_rgn; */
+  ht->r = permanent;
   ht->hash = NULL;
   ht->cmp = NULL;
 
-  fread((void *)&ht->hash, sizeof(void *), 1, f);
-  fread((void *)&ht->cmp, sizeof(void *), 1, f);
-  fread((void *)&ht->size, sizeof(unsigned long), 1, f);
-  fread((void *)&ht->log2size, sizeof(unsigned long), 1, f);
-  fread((void *)&ht->used, sizeof(unsigned long), 1, f);
-  fread((void *)&ht->key_persist_kind, sizeof(int), 1, f);
-  fread((void *)&ht->data_persist_kind, sizeof(int), 1, f);
+  fread(&ht->hash, sizeof(void *) * 2 + sizeof(unsigned long) * 3 + 2 *sizeof(int), 1, f);
 
   /* Read all the key/value pairs into the temporary region */
   ht->table = rarrayalloc(ht->r, ht->size, bucket);
   for (i = 0; i < ht->size; i++) {
     unsigned long num_buckets,j;
-    fread((void *)&num_buckets, sizeof(unsigned long), 1, f); 
+    fread(&num_buckets, sizeof(unsigned long), 1, f); 
     prev = &ht->table[i];
     for (j = 0; j < num_buckets; j++) {
       newbucket = ralloc(ht->r, struct bucket);
-      fread((void *)&newbucket->key, sizeof(hash_key), 1, f);
-      fread((void *)&newbucket->data, sizeof(hash_data), 1, f);
+      fread(&newbucket->key, sizeof(hash_key) + sizeof(hash_data), 1 ,f);
       newbucket->next = NULL;
       assert(!*prev);
       *prev = newbucket;
@@ -502,27 +499,29 @@ void *hash_table_deserialize(FILE *f)
 
 bool hash_table_set_fields(void *obj)
 {
-  unsigned long i;
-  hash_table ht = (hash_table)obj;
-  bucket *oldtable = NULL, cur;
-  region oldregion;
+ hash_table ht = (hash_table)obj;
+  
+ unsigned long i;
+ bucket cur;
+/*   bucket *oldtable = NULL, cur; */
+/*   region oldregion; */
   assert(ht);
 
   deserialize_set_obj((void **)&ht->hash);
   deserialize_set_obj((void **)&ht->cmp);
 
-  oldtable = ht->table;
-  oldregion = ht->r;
-  ht->used = 0;
-  ht->r = permanent;
-  ht->table = rarrayalloc(ht->r, ht->size, bucket);
+/*   oldtable = ht->table; */
+/*   oldregion = ht->r; */
+/*   ht->used = 0; */
+/*   ht->r = permanent; */
+/*   ht->table = rarrayalloc(ht->r, ht->size, bucket); */
   
-  /* Reinsert all the key/value pairs after they have been remapped */
+   /* Reinsert all the key/value pairs after they have been remapped */
   for (i = 0; i < ht->size; i++) {
-    scan_bucket(oldtable[i], cur) {
-      deserialize_set_obj((void **)&cur->key);
+    scan_bucket(ht->table[i], cur) {
+      //deserialize_set_obj((void **)&cur->key);
       deserialize_set_obj((void **)&cur->data);
-      hash_table_insert(ht, cur->key, cur->data);
+      //hash_table_insert(ht, cur->key, cur->data);
     }
   }
 

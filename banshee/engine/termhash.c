@@ -295,6 +295,9 @@ void *term_hash_deserialize(FILE *f)
       term_hash_insert(result, e, sig, length);
     }
   }
+
+  assert (result->inserts == inserts);
+
   return result;
 }
 
@@ -305,7 +308,7 @@ bool term_hash_set_fields(void *obj)
   term_hash h = (term_hash)obj;
   
 
-  for (i = 0; i < h->inserts; i++) {
+  for (i = 0; i < h->capacity; i++) {
     scan_term_bucket(h->term_buckets[i], cur) {
       deserialize_set_obj((void **)&cur->entry->e);
     }

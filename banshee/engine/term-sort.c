@@ -216,9 +216,9 @@ static void term_register_rollback(void)
   term_current_rollback_info->kind = term_sort;
   term_current_rollback_info->added_edges = 
     make_persistent_hash_table(banshee_rollback_region,
-			       4, ptr_hash, ptr_eq,
-			       BANSHEE_PERSIST_KIND_bounds,
-			       BANSHEE_PERSIST_KIND_list);
+			       4, stamp_hash, stamp_eq,
+			       BANSHEE_PERSIST_KIND_nonptr,
+			       BANSHEE_PERSIST_KIND_added_edge_info);
   
   banshee_register_rollback((banshee_rollback_info)term_current_rollback_info);
 #endif /* BANSHEE_ROLLBACK */
@@ -226,23 +226,26 @@ static void term_register_rollback(void)
 
 static void term_register_edge(const bounds b, stamp st) {
 #ifdef BANSHEE_ROLLBACK
-  stamp_list sl = NULL;
+  added_edge_info info = NULL;
   assert(term_current_rollback_info);
   
   /* The current rollback info already has an edge list associated
    * with this bounds */
   if (hash_table_lookup(term_current_rollback_info->added_edges,
-			(hash_key)b,
-			(hash_data *)&sl)) {
-    assert(sl);
-    stamp_list_cons(st,sl);
+			(hash_key)bounds_stamp(b),
+			(hash_data *)&info)) {
+    assert(info);
+    stamp_list_cons(st,info->sl);
   }
   else {
-    sl = new_stamp_list(banshee_rollback_region);
+    stamp_list sl = new_stamp_list(banshee_rollback_region);
     stamp_list_cons(st,sl);
+    info  = ralloc(banshee_rollback_region, struct added_edge_info_);
+    info->b = b;
+    info->sl = sl;
     hash_table_insert(term_current_rollback_info->added_edges,
-		      (hash_key)b,
-		      (hash_data)sl);
+		      (hash_key)bounds_stamp(b),
+		      (hash_data)info);
   }
 #endif /* BANSHEE_ROLLBACK */ 
 }
@@ -385,20 +388,19 @@ void term_rollback(banshee_rollback_info info)
 {
   hash_table_scanner hash_scan;
   stamp_list_scanner stamp_scan;
-  bounds next_bounds;
-  stamp_list next_edges;
-  stamp next_stamp;
+  added_edge_info next_info;
+  stamp next_stamp,st;
 
   term_rollback_info tinfo = (term_rollback_info)info;
   
   assert(tinfo->kind = term_sort);
   
   hash_table_scan(tinfo->added_edges, &hash_scan);
-  while(hash_table_next(&hash_scan,(hash_key *)&next_bounds,
-			(hash_data *) &next_edges)) {
-    stamp_list_scan(next_edges, &stamp_scan);
+  while(hash_table_next(&hash_scan,(hash_key *)&st,
+			(hash_data *) &next_info)) {
+    stamp_list_scan(next_info->sl, &stamp_scan);
     while(stamp_list_next(&stamp_scan,&next_stamp)) {
-      bounds_remove(next_bounds,next_stamp);
+      bounds_remove(next_info->b,next_stamp);
     }
   }
 						     

@@ -550,21 +550,21 @@ static void compile_file(char *name) deletes
 	{
 	  files_processed++;
 
-	  if (flag_points_to)
+
 	    {
 	      int last_clock;
 	      inhibit_warnings = 1; // FIX
 	      fprintf(stderr, "Analyzing...");
 	      
 	      begin_time();
-	      analyze(the_program);
+	      if (flag_points_to) analyze(the_program);
 	      end_time(&analyze_time);
 	      fprintf(stderr,"analysis time so far: ");
 	      print_time(stderr,&analyze_time);
 	      fprintf(stderr,"\n");
 	      last_clock = banshee_get_time();
-	      fprintf(stderr,"file: %d; banshee clock: %d\n",
-		      files_processed, last_clock);
+	      fprintf(stdout, "file: %s clock: %d\n",
+		      name, last_clock);
 	      inhibit_warnings = 0;
 	      errorcount = 0;
 
@@ -1071,7 +1071,7 @@ int main(int argc, char **argv) deletes
       if (flag_backtrack_constraints) {
 	fprintf(stderr, "Backtracking...\n");
 	begin_time();
-	banshee_backtrack(backtrack_time);
+	analysis_backtrack(backtrack_time);
 	end_time(&rollback_time);
       }
     } 
@@ -1088,6 +1088,8 @@ int main(int argc, char **argv) deletes
 	fprintf(stderr, "Parsing %s...", file);
 	compile_file(file);
       }
+
+  fprintf(stdout,"##################\n");
   
   if (flag_debug_backtrack) {
     fprintf(stderr, "Backtracking...\n");

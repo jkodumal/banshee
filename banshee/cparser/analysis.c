@@ -41,12 +41,29 @@ Boston, MA 02111-1307, USA.  */
 #define PUSH_ENV ({++acnt.scope; local_env = new_env(env_rgn,local_env);}) 
 #define POP_ENV ({local_env = env_parent(local_env);})
 
+DECLARE_LIST(hash_table_list, hash_table);
+DEFINE_LIST(hash_table_list, hash_table);
+
+DECLARE_LIST(int_list, int);
+DEFINE_NONPTR_LIST(int_list, int);
+
 struct counts {
   int scope;
   int collection_count;
   int string_count;
   int next_alloc;
 };
+
+struct persistence_state {
+  hash_table_list collection_envs;
+  int_list scopes;
+  int_list collection_counts;
+  int_list string_counts;
+  int_list next_allocs;
+  int_list banshee_times;
+};
+
+static struct persistence_state state;
 
 static struct counts acnt = {0,0,0,0};
 
@@ -57,6 +74,7 @@ static function_decl current_fun_decl = NULL;
 // For alpha renaming
 /* static int scope = 0; */
 
+/* TODO -- must serialize this!!! */
 static env global_var_env;
 static env file_env;
 static env local_env;
@@ -65,7 +83,12 @@ static hash_table collection_hash;
 
 static char *alloc_names[] = {"malloc","calloc","realloc","valloc",
                               "xmalloc","__builtin_alloca","alloca",
-			      "kmalloc",NULL};
+			      "kmalloc","__rc_typed_ralloc",
+			      "rc_typed_rarrayalloc",
+			      "__rc_ralloc_small0",
+			      "__rc_rstralloc",
+			      "rc_rstralloc0",
+			      NULL};
 
 int flag_field_based = 0;
 
@@ -100,7 +123,9 @@ extern int flag_print_empty;
 extern int flag_print_vars;
 extern int flag_model_strings;
 
-extern bool is_void_parms(declaration); /* semantics.c */
+void banshee_backtrack(int);
+int banshee_get_time();		 /* banshee.c */
+bool is_void_parms(declaration); /* semantics.c */
 static expr_type analyze_expression(expression) deletes;
 static expr_type analyze_binary_expression(binary) deletes;
 static expr_type analyze_unary_expression(unary) deletes;
@@ -181,6 +206,8 @@ static bool var_info_lookup(const char *name,var_info *v)
   return FALSE;
 }
 
+static void collect_state();
+
 static void var_info_init(void)
 {
   env_rgn = newregion();
@@ -192,6 +219,16 @@ static void var_info_init(void)
 static void var_info_clear(void) deletes
 {
   deleteregion(env_rgn);
+}
+
+static void collect_state(void)
+{ 
+  hash_table_list_append_tail(hash_table_copy(analysis_rgn, collection_hash), state.collection_envs);
+  int_list_append_tail(acnt.scope, state.scopes);
+  int_list_append_tail(acnt.collection_count, state.collection_counts);
+  int_list_append_tail(acnt.string_count, state.string_counts); 
+  int_list_append_tail(acnt.next_alloc, state.next_allocs);
+  int_list_append_tail(banshee_get_time(), state.banshee_times);
 }
 
 void analyze(declaration program) deletes
@@ -207,6 +244,7 @@ void analyze(declaration program) deletes
   scan_declaration(d, program) 
     analyze_declaration(d);
 
+  collect_state();
   var_info_clear();
 }
 
@@ -1451,36 +1489,130 @@ T get_contents(var_info v_info)
   return t_decon.f1;
 }
 
-/* TODO -- to serialize the collection env */
-/* static hash_table *hash_table_from_env(env e) */
-/* { */
-  
-/* } */
-
 void serialize_cs(FILE *f, hash_table *entry_points, unsigned long sz);
+
+void analysis_backtrack(int backtrack_time)
+{
+  int_list_scanner scan;
+  int next, length = 0;
+  
+  int_list_scan(state.banshee_times, &scan);
+
+  /* Search the analysis state for the corresponding time */
+  while(int_list_next(&scan,&next)) {
+  /* Get the list length */
+    if (backtrack_time == next) break;
+    length++;
+  }
+
+  /* Truncate each of the lists */
+  state.collection_envs = 
+    hash_table_list_copy_upto(analysis_rgn, state.collection_envs, length);
+  state.scopes = 
+    int_list_copy_upto(analysis_rgn, state.scopes, length);
+  state.collection_counts  = 
+    int_list_copy_upto(analysis_rgn, state.collection_counts, length);
+  state.string_counts  = 
+    int_list_copy_upto(analysis_rgn, state.string_counts, length);
+  state.next_allocs = 
+    int_list_copy_upto(analysis_rgn, state.next_allocs, length);
+  state.banshee_times =
+    int_list_copy_upto(analysis_rgn, state.banshee_times, length);
+
+  /* Set the collection environment and acnt struct */
+  collection_hash = hash_table_list_last(state.collection_envs);
+  acnt.scope = int_list_last(state.scopes);
+  acnt.collection_count = int_list_last(state.collection_counts);
+  acnt.string_count = int_list_last(state.string_counts);
+  acnt.next_alloc = int_list_last(state.next_allocs);
+
+  banshee_backtrack(backtrack_time);
+}
+
+static void write_int_list(FILE *f, int_list l)
+{
+  int_list_scanner scan;
+  int next, length;
+
+  assert(f);
+
+  length = int_list_length(l);
+
+
+  fwrite((void *)&length, sizeof(int), 1, f);
+
+  int_list_scan(l, &scan);
+  while(int_list_next(&scan,&next)) {
+    fwrite((void *)&next, sizeof(int), 1, f);
+  }
+  
+}
+
+static int_list read_int_list(FILE *f)
+{
+  int_list result;
+  int length,i,next;
+  assert(f);
+
+  result = new_int_list(permanent);
+
+  fread((void *)&length, sizeof(int), 1, f);
+
+  for (i = 0; i < length; i++) {
+    fread((void *)&next, sizeof(int), 1, f);
+    int_list_append_tail(next, result);
+  }
+  return result;
+}
 
 void analysis_serialize(const char *filename)
 {
+  hash_table *entries;
+  int length;
   FILE *f = fopen(filename, "wb");
   
   assert(f);
   
   fwrite((void *)&acnt, sizeof(struct counts), 1, f);
-
-  pta_serialize(f, &collection_hash, 1);
+  write_int_list(f,state.scopes);
+  write_int_list(f,state.collection_counts);
+  write_int_list(f,state.string_counts);
+  write_int_list(f,state.next_allocs);
+  write_int_list(f,state.banshee_times);
+  length = int_list_length(state.scopes);
+  
+  entries = hash_table_list_array_from_list(permanent, state.collection_envs);
+  pta_serialize(f, entries, length);
 }
 
 void analysis_deserialize(const char *filename)
 {
+  int length,i;
   hash_table *result;
+  hash_table_list collection_envs;
   FILE *f = fopen(filename, "rb");
   assert(f);
 
+  collection_envs = new_hash_table_list(permanent);
+
   fread((void *)&acnt, sizeof(struct counts), 1, f);
+  state.scopes = read_int_list(f);
+  state.collection_counts = read_int_list(f);
+  state.string_counts = read_int_list(f);
+  state.next_allocs = read_int_list(f);
+  state.banshee_times = read_int_list(f);
 
   result = pta_deserialize(f);
 
-  collection_hash = result[0];
+  length = int_list_length(state.scopes);
+
+  collection_hash = result[length-1];
+
+  for (i = 0; i < length; i++) {
+    hash_table_list_append_tail(result[i], collection_envs);
+  }
+  state.collection_envs = collection_envs;
+  assert(hash_table_list_last(state.collection_envs) == collection_hash);
 }
 
 
@@ -1553,6 +1685,13 @@ void analysis_init() deletes
   collection_hash = 
     make_persistent_string_hash_table(permanent, 128, 
 				      BANSHEE_PERSIST_KIND_gen_e);
+
+  state.collection_envs = new_hash_table_list(analysis_rgn);
+  state.scopes = new_int_list(analysis_rgn);
+  state.collection_counts = new_int_list(analysis_rgn);
+  state.string_counts = new_int_list(analysis_rgn);
+  state.next_allocs = new_int_list(analysis_rgn);
+  state.banshee_times = new_int_list(analysis_rgn);
 }
 
 

@@ -124,6 +124,8 @@ bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[],
 void *deserialize_get_obj(void *old_obj);
 bool deserialize_set_obj(void **old_obj);
 
+void deserialize_end(void);
+
 /* Support for special data kinds (non pointer, function pointer, string) */
 bool nonptr_data_serialize(FILE *f, void *obj);
 void *nonptr_data_deserialize(FILE *f);

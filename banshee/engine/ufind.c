@@ -34,7 +34,7 @@
 #include "list.h"
 #include "persist.h"
 
-enum uf_kind {uf_ecr,uf_link};
+enum uf_kind {uf_ecr = 42,uf_link = 43};
 typedef enum uf_kind uf_kind;
 
 DECLARE_LIST(elt_stack, uf_element);
@@ -49,23 +49,23 @@ typedef struct ustack_elt_ {
 DECLARE_LIST(union_stack,ustack_elt);
 DEFINE_LIST(union_stack,ustack_elt);
 
-struct uf_element {
+struct uf_element_ {
   uf_kind kind;
   int rank;
   int persist_kind;
   void *info;
-  struct uf_element *link;
+  struct uf_element_ *link;
   elt_stack elt_stack;
 };
 
 static region uf_region = NULL;
 static union_stack ustack = NULL;
 
-struct uf_element *new_uf_element(region r, void *info, int persist_kind)
+struct uf_element_ *new_uf_element(region r, void *info, int persist_kind)
 {
-  struct uf_element *result;
+  struct uf_element_ *result;
 
-  result = ralloc(r, struct uf_element);
+  result = ralloc(r, struct uf_element_);
 
   result->kind = uf_ecr;
   result->rank = 0;
@@ -77,7 +77,7 @@ struct uf_element *new_uf_element(region r, void *info, int persist_kind)
   return result;
 }
 
-static struct uf_element *find(struct uf_element *e)
+static struct uf_element_ *find(struct uf_element_ *e)
 {
 
   if (e->kind == uf_ecr)
@@ -85,7 +85,7 @@ static struct uf_element *find(struct uf_element *e)
   
   else if (e->link->kind == uf_link)
     {
-      struct uf_element *temp = e->link;
+      struct uf_element_ *temp = e->link;
 	
       e->link = temp->link;
       
@@ -109,10 +109,10 @@ static ustack_elt make_ustack_elt(uf_element e,void *info)
   return result;
 }
 
-bool uf_union(struct uf_element *a, struct uf_element *b)
+bool uf_union(struct uf_element_ *a, struct uf_element_ *b)
 {
-  struct uf_element *e1 = find(a);
-  struct uf_element *e2 = find(b);
+  struct uf_element_ *e1 = find(a);
+  struct uf_element_ *e2 = find(b);
 
   assert(ustack);
 
@@ -163,10 +163,10 @@ bool uf_union(struct uf_element *a, struct uf_element *b)
 }
 
 bool uf_unify(combine_fn_ptr combine,
-	      struct uf_element *a, struct uf_element *b)
+	      struct uf_element_ *a, struct uf_element_ *b)
 {
-  struct uf_element *e1 = find(a);
-  struct uf_element *e2 = find(b);
+  struct uf_element_ *e1 = find(a);
+  struct uf_element_ *e2 = find(b);
 
   assert(ustack);
 
@@ -219,18 +219,18 @@ bool uf_unify(combine_fn_ptr combine,
     }
 }
 
-void *uf_get_info(struct uf_element *e)
+void *uf_get_info(struct uf_element_ *e)
 {
   return find(e)->info;
 }
 
 
-bool uf_eq(struct uf_element *e1,struct uf_element *e2)
+bool uf_eq(struct uf_element_ *e1,struct uf_element_ *e2)
 {
   return (find(e1) == find(e2));
 }
 
-void uf_update(struct uf_element *e,uf_info i)
+void uf_update(struct uf_element_ *e,uf_info i)
 {
   ustack_elt ue;
   e = find(e);
@@ -241,7 +241,7 @@ void uf_update(struct uf_element *e,uf_info i)
   e->info = i;
 }
 
-static void repair_elt_stack(struct uf_element *nonroot)
+static void repair_elt_stack(struct uf_element_ *nonroot)
 {
   elt_stack_scanner scan;
   uf_element temp;
@@ -251,6 +251,7 @@ static void repair_elt_stack(struct uf_element *nonroot)
   elt_stack_scan(nonroot->elt_stack,&scan);
 
   while(elt_stack_next(&scan,&temp)) {
+    //    printf("persist kind is: %d, kind is: %d, uf_link is: %d, uf_ecr is %d\n",temp->persist_kind, temp->kind, uf_link, uf_ecr);
     assert(temp->kind == uf_link);
     temp->link = nonroot;
   }
@@ -277,6 +278,7 @@ static bool uf_backtrack_one()
   }
   else {
     /* Make sure it's a link */
+    //printf("kind is %d, uf_link is %d, uf_ecr is %d\n",ue->nonroot->kind, uf_link, uf_ecr);
     assert(ue->nonroot->kind == uf_link);
     
     /* Roll back the old ecr's info */
@@ -345,7 +347,7 @@ bool uf_element_serialize(FILE *f, void *obj)
 
 void *uf_element_deserialize(FILE *f)
 {
-  uf_element elt = ralloc(uf_region, struct uf_element);
+  uf_element elt = ralloc(uf_region, struct uf_element_);
 
   fread((void *)&elt->kind, sizeof(int), 1, f);
   fread((void *)&elt->rank, sizeof(int), 1, f);

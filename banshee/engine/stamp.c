@@ -49,7 +49,7 @@ static region str_hash_rgn;
 static int count1 = INITIAL1, count2 = INITIAL2, count3 = INITIAL3;
 static int bounds1 = INT_MIN, bounds2 = 536870911, bounds3 = INT_MAX;
 
-DEFINE_NONPERSISTENT_LIST(stamp_list,stamp);
+DEFINE_NONPTR_LIST(stamp_list,stamp);
 
 static inline stamp check1(int i)
 {
@@ -153,4 +153,24 @@ void stamp_deserialize(FILE *f)
 void stamp_set_fields(void)
 {
   deserialize_set_obj((void **)&str_hash);
+}
+
+/* Taken from here: http://www.concentric.net/~Ttwang/tech/inthash.htm  */
+unsigned long stamp_hash(hash_key key)
+{
+  unsigned long keyval = (unsigned long)key;
+  keyval += (keyval << 12);
+  keyval ^= (keyval >> 22);
+  keyval += (keyval << 4);
+  keyval ^= (keyval >> 9);
+  keyval += (keyval << 10);
+  keyval ^= (keyval >> 2);
+  keyval += (keyval << 7);
+  keyval ^= (keyval >> 12);
+  return keyval;
+}
+
+bool stamp_eq(hash_key s1, hash_key s2)
+{
+  return s1 == s2;
 }

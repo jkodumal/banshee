@@ -111,9 +111,9 @@ static void serialize()
   { 				
     node n2,n3,n4;
     
-    table = make_persistent_hash_table(test_rgn, 4, ptr_hash, ptr_eq,
-				       NODE_PERSIST_KIND, 
-				       NONPTR_PERSIST_KIND);
+    table = make_persistent_string_hash_table(test_rgn, 4, 
+					      0);
+
 
     n1 = ralloc(test_rgn, struct node_);
     n2 = ralloc(test_rgn, struct node_);
@@ -137,10 +137,10 @@ static void serialize()
     n4->left = n1;
     n4->right = n1;
 
-    hash_table_insert(table, (hash_key)n1, (hash_data)n1->data);
-    hash_table_insert(table, (hash_key)n2, (hash_data)n2->data);
-    hash_table_insert(table, (hash_key)n3, (hash_data)n3->data);
-    hash_table_insert(table, (hash_key)n4, (hash_data)n4->data);
+    hash_table_insert(table, (hash_key)"n1", (hash_data)n1->data);
+    hash_table_insert(table, (hash_key)"n2", (hash_data)n2->data);
+    hash_table_insert(table, (hash_key)"n3", (hash_data)n3->data);
+    hash_table_insert(table, (hash_key)"n4", (hash_data)n4->data);
   }
 
   /* Serialize it */
@@ -206,6 +206,8 @@ static void deserialize()
   /* Update table with its new address */
   deserialize_set_obj((void **)&table);
 
+  deserialize_end();
+
   /* Close the infile */
   fclose(infile);
 
@@ -245,22 +247,22 @@ static void deserialize()
 
     while(hash_table_next(&scan, &next_key, &next_data)) {
       if ((int)next_data == 1) {
-	if ((node)next_key != n) {
+	if (strcmp("n1",next_key)) {
 	  fail("hash table doesn't map n1 correctly.\n");
 	}
       }
       else if ((int)next_data == 2) {
-	if ((node)next_key != n->left) {
+	if (strcmp("n2",next_key)) {
 	  fail("hash table doesn't map n2 correctly.\n");
 	}
       }
       else if ((int)next_data == 3) {
-	if ((node)next_key != n->right) {
+	if (strcmp("n3",next_key)) {
 	  fail("hash table doesn't map n3 correctly.\n");
 	}
       }
       else if ((int)next_data == 4) {
-	if ((node)next_key != n->left->left) {
+	if (strcmp("n4",next_key)) {
 	  fail("hash toble doesn't map n4 correctly.\n");
 	}
       }

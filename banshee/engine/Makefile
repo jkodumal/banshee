@@ -71,13 +71,13 @@ all: $(TARGETS) TAGS
 libengine.a: $(OBJS)
 	@echo $(OBJS)
 	../bin/build_funptr_table.py $(OBJS) > fn_ptrs.c
-	$(CC) -c $(CFLAGS) fn_ptrs.c
+	$(CC) -c $(CFLAGS) fn_ptrs.c -o fn_ptrs.o
 	$(AR) rcs $@ $^ fn_ptrs.o
 
 libnsengine.a: $(NSOBJS) 
 	@echo $(NSOBJS)
 	../bin/build_funptr_table.py $(NSOBJS) > fn_ptrs.ns.c
-	$(CC) -c $(CFLAGS) fn_ptrs.ns.c
+	$(CC) -c $(CFLAGS) fn_ptrs.ns.c -o fn_ptrs.o
 	$(AR) rcs $@ $^ fn_ptrs.o
 
 nonspec.o: nonspec.c nonspec.h

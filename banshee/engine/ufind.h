@@ -43,9 +43,9 @@
 
 EXTERN_C_BEGIN
 
-struct uf_element;
+// struct uf_element_;
 
-typedef struct uf_element *uf_element;
+typedef struct uf_element_ *uf_element;
 typedef void *uf_info;
 
 /* Given two infos, return a representative for them. The infos are
@@ -62,25 +62,25 @@ void uf_init();
 void uf_reset();
 
 /* Create a new union find element with info i in region r  */
-struct uf_element *new_uf_element(region r,uf_info i, int persist_kind);  
+uf_element new_uf_element(region r,uf_info i, int persist_kind);  
 
 /* Return the info associated with the element's equivalence class */
-uf_info uf_get_info(struct uf_element *); 
+uf_info uf_get_info(uf_element ); 
 
 /* Put two elements in the same equivalence class. The information for
  * the equivalence class is determined by the combine_fn_ptr */
-bool uf_unify(combine_fn_ptr, struct uf_element *, struct uf_element *);
+bool uf_unify(combine_fn_ptr, uf_element , uf_element );
 
 /* Put two elements in the same equivalence class. The information for
  * the equivalence class is picked from one of the two elements */
-bool uf_union(struct uf_element *,struct uf_element *);
+bool uf_union(uf_element ,uf_element );
 
 /* Check whether two elements are in the same equivalence class  */
-bool uf_eq(struct uf_element *, struct uf_element *);
+bool uf_eq(uf_element , uf_element );
 
 /* Update the information associated with the element's equivalence
  * class */
-void uf_update(struct uf_element *,uf_info i);
+void uf_update(uf_element ,uf_info i);
 
 /* Put a mark on the history for rollback */
 void uf_tick();		
@@ -106,30 +106,30 @@ bool name ## _union(name e1, name e2); \
 bool name ## _eq(name e1, name e2); \
 void name ## _update(name e1, type info);
 
-#define DEFINE_NONPERSISTENT_UFIND(name,type) \
+#define DEFINE_NONPTR_UFIND(name,type) \
 name new_ ## name(region r, type info) \
 {\
   return (name)new_uf_element(r,(void *)info, 0);\
 }\
 type name ## _get_info(name elem) \
 {\
- return (type)uf_get_info((struct uf_element *)elem);\
+ return (type)uf_get_info((uf_element )elem);\
 }\
 bool name ## _unify(name ## _combine_fn_ptr cmb,name e1, name e2) \
 {\
- return uf_unify((combine_fn_ptr)cmb,(struct uf_element *)e1,(struct uf_element *)e2); \
+ return uf_unify((combine_fn_ptr)cmb,(uf_element )e1,(uf_element )e2); \
 }\
 bool name ## _union(name e1, name e2) \
 {\
- return uf_union((struct uf_element *)e1,(struct uf_element *)e2); \
+ return uf_union((uf_element )e1,(uf_element )e2); \
 }\
 bool name ## _eq(name e1, name e2) \
 {\
- return uf_eq((struct uf_element *)e1,(struct uf_element *)e2); \
+ return uf_eq((uf_element )e1,(uf_element )e2); \
 }\
 void name ##_update(name e1, type info) \
 {\
- return uf_update((struct uf_element *)e1,(uf_info)info); \
+ return uf_update((uf_element )e1,(uf_info)info); \
 }\
 
 #define DEFINE_UFIND(name,type) \
@@ -139,23 +139,23 @@ name new_ ## name(region r, type info) \
 }\
 type name ## _get_info(name elem) \
 {\
- return (type)uf_get_info((struct uf_element *)elem);\
+ return (type)uf_get_info((uf_element )elem);\
 }\
 bool name ## _unify(name ## _combine_fn_ptr cmb,name e1, name e2) \
 {\
- return uf_unify((combine_fn_ptr)cmb,(struct uf_element *)e1,(struct uf_element *)e2); \
+ return uf_unify((combine_fn_ptr)cmb,(uf_element )e1,(uf_element )e2); \
 }\
 bool name ## _union(name e1, name e2) \
 {\
- return uf_union((struct uf_element *)e1,(struct uf_element *)e2); \
+ return uf_union((uf_element )e1,(uf_element )e2); \
 }\
 bool name ## _eq(name e1, name e2) \
 {\
- return uf_eq((struct uf_element *)e1,(struct uf_element *)e2); \
+ return uf_eq((uf_element )e1,(uf_element )e2); \
 }\
 void name ##_update(name e1, type info) \
 {\
- return uf_update((struct uf_element *)e1,(uf_info)info); \
+ return uf_update((uf_element )e1,(uf_info)info); \
 }\
 
 EXTERN_C_END

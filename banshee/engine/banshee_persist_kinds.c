@@ -52,6 +52,8 @@ bool ustack_elt_serialize(FILE *f, void *obj);
 bool hash_table_serialize(FILE *f, void *obj);
 bool constructor_serialize(FILE *f, void *obj);
 bool term_hash_serialize(FILE *f, void *obj);
+bool added_edge_info_serialize(FILE *f, void *obj);
+bool added_ub_proj_info_serialize(FILE *f, void *obj);
 
 void *nonptr_data_deserialize(FILE *f);
 void *funptr_data_deserialize(FILE *f);
@@ -74,6 +76,8 @@ void *ustack_elt_deserialize(FILE *f);
 void *hash_table_deserialize(FILE *f);
 void *constructor_deserialize(FILE *f);
 void *term_hash_deserialize(FILE *f);
+void *added_edge_info_deserialize(FILE *f);
+void *added_ub_proj_info_deserialize(FILE *f);
 
 bool nonptr_data_set_fields(void *obj);
 bool funptr_data_set_fields(void *obj);
@@ -96,7 +100,8 @@ bool ustack_elt_set_fields(void *obj);
 bool hash_table_set_fields(void *obj);
 bool constructor_set_fields(void *obj);
 bool term_hash_set_fields(void *obj);
-
+bool added_edge_info_set_fields(void *obj);
+bool added_ub_proj_info_set_fields(void *obj);
 
 /* TODO -- this is a temporary hack to get spec. code to compile */
 #ifndef NONSPEC
@@ -119,7 +124,7 @@ void serialize_cs(const char *filename, hash_table *entry_points, unsigned long 
 {
   return;
 }
-#endif
+#endif	/* NONSPEC */
 
 
 static serialize_fn_ptr serialize_fns[NUM_PERSIST_KINDS] = {
@@ -142,6 +147,8 @@ static serialize_fn_ptr serialize_fns[NUM_PERSIST_KINDS] = {
   hash_table_serialize,
   term_hash_serialize,
   gen_e_serialize,
+  added_edge_info_serialize,
+  added_ub_proj_info_serialize,
 #ifdef NONSPEC
   cons_group_serialize,
   constructor_serialize,
@@ -168,6 +175,8 @@ static deserialize_fn_ptr deserialize_fns[NUM_PERSIST_KINDS] = {
   hash_table_deserialize,
   term_hash_deserialize,
   gen_e_deserialize,
+  added_edge_info_deserialize,
+  added_ub_proj_info_deserialize,
 #ifdef NONSPEC
   cons_group_deserialize,
   constructor_deserialize,
@@ -195,6 +204,8 @@ static set_fields_fn_ptr set_fields_fns[NUM_PERSIST_KINDS] = {
   hash_table_set_fields,
   term_hash_set_fields,
   gen_e_set_fields,
+  added_edge_info_set_fields,
+  added_ub_proj_info_set_fields,
 #ifdef NONSPEC
   cons_group_set_fields,
   constructor_set_fields,
@@ -214,4 +225,9 @@ void banshee_serialize_end()
 void banshee_deserialize_all(FILE *f)
 {
   deserialize_all(f, deserialize_fns, set_fields_fns, NUM_PERSIST_KINDS);
+}
+
+void banshee_deserialize_end(void)
+{
+  deserialize_end();
 }

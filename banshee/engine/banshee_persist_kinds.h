@@ -43,9 +43,9 @@ EXTERN_C_BEGIN
 
 /* This should be kept in sync with the enum below it */
 #ifdef NONSPEC
-#define NUM_PERSIST_KINDS 21
+#define NUM_PERSIST_KINDS 23
 #else
-#define NUM_PERSIST_KINDS 19
+#define NUM_PERSIST_KINDS 21
 #endif 
 /* Take each type that should support serialization and prefix it with
    BANSHEE_PERSIST_KIND. Then serialize_banshee_object(object, type)
@@ -71,15 +71,21 @@ typedef enum banshee_persist_kind_ {
   BANSHEE_PERSIST_KIND_hash_table,
   BANSHEE_PERSIST_KIND_term_hash,
   BANSHEE_PERSIST_KIND_gen_e,
+  BANSHEE_PERSIST_KIND_added_edge_info,
+  BANSHEE_PERSIST_KIND_added_ub_proj_info,
 #ifdef NONSPEC
   BANSHEE_PERSIST_KIND_cons_group,	
   BANSHEE_PERSIST_KIND_constructor,
 #endif
 } banshee_persist_kind;
 
+/* Serialization */
 void banshee_serialize_start(FILE *f);
 void banshee_serialize_end();
+
+/* Deserialization */
 void banshee_deserialize_all(FILE *f);
+void banshee_deserialize_end();
 
 /* TODO -- for consistency, rename to banshee_serialize_object */
 #define serialize_banshee_object(object, type)			\

@@ -289,3 +289,4 @@ void engine_set_fields(void)
 {
   deserialize_set_obj((void **)&rb_stack);
 }
+

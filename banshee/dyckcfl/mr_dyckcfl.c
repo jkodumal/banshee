@@ -50,13 +50,13 @@ struct mr_dyck_node_ {
 };
 
 DECLARE_LIST(mr_dyck_node_list,mr_dyck_node);
-DEFINE_NONPERSISTENT_LIST(mr_dyck_node_list,mr_dyck_node);
+DEFINE_NONPTR_LIST(mr_dyck_node_list,mr_dyck_node);
 
 #define MINIMIZE_CONSTRAINTS
 
 #ifdef MINIMIZE_CONSTRAINTS
 DECLARE_LIST(relevant_constraint_list,int);
-DEFINE_NONPERSISTENT_LIST(relevant_constraint_list,int);
+DEFINE_NONPTR_LIST(relevant_constraint_list,int);
 static relevant_constraint_list relevant_constraints;
 #endif
 

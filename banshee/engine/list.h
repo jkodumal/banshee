@@ -67,6 +67,7 @@ struct list *list_filter(region r,struct list *a,eq_fn eq);
 struct list *list_filter2(struct list *a,eq_fn eq);
 struct list *list_keep(struct list *a,eq_fn eq);
 struct list *list_copy(region r, struct list *a);
+struct list *list_copy_upto(region r, struct list *a, int len);
 struct list *list_sort(struct list *a, comparator_fn cmp);
 struct list *list_merge(struct list *a,struct list *b, comparator_fn cmp);
 void list_scan(struct list *a,struct list_scanner *scan);
@@ -77,6 +78,7 @@ void list_clear(struct list *a);
 struct list *list_reverse(struct list *a);
 struct list *list_from_array(region r,void **data, int length);
 void **array_from_list(region r,struct list *a);
+int list_stamp(struct list *a);
 
 #define DECLARE_OPAQUE_LIST(name,type) \
 typedef struct list_scanner name ## _scanner; \
@@ -105,6 +107,7 @@ name name ## _filter(region r,name a, name ## _eq_fn eq); \
 name name ## _filter2(name a, name ## _eq_fn eq); \
 name name ## _keep(name a, name ## _eq_fn eq); \
 name name ## _copy(region r, name a); \
+name name ## _copy_upto(region r, name a, int l);		\
 name name ## _sort(name a, name ## _comparator_fn cmp); \
 name name ## _merge(name a,name b, name ## _comparator_fn cmp); \
 void name ## _scan(name a, name ##_scanner *scan); \
@@ -113,6 +116,7 @@ bool name ## _empty(name a); \
 void name ## _clear(name a); \
 bool name ## _member(name a, type data); \
 name name ## _reverse(name a); \
+int name ## _stamp(name a); \
 name name ## _from_array(region r,type data[], int length); \
 type *name ##_array_from_list(region r, name a);
 
@@ -177,6 +181,10 @@ name name ## _copy(region r, name a) \
 { \
  return (name)list_copy(r,(struct list *) a); \
 } \
+name name ## _copy_upto(region r, name a, int l)	\
+{ \
+  return (name)list_copy_upto(r,(struct list *) a,l); \
+} \
 name name ## _sort(name a, name ## _comparator_fn cmp) \
 { \
  return (name)list_sort((struct list *)a,(comparator_fn) cmp); \
@@ -213,12 +221,16 @@ name name ## _from_array(region r,type data[], int length) \
 {\
  return (name)list_from_array(r,(void **)data,length); \
 }\
+int name ## _stamp(name a) \
+{\
+  return list_stamp((struct list*)a);\
+}\
 type *name ##_array_from_list(region r, name a) \
 {\
  return (type *)array_from_list(r,(struct list *)a);\
 }
 
-#define DEFINE_NONPERSISTENT_LIST(name,type) \
+#define DEFINE_NONPTR_LIST(name,type) \
 name new_ ## name(region r) \
 { \
   return (name)new_list(r,0);\
@@ -279,6 +291,10 @@ name name ## _copy(region r, name a) \
 { \
  return (name)list_copy(r,(struct list *) a); \
 } \
+name name ## _copy_upto(region r, name a, int l)	\
+{ \
+  return (name)list_copy_upto(r,(struct list *) a,l); \
+} \
 name name ## _sort(name a, name ## _comparator_fn cmp) \
 { \
  return (name)list_sort((struct list *)a,(comparator_fn) cmp); \
@@ -314,6 +330,10 @@ name name ## _reverse(name a) \
 name name ## _from_array(region r,type data[], int length) \
 {\
  return (name)list_from_array(r,(void **)data,length); \
+}\
+int name ## _stamp(name a) \
+{\
+  return list_stamp((struct list*)a);\
 }\
 type *name ##_array_from_list(region r, name a) \
 {\

@@ -68,10 +68,15 @@ struct setif_constant_ /* extends gen_e */
   char *name;
 };
 
+typedef struct added_ub_proj_info_ {
+  gen_e_list ub_projs;
+  gen_e_list el;
+} *added_ub_proj_info;
+
 typedef struct setif_rollback_info_ { /* extends banshee_rollback_info */
   int time;
   sort_kind kind;
-  hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
+  hash_table added_edges; 	/* from bounds stamps to added_edge_infos */
   hash_table added_ub_projs;    
 } *setif_rollback_info;
 
@@ -335,15 +340,15 @@ void setif_register_rollback(void)
   setif_current_rollback_info->kind = setif_sort;
   setif_current_rollback_info->added_edges = 
     make_persistent_hash_table(banshee_rollback_region,
-			       4, ptr_hash, ptr_eq,
-			       BANSHEE_PERSIST_KIND_bounds,
-			       BANSHEE_PERSIST_KIND_list);
+			       4, stamp_hash, stamp_eq,
+			       BANSHEE_PERSIST_KIND_nonptr,
+			       BANSHEE_PERSIST_KIND_added_edge_info);
 
   setif_current_rollback_info->added_ub_projs = 
     make_persistent_hash_table(banshee_rollback_region,
-			       4, ptr_hash, ptr_eq,
-			       BANSHEE_PERSIST_KIND_list,
-			       BANSHEE_PERSIST_KIND_list);
+			       4, stamp_hash, stamp_eq,
+			       BANSHEE_PERSIST_KIND_nonptr,
+			       BANSHEE_PERSIST_KIND_added_ub_proj_info);
   
   banshee_register_rollback((banshee_rollback_info)setif_current_rollback_info);
 #endif /* BANSHEE_ROLLBACK */
@@ -351,44 +356,50 @@ void setif_register_rollback(void)
 
 void setif_register_edge(const bounds b, stamp st) {
 #ifdef BANSHEE_ROLLBACK
-  stamp_list sl = NULL;
+  added_edge_info info = NULL;
   assert(setif_current_rollback_info);
   
   /* The current rollback info already has an edge list associated
    * with this bounds */
   if (hash_table_lookup(setif_current_rollback_info->added_edges,
-			(hash_key)b,
-			(hash_data *)&sl)) {
-    assert(sl);
-    stamp_list_cons(st,sl);
+			(hash_key)bounds_stamp(b),
+			(hash_data *)&info)) {
+    assert(info);
+    stamp_list_cons(st,info->sl);
   }
   else {
-    sl = new_stamp_list(banshee_rollback_region);
+    stamp_list sl = new_stamp_list(banshee_rollback_region);
     stamp_list_cons(st,sl);
+    info = ralloc(banshee_rollback_region, struct added_edge_info_);
+    info->b = b;
+    info->sl = sl;
     hash_table_insert(setif_current_rollback_info->added_edges,
-		      (hash_key)b,
-		      (hash_data)sl);
+		      (hash_key)bounds_stamp(b),
+		      (hash_data)info);
   }
 #endif /* BANSHEE_ROLLBACK */
 }
 
 void setif_register_ub_proj(gen_e_list ub_projs, gen_e e) {
 #ifdef BANSHEE_ROLLBACK
-  gen_e_list el = NULL;
+  added_ub_proj_info info = NULL;
   assert(setif_current_rollback_info);
   
   if (hash_table_lookup(setif_current_rollback_info->added_ub_projs,
-			(hash_key)ub_projs,
-			(hash_data *)&el)) {
-    assert(el);
-    gen_e_list_cons(e,el);
+			(hash_key)gen_e_list_stamp(ub_projs),
+			(hash_data *)&info)) {
+    assert(info);
+    gen_e_list_cons(e,info->el);
   }
   else {
-    el = new_gen_e_list(banshee_rollback_region);
+    gen_e_list el = new_gen_e_list(banshee_rollback_region);
     gen_e_list_cons(e,el);
+    info = ralloc(banshee_rollback_region, struct added_ub_proj_info_);
+    info->ub_projs = ub_projs;
+    info->el = el;
     hash_table_insert(setif_current_rollback_info->added_ub_projs,
-		      (hash_key)ub_projs,
-		      (hash_data)el);
+		      (hash_key)gen_e_list_stamp(ub_projs),
+		      (hash_data)info);
   }
 #endif /* BANSHEE_ROLLBACK */
 }
@@ -1254,11 +1265,9 @@ void setif_rollback(banshee_rollback_info info)
   
   hash_table_scanner hash_scan;
   stamp_list_scanner stamp_scan;
-  bounds next_bounds;
-  gen_e_list next_ub_projs;
-  stamp_list next_edges;
-  stamp next_stamp;
-  gen_e_list next_exprs;
+  added_edge_info next_info;
+  added_ub_proj_info  next_ubproj_info;
+  stamp next_stamp,st;
   gen_e_list_scanner expr_scan;
   gen_e next_expr;
   
@@ -1269,22 +1278,22 @@ void setif_rollback(banshee_rollback_info info)
   lazy_invalidate_tlb_cache();
   
   hash_table_scan(tinfo->added_edges, &hash_scan);
-  while(hash_table_next(&hash_scan,(hash_key *)&next_bounds,
-			(hash_data *) &next_edges)) {
-    stamp_list_scan(next_edges, &stamp_scan);
+  while(hash_table_next(&hash_scan,(hash_key *)&st,
+			(hash_data *) &next_info)) {
+    stamp_list_scan(next_info->sl, &stamp_scan);
     while(stamp_list_next(&stamp_scan,&next_stamp)) {
-      bool present = bounds_remove(next_bounds,next_stamp);
+      bool present = bounds_remove(next_info->b,next_stamp);
       if (! present) fail("Tried to remove a nonexistent bound\n");
     }
   }
   
   hash_table_scan(tinfo->added_ub_projs, &hash_scan);
-  while (hash_table_next(&hash_scan,(hash_key *)&next_ub_projs,
-			 (hash_data *)&next_exprs)) {
-    gen_e_list_scan(next_exprs, &expr_scan);
+  while (hash_table_next(&hash_scan,(hash_key *)&st,
+			 (hash_data *)&next_ubproj_info)) {
+    gen_e_list_scan(next_ubproj_info->el, &expr_scan);
     while(gen_e_list_next(&expr_scan,&next_expr)) {
       current_expr = next_expr;
-      gen_e_list_drop(next_ub_projs,expr_eq_fn);
+      gen_e_list_drop(next_ubproj_info->ub_projs,expr_eq_fn);
     }
   }
 
@@ -1297,8 +1306,8 @@ bool setif_rollback_serialize(FILE *f, banshee_rollback_info i)
   assert(f);
   assert(info);
 
-  fwrite((void *)&info->added_edges, sizeof(hash_table), 1, f);
-  fwrite((void *)&info->added_ub_projs, sizeof(hash_table), 1, f);
+  fwrite(&info->added_edges, 2 * sizeof(hash_table), 1, f);
+/*   fwrite((void *)&info->added_ub_projs, sizeof(hash_table), 1, f); */
 
   serialize_banshee_object(info->added_edges, hash_table);
   serialize_banshee_object(info->added_ub_projs, hash_table);
@@ -1311,8 +1320,9 @@ banshee_rollback_info setif_rollback_deserialize(FILE *f)
   setif_rollback_info info = ralloc(permanent, struct setif_rollback_info_);
   assert(f);
 
-  fread((void *)&info->added_edges, sizeof(hash_table), 1, f);
-  fread((void *)&info->added_ub_projs, sizeof(hash_table), 1, f);
+/*   fread((void *)&info->added_edges, sizeof(hash_table), 1, f); */
+/*   fread((void *)&info->added_ub_projs, sizeof(hash_table), 1, f); */
+  fread(&info->added_edges, 2 *sizeof(hash_table), 1, f);
 
   return (banshee_rollback_info) info;
 }
@@ -1333,9 +1343,10 @@ bool setif_union_serialize(FILE *f, gen_e e)
   assert(f);
   assert(expr);
 
-  fwrite((void *)&expr->st, sizeof(stamp), 1, f);
-  fwrite((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
-  fwrite((void *)&expr->proj_cache, sizeof(gen_e_list), 1, f);
+/*   fwrite((void *)&expr->st, sizeof(stamp), 1, f); */
+/*   fwrite((void *)&expr->exprs, sizeof(gen_e_list), 1, f); */
+/*   fwrite((void *)&expr->proj_cache, sizeof(gen_e_list), 1, f); */
+  fwrite(&expr->st, sizeof(stamp) + sizeof(gen_e_list) * 2, 1, f);
   serialize_banshee_object(expr->exprs, list);
   serialize_banshee_object(expr->proj_cache, list);
   
@@ -1348,8 +1359,10 @@ bool setif_inter_serialize(FILE *f, gen_e e)
   assert(f);
   assert(expr);
 
-  fwrite((void *)&expr->st, sizeof(stamp), 1, f);
-  fwrite((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
+/*   fwrite((void *)&expr->st, sizeof(stamp), 1, f); */
+/*   fwrite((void *)&expr->exprs, sizeof(gen_e_list), 1, f); */
+  fwrite(&expr->st, sizeof(stamp) + sizeof(gen_e_list), 1 ,f);
+
   serialize_banshee_object(expr->exprs, list);
 
   return TRUE;
@@ -1361,7 +1374,7 @@ bool setif_constant_serialize(FILE *f, gen_e e)
   assert(f);
   assert(c);
 
-  fwrite((void *)&c->st, sizeof(stamp), 1, f);
+  fwrite(&c->st, sizeof(stamp), 1, f);
   string_data_serialize(f, c->name);
 
   return TRUE;
@@ -1371,9 +1384,10 @@ void *setif_union_deserialize(FILE *f)
 {
   setif_union_ expr = ralloc(permanent, struct setif_union_);
   
-  fread((void *)&expr->st, sizeof(stamp), 1, f);
-  fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
-  fread((void *)&expr->proj_cache, sizeof(gen_e_list), 1, f);
+/*   fread((void *)&expr->st, sizeof(stamp), 1, f); */
+/*   fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f); */
+/*   fread((void *)&expr->proj_cache, sizeof(gen_e_list), 1, f); */
+  fread(&expr->st, sizeof(stamp) + 2 *sizeof(gen_e_list), 1, f);
 
   return expr;
 }
@@ -1381,8 +1395,10 @@ void *setif_union_deserialize(FILE *f)
 void *setif_inter_deserialize(FILE *f)
 {
   setif_inter_ expr = ralloc(permanent, struct setif_inter_);
-  fread((void *)&expr->st, sizeof(stamp), 1, f);
-  fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
+/*   fread((void *)&expr->st, sizeof(stamp), 1, f); */
+/*   fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f); */
+  fread(&expr->st, sizeof(stamp) + sizeof(gen_e_list), 1, f);
+
 
   return expr;
 }
@@ -1446,4 +1462,36 @@ void setif_set_fields(void)
 {
   deserialize_set_obj((void **)&setif_current_rollback_info);
   deserialize_set_obj((void **)&setif_hash);
+}
+
+bool added_ub_proj_info_serialize(FILE *f, void *obj)
+{
+  added_ub_proj_info info = (added_ub_proj_info)obj;
+  assert(f);
+
+  fwrite(info, sizeof(struct added_ub_proj_info_), 1, f);
+  
+  serialize_banshee_object(info->ub_projs, list);
+  serialize_banshee_object(info->el, list);
+
+  return TRUE;
+}
+
+void *added_ub_proj_info_deserialize(FILE *f)
+{
+  added_ub_proj_info info = ralloc(banshee_rollback_region, 
+				   struct added_ub_proj_info_);
+
+  fread(info, sizeof(struct added_ub_proj_info_), 1, f);
+
+  return info;
+}
+
+bool added_ub_proj_info_set_fields(void *obj)
+{
+  added_ub_proj_info info = (added_ub_proj_info)obj;
+  deserialize_set_obj((void **)&info->ub_projs);
+  deserialize_set_obj((void **)&info->el);
+
+  return TRUE;
 }

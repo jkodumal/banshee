@@ -135,3 +135,4 @@ bool bounds_set_fields(void *obj)
   fail("bounds persistence not implemented\n");
   return FALSE;
 }
+
