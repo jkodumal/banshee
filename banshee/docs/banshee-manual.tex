@@ -282,6 +282,8 @@ $arity(g) = 1$, and $arity(c) = 0$ as before. Now consider the
 following system of constraints:
 \[
 f(\var{X},g(\var{X})) \subseteq f(\var{Y},\var{Y})
+\]
+\[
 c \subseteq \var{X}
 \]
 A solution to this system of constraints is $S$ where $S(\var{X}) =
@@ -290,6 +292,87 @@ satisfies the inclusion constraints by substituting in for the
 variables.
 \end{example}
 
+A system of constraints may have no solutions, one solution, or many
+solutions. Often we will want the least solution or the greatest
+solution. For the simple model of constraints explained here, the
+least and greatest solutions will be unique (assuming there are any
+solutions at all!). In the previous example, the solution $S$ is
+least.
+
 \subsection{Set constraints in \ibanshee{}}
+
+Creating a system of constraints in \ibanshee{} is
+straightforward. After defining a set of constructors and variables,
+you can build terms over those constructors and variables and add
+constraints. We'll continue with an \ibanshee{} program that
+corresponds to the previous example:
+
+\begin{verbatim}
+[0] > f(+setIF,+setIF):setIF
+constructor: f
+[0] > c : setIF
+constructor: c
+[0] > g(+setIF) : setIF
+constructor: g
+[0] > 'x : setIF
+var: 'x
+[0] > 'y : setIF
+var: 'y
+[0] > f('x,g('x)) <= f('y,'y)
+[1] > c <= 'x
+\end{verbatim}
+
+Now that we have defined our constraint system, we'll probably want to
+inspect the solutions of the constraints. We can do so using
+\ibanshee{}'s query commands. \ibanshee{} commands always begin with
+\texttt{!}. The first command is \texttt{!tlb}, which stands for
+\emph{transitive lower bounds}. This command allows you to read off
+the least solution of the constraints:
+
+\begin{verbatim}
+[2] > !tlb 'x
+{c}
+[2] > !tlb 'y
+{c, g('x)}
+\end{verbatim}
+
+With a little investigation we see that this is exactly the least
+solution. But why doesn't \ibanshee{} explicitly compute it? In other
+words, why doesn't \ibanshee{} report that \texttt{'y} maps to the
+ground set \texttt{\{c,g(c)\}}? Another example is in order. 
+
+\begin{example}
+Consider the following constraint system: 
+\[
+g(\var{X}) \subseteq \var{X}
+\]
+\[
+c \subseteq \var{X}
+\]
+There is a solution for $\var{X}$, namely $\var{X} = \{c, g(c),
+g(g(c)),\ldots\}$. However, there are no finite solutions for
+$\var{X}$.
+\end{example}
+
+Thus, it may not be possible for \banshee{} to explicitly compute a
+set of ground terms as a solution for a given variable. A little more
+machinery is required to understand solutions and fully explain what
+the \texttt{!tlb} command computes. A complete discussion is beyond
+the scope of this tutorial, and we refer the reader to
+\cite{heintze:thesis} for a thorough discussion. Briefly, it turns out
+that each set variable describes a \emph{regular tree language} and
+that solutions of set constraints can be viewed as collections of
+regular tree grammars. The solution for $\var{X}$ in the previous
+example corresponds to the regular tree grammar
+\[
+X \Rightarrow c
+\]
+\[
+X \Rightarrow g(X)
+\]
+and we see that the \texttt{!tlb} command essentially returns the
+right-hand sides of the grammar productions corresponding to the
+solution for a given variable.
+
 
 \end{document}
