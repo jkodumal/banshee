@@ -52,6 +52,7 @@ static hash_table var_env;
 %token TOK_UNION "||"
 %token TOK_LEQ "<="
 %token TOK_DEQ "=="
+%token TOK_LINE
 
 /* Keywords */
 /* Commands (help,tlb,undo,time,trace,quit) are treated as
@@ -72,8 +73,9 @@ static hash_table var_env;
 %type <sig_elt> sig_elt
 %type <pattern> pattern
 %type <flowrow_map> rowmap
-%type <row> gen_e
+%type <gen_e> row
 %type <signature> signature
+
 
 %union {
   int num;
@@ -129,7 +131,7 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	   }
          | TOK_DECL TOK_IDENT TOK_EQ expr
            {
-	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+	     if (hash_table_lookup(constructor_env,$2,NULL)) {
 	       fail("A constructor named %s already exists.\n",$2);
 	     }
 	     else {
@@ -189,6 +191,11 @@ sig_elt:   TOK_POS sort
            { $$ = (sig_elt){vnc_non,$2}; }
 ;
  
+sort:       basesort
+           { $$ = $1}
+         | TOK_ROW TOK_LPAREN basesort TOK_RPAREN
+           { $$ = flowrow_sort }
+
 esort:      basesort
            {
              switch($1) {
@@ -246,7 +253,7 @@ expr:    TOK_VAR
 	       fail("Could not find constant or expression named %s.\n",$1);
 	     }
            }
-         | TOK_IDENT LPAREN expr_list TOK_RPAREN /* a constructed term */
+         | TOK_IDENT TOK_LPAREN expr_list TOK_RPAREN /* a constructed term */
            {
 	     constructor c = NULL;
 
@@ -278,7 +285,7 @@ expr:    TOK_VAR
            {
              $$ = $2;
            }
-         | TOK_INTEGER COLON esort /* only 0,1 though */
+         | TOK_INTEGER TOK_COLON esort /* only 0,1 though */
            { 
              if ($1 == 1) {
               switch($3) {
@@ -303,7 +310,7 @@ expr:    TOK_VAR
                fail("Invalid expression %d\n",$1);
 	     }
            }
-         | TOK_WILD COLON esort	/* wildcard */
+         | TOK_WILD TOK_COLON esort	/* wildcard */
            { 
              switch($3) {
 	       case e_setif_sort: $$ = setif_wild(); break;
@@ -384,6 +391,6 @@ cmd:       TOK_CMD TOK_IDENT
 	   }
         |  TOK_CMD TOK_IDENT TOK_INTEGER
            { }  
-        |  TOK_CMD TOK_IDENT TOK_EXPR 
+        |  TOK_CMD TOK_IDENT expr
            { }
 ;
