@@ -45,8 +45,12 @@ CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
-TARGETS = lambda-test.exe dyckcfl-test.exe dyckcfl-random-test.exe \
-          uf-bt-test.exe TAGS
+EXES = lambda-test.exe dyckcfl-test.exe dyckcfl-random-test.exe \
+          uf-bt-test.exe
+
+TARGETS =  $(EXES) TAGS
+
+TARGETCHECK = $(patsubst %,check/%,$(EXES))
 
 all: $(TARGETS) 
 
@@ -62,7 +66,7 @@ dyckcfl-random-test.exe: dyckcfl-random-test.c $(DYCKCFL_EXTRA_OBJS) $(ENGINE_LI
 uf-bt-test.exe: uf-bt-test.c $(ENGINE_LIB) $(REGION_LIB)
 	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
 
-.PHONY: clean
+.PHONY: clean check 
 
 $(LAMBDA_EXTRA_OBJS): 
 	$(MAKE) -C ../lambda
@@ -81,6 +85,13 @@ $(ENGINE_LIB):
 
 TAGS: 
 	etags $(TAGFILES)
+
+check: $(TARGETS) $(TARGETCHECK)
+
+check/%: 
+	$*
+	@echo $* passed
+
 
 clean:
 	rm -f *.o $(TARGETS) *.exe *.dot *~
