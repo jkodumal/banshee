@@ -1283,6 +1283,14 @@ void nonspec_reset(void)
   deleteregion(gproj_pat_region);
   deleteregion(gen_e_ptr_region);
 
+  cons_group_region = newregion();
+  constructor_region = newregion();
+  cons_expr_region = newregion();
+  cons_group_region = newregion();
+  proj_pat_region = newregion();
+  gproj_pat_region = newregion();
+  gen_e_ptr_region = newregion();
+
   flowrow_reset();
   setst_reset();
   setif_reset();
