@@ -25,9 +25,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-.PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl docs
+.PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
+        docs points-to
 
-all: banshee tests docs
+all: banshee tests points-to docs
 
 banshee: libcompat codegen engine
 
