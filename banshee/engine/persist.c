@@ -214,6 +214,8 @@ bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[],
   create_objects(f, deserialize_obj, length);
   set_object_fields(set_fields, length);
 
+  deleteregion(persist_rgn);
+
   return TRUE;
 }
 
