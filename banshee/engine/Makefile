@@ -33,6 +33,8 @@ else
 FILTEREDOBJS = bounds.o
 endif
 
+FILTEREDOBJS += malloc.o
+
 NONSPEC_OBJ = nonspec.o
 
 region_dir = ../libcompat
