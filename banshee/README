@@ -31,7 +31,8 @@ information.
 
 'make' will also build the user manual (docs/banshee.ps) a suite of
 small test applications (see tests/README) and the points-to analysis
-application (see cparser/README).
+application (see cparser/README). Currently, the manual is extremely
+out of date. This will hopefully be remodied soon.
 
 Other useful make targets:
 
@@ -39,9 +40,10 @@ Other useful make targets:
 'make banshee' will build banshee without building any test applications
 'make docs' will just build the documentation
 'make test' will just build the test applications
-'make points-to' : build the points-to analysis application
+'make points-to' will just build the points-to analysis application
 
-banshee should build and run on Linux and Windows (with cygwin).
+banshee should build and run on Linux, FreeBSD and Windows (with
+cygwin). On FreeBSD, use 'gmake' instead of 'make'
 
 banshee is distributed under the BSD license, with the exception of
 the following files:

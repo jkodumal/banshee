@@ -30,7 +30,32 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek)
   fprintf(stderr,"\n");
 }
 
-void ibanshee_init(void) {
+static void print_tlb(gen_e e) 
+{
+  gen_e_list sol = setif_tlb(e);
+	       
+  if (gen_e_list_length(sol) == 0) {
+    printf("{}");
+  }
+  else {
+    gen_e next;
+    gen_e_list_scanner scan;
+    
+    gen_e_list_scan(sol,&scan);
+    
+    gen_e_list_next(&scan,&next);
+    printf("{");
+    expr_print(stdout,next);
+    
+    while(gen_e_list_next(&scan,&next)) {
+      printf(", ");
+      expr_print(stdout,next);
+    }
+    printf("}");
+  }
+}
+
+static void ibanshee_init(void) {
   region_init();
   nonspec_init();
   register_error_handler(ibanshee_error_handler);
@@ -68,6 +93,7 @@ void ibanshee_init(void) {
 %token TOK_DEQ "=="
 %token TOK_LINE
 %token TOK_ERROR
+%token TOK_EOF
 
 /* Keywords */
 /* Commands (help,tlb,undo,time,trace,quit) are treated as
@@ -112,6 +138,8 @@ line:      TOK_LINE
            { YYACCEPT; }
          | toplev TOK_LINE
            { YYACCEPT; }
+         | TOK_EOF
+           { exit(0); }
 ;
 
 // TODO
@@ -247,9 +275,9 @@ basesort:  TOK_SETIF
            { $$ = term_sort; }
 ;
 
-constraint: expr TOK_DEQ expr
+constraint: expr TOK_LEQ expr
             { call_sort_inclusion($1,$3); }
-         |  expr TOK_LEQ expr
+         |  expr TOK_DEQ expr
             { call_sort_unify($1,$3); }
 ;
 
@@ -412,11 +440,18 @@ cmd:       TOK_CMD TOK_IDENT
 	     if (!strcmp($2,"quit")) {
 	       exit(0);
 	     }
+	     if (!strcmp($2,"exit")) {
+               exit(0);
+	     }
 	   }
         |  TOK_CMD TOK_IDENT TOK_INTEGER
            { }  
         |  TOK_CMD TOK_IDENT expr
-           { }
+           { 
+	     if (!strcmp($2,"tlb")) {
+	       print_tlb($3);
+	     }
+           }
 ;
 
 %%

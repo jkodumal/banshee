@@ -238,6 +238,8 @@ char *expr_constant_name(gen_e e);
 
 int expr_stamp(gen_e e);
 
+sort_kind expr_sort(gen_e e);
+
 /* Keep these in sync with banshee.h */
 typedef enum banshee_error_kind
 {

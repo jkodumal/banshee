@@ -21,6 +21,7 @@ DIGITS ({DIGIT}+)
 IDENT [A-Za-z][A-Za-z0-9_]*
 TICK [\']
 %%
+<<EOF>>     return TOK_EOF;
 {LINE}      return TOK_LINE;
 "setIF"     return TOK_SETIF;
 "term"      return TOK_TERM;

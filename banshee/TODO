@@ -149,15 +149,13 @@ Just change pending representation to bounds
            -x- contour unifications should automatically be undone (ufind)
 *** SetIF
 
-   --- Make cycle elimination support rollback
+   -x- Make cycle elimination support rollback
  
        Really just undo unifications and repair bounds
-
+     
    -x- Make projection merging support rollback
       
        -x- Remove entries from ub_projs
-
-
 
 *** SetST
 
@@ -169,5 +167,5 @@ Just change pending representation to bounds
 
        Not really rollback support, but deletion support
 
-
+* Add serialization support
 

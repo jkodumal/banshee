@@ -1538,6 +1538,12 @@ int expr_stamp(gen_e e)
   return get_stamp(e);
 }
 
+sort_kind expr_sort(gen_e e)
+{
+  return e->sort;
+}
+
+
 void register_error_handler(banshee_error_handler_fn error_handler)
 {
   handle_error = error_handler;
