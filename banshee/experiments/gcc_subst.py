@@ -36,6 +36,12 @@ def already_added(appendline, filename):
 	return True
     return False
 
+def gcc_cmd():
+    try:
+	return os.environ["GCC_SUBST"]
+    except KeyError:
+	return "gcc"
+
 # Add a string variable declaration to the end of a file. If the file
 # already ends with such a declaration, this won't add another
 def modify_file(filename):
@@ -47,7 +53,7 @@ def main():
     for arg in sys.argv[1:]:
 	if (is_c_file(arg)):
 	    modify_file(arg)
-    os.system("gcc %s" % list_to_string_nolf(sys.argv[1:]))
+    os.system("%s %s" % (gcc_cmd(),list_to_string_nolf(sys.argv[1:])))
 
 if __name__ == "__main__":
     main()
