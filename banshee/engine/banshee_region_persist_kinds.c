@@ -33,6 +33,7 @@
 #include "persist.h"
 #include "hash.h"
 
+#define UNKNOWN_ID2 -2
 #define UNKNOWN_ID -1
 
 /* A region containing pointers. The update function will call
@@ -49,6 +50,7 @@ hash_table extra_regions = NULL;
 
 extern hash_table fn_ptr_table;
 Updater extra_update_fn = NULL;
+Updater extra_update_fn2 = NULL;
 
 void banshee_region_persistence_init()
 {
@@ -80,11 +82,11 @@ void write_extra_info(const char *filename, unsigned long num_regions)
   region next_region = NULL;
   FILE *f = fopen(filename, "wb");
   int unknown_id = UNKNOWN_ID;
+  int unknown_id2 = UNKNOWN_ID2;
 
   assert(f);
 
   fwrite((void *)&num_regions, sizeof(unsigned long), 1, f);
-  
 
   hash_table_scan(extra_regions, &scan);
   assert(fn_ptr_table);
@@ -93,8 +95,12 @@ void write_extra_info(const char *filename, unsigned long num_regions)
     int id = 0;
     bool success = hash_table_lookup(fn_ptr_table, (hash_key)next_updater, (hash_data *)&id);
     if (!success) { 
-      fwrite((void *)&unknown_id, sizeof(int), 1, f);
-      // fail("Error: couldn't figure out what function %d corresponds to\n", id);
+      if (next_updater == extra_update_fn)
+	fwrite((void *)&unknown_id, sizeof(int), 1, f);
+      else if (next_updater == extra_update_fn2)
+	fwrite((void *)&unknown_id2, sizeof(int), 1, f);
+      else 
+	fail("Error: couldn't figure out what function %d corresponds to\n", id);
     }
     else {
       fwrite((void *)&id, sizeof(int), 1 , f);
@@ -122,6 +128,10 @@ Updater *read_extra_info(const char *filename)
     if (next_id == UNKNOWN_ID) {
       assert(extra_update_fn);
       result[i] = extra_update_fn;
+    }
+    else if (next_id == UNKNOWN_ID2) {
+      assert(extra_update_fn2);
+      result[i] = extra_update_fn2;
     }
     else {
       result[i] = update_funptr_data(next_id);

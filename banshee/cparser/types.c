@@ -368,8 +368,8 @@ extern Updater extra_update_fn;
 void init_types(void)
 {
   types_region = newregion();
-    
-/*   register_persistent_region(types_region, update_type); */
+
+  register_persistent_region(types_region, update_type);
 
 
   float_type = make_primitive(tp_float, sizeof(float), __alignof__(float));

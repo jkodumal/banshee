@@ -49,6 +49,8 @@ DEFINE_NONPTR_LIST(int_list, int);
 
 extern region banshee_nonptr_region;
 
+region var_info_region;
+
 struct counts {
   int scope;
   int collection_count;
@@ -267,7 +269,7 @@ static var_info new_var(const char *name,type c_type,
 {
   char str[MAX_STR];
 
-  var_info v_info = ralloc(analysis_rgn, struct var_info);
+  var_info v_info = ralloc(var_info_region, struct var_info);
   
   v_info->name = rstrdup(banshee_nonptr_region,name);
   v_info->c_type = c_type;
@@ -1727,6 +1729,18 @@ void print_points_to_sets()
 
 }
 
+void register_persistent_region(region r, Updater u);
+
+int update_var_info(translation t, void *m)
+{
+  var_info v = (var_info)m;
+  update_pointer(t, (void **)&v->t_type);
+  update_pointer(t, (void **)&v->c_type);
+  update_pointer(t, (void **)&v->name);
+
+  return sizeof(struct var_info);
+}
+
 void analysis_init() deletes
 {
   pta_init();
@@ -1735,6 +1749,9 @@ void analysis_init() deletes
   collection_hash = 
     make_persistent_string_hash_table(128, 
 				      BANSHEE_PERSIST_KIND_gen_e);
+
+  var_info_region = newregion();
+  register_persistent_region(var_info_region,update_var_info);
 
   state.collection_envs = new_persistent_hash_table_list();
   state.scopes = new_persistent_int_list();

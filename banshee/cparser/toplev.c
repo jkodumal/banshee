@@ -826,7 +826,10 @@ static void rcc_aborting(int s)
 
 void *orig_brk;
 extern Updater extra_update_fn;
+extern Updater extra_update_fn2;
+
 int update_type(translation t, void *m);
+int update_var_info(translation t, void *m);
 
 int main(int argc, char **argv) deletes
 {
@@ -843,7 +846,7 @@ int main(int argc, char **argv) deletes
   main_region = newregion();
 
   extra_update_fn = update_type;
-
+  extra_update_fn2 = update_var_info;
 
   signal(SIGABRT, rcc_aborting);
 
