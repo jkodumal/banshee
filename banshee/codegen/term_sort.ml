@@ -301,7 +301,7 @@ class termsort_gen =
 	  (String.uppercase c ^ "_",
 	   Switch ("((gen_term)arg2)->type",
 		   [(gen_con_case c consig)],
-		   Expr "fail(\"Inconsistent system of constraints\\n\");") )
+		   Expr "handle_error(arg1,arg2,bek_cons_mismatch);") )
       |	None -> (String.uppercase c ^ "_",
 		 Expr "if (((gen_term)arg1)->type != ((gen_term)arg2)->type) handle_error(arg1,arg2,bek_cons_mismatch);")
       in
