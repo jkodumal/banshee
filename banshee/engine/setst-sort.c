@@ -716,7 +716,6 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	  gen_e_list tlbs = tlb((gen_e)v);
 	  gen_e_list snks = st_get_sinks(v);
 	  
-	  st_set_seen(v,TRUE);
 
 	  if(gen_e_list_empty(st_get_sinks(v)))
 	    {
@@ -734,6 +733,8 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	      setst_stats.unchanged_vars++;
 	      continue;
 	    }
+	  
+    st_set_seen(v,TRUE);
 	  
 	  st_set_src_sz(v,gen_e_list_length(tlbs));
 	  st_set_snk_sz(v,gen_e_list_length(snks));
