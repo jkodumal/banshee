@@ -3,6 +3,7 @@ import sys
 import os
 import string
 import random
+import md5
 
 # A file is a C source file if it ends in '.c', doesn't start with
 # '-', and corresponds to a file on disk
@@ -21,8 +22,11 @@ def list_to_string_nolf(list):
 # Given a filename, return a canonical string suitable for use as a C
 # identifier
 def get_canon_ident(filename):
-    output = os.popen("md5 -s \"%s\"" % filename)
-    return output.readlines()[0].split()[3]
+    m = md5.new()
+    m.update(filename)
+    return m.hexdigest()
+#    output = os.popen("md5 -s \"%s\"" % filename)
+#    return output.readlines()[0].split()[3]
     
 # Return true if the line 'appendline' was already appended to the file
 def already_added(appendline, filename):
