@@ -125,7 +125,7 @@ so, here are the tasks:
             rollback code for each sort
 
     
-   --- Differentiate between toplevel and internal constraints, and 
+   -x- Differentiate between toplevel and internal constraints, and 
        add tick() for toplevel constraints
 
    --- Rollback support for each sort
@@ -142,6 +142,11 @@ so, here are the tasks:
        interface, and operations should all be fixed to maintain this
        illusion. Identity is more of a concern with incremental
        analysis than rollback
+
+       What about internal constraints added due to the creation of
+       terms (e.g. proj)? We don't ever want to undo these. One
+       approach would be to add a notion of an internal constraint
+       that cannot be undone.
 
        General list of things to keep track of:
         
