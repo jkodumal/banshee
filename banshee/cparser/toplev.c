@@ -334,7 +334,8 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"print-graph",&flag_print_graph,1},
   {"model-strings",&flag_model_strings,1},
   {"print-memusage",&flag_print_memusage,1},
-  {"field-based",&flag_field_based,1}
+  {"field-based",&flag_field_based,1},
+  {"hash-cons", (int *)&flag_hash_cons,1}
 };
 
 /* Table of language-specific options.  */

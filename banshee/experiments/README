@@ -45,6 +45,9 @@ modifications whatsoever, because things like makefiles will be
 checked out on each commit, and any changes we make won't
 persist. Here we outline a few possible approaches...
 
+NOTE: Build projects in the same fully qualified directory:
+preprocessed source may contain the fully qualified path + filename
+
 ** gcc -P -save-temps
 
 Compile the project as follows:

@@ -59,6 +59,7 @@ static void term_inclusion(T t1, T t2)
 
 void pta_init()
 {
+  //flag_hash_cons = FALSE;
   andersen_terms_init();
 }
 
