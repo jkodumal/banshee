@@ -47,6 +47,8 @@ typedef struct hash_entry *hash_entry;
 /*  collided after hashing) */ 
 typedef struct term_bucket *term_bucket;
 
+bool flag_hash_cons = TRUE;
+
 struct hash_entry
 {
   int length;
@@ -146,6 +148,8 @@ gen_e term_hash_find(term_hash tab, stamp stamps[], int len)
 {
   int hash_val;
 
+  if (!flag_hash_cons) return NULL;
+
   term_bucket b;
   hash_val = hash(tab->ub, stamps, len);
   assert(hash_val < tab->capacity);
@@ -170,6 +174,8 @@ static gen_e walk(term_bucket b, stamp stamps[], int len)
 /*  true and do nothing. */ 
 bool term_hash_insert(term_hash tab, gen_e e, stamp * stamps, int len) deletes
 {
+  if (!flag_hash_cons) return FALSE;
+
   if (term_hash_find(tab, stamps, len) != NULL)
     {
       return TRUE;
@@ -188,7 +194,6 @@ static void insert(term_hash tab, gen_e e, stamp stamps[], int len)
   stamp * stamp_cpy;
   int i;
 
-  
   entry = ralloc(tab->rgn ? tab->rgn : hash_entry_region, struct hash_entry);
 
   stamp_cpy = rarrayalloc(tab->rgn ? tab->rgn : banshee_nonptr_region, len, stamp);

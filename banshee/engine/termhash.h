@@ -38,6 +38,7 @@
 EXTERN_C_BEGIN
 
 typedef struct term_hash_ *term_hash;
+extern bool flag_hash_cons;
 
 void term_hash_init();
 void term_hash_reset();

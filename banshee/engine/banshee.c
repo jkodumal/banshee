@@ -55,10 +55,10 @@ static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
 {
   switch (k) {
   case bek_cons_mismatch:
-    fprintf(stderr, "Unhandled banshee error: constructor mismatch");
+    fprintf(stderr, "Unhandled banshee error: constructor mismatch\n");
     break;
   case bek_occurs_check:
-    fprintf(stderr, "Unhandled banshee error: occurs check");
+    fprintf(stderr, "Unhandled banshee error: occurs check\n");
     break;
   default:
     fprintf(stderr,"Unhandled banshee error: unknown code %d\n",k);

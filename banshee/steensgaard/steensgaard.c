@@ -152,6 +152,7 @@ static argT fun_rec_T(T_list args)
 
 void pta_init() {
   steensgaard_terms_init();
+  flag_hash_cons = FALSE;
   bottom = T_zero();
 }
 
