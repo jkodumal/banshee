@@ -45,6 +45,7 @@ struct list
   region sameregion r;
   int length;
   list_node sameregion head;
+  list_node sameregion tail;
 };
 
 struct list *new_list(region r)
@@ -57,7 +58,8 @@ struct list *new_list(region r)
   result->r = r;
   result->length = 0;
   result->head = NULL;
-  
+  result->tail = NULL;
+
   return result;
 }
 
@@ -71,9 +73,35 @@ struct list *list_cons(void *data, struct list *l)
   list_node newnode = ralloc(l->r, struct list_node_);
   newnode->next = l->head;
   newnode->data = data;
+
+  if (l->head == NULL) {
+    assert(list_length(l) == 0);
+    l->tail = newnode;
+  }
   
   l->head = newnode;
   l->length++;
+
+  return l;
+}
+
+struct list *list_append_tail(void *data, struct list *l)
+{
+
+  if (l->tail == NULL) {
+    assert(l->head == NULL);
+    assert(list_length(l) == 0);
+    list_cons(data, l);
+  }
+  else {
+    list_node newnode = ralloc(l->r, struct list_node_);
+    assert(l->tail->next == NULL);
+    newnode->next = NULL;
+    newnode->data = data;
+    l->tail->next = newnode;
+    l->tail = newnode;
+    l->length++;
+  }
 
   return l;
 }
@@ -87,6 +115,8 @@ struct list *list_reverse(struct list *l)
   else
     {
       list_node temp,reversed = NULL; 
+
+      l->tail = l->head;
 
       while (l->head)
 	{
@@ -107,14 +137,20 @@ struct list *list_reverse(struct list *l)
 
 bool list_empty(struct list *l)
 {
+  assert( (l->head == NULL) == (list_length(l) == 0) ); 
   return (l->head == NULL);
 }
 
-static inline list_node tail(list_node n)
+static list_node tail(struct list *l)
+{
+  return l->tail;
+}
+
+static list_node fetch_tail(list_node n)
 {
   if (n == NULL)
     return NULL;
-  else 
+  else
     {
       list_node temp = NULL,
 	tail = NULL;
@@ -136,19 +172,21 @@ struct list *list_append(struct list *a, struct list *b)
   assert( a != b);
   assert( ptr_eq(a->r,b->r) );
 
-  tl = tail(a->head);
+  tl = tail(a);
 
   
   if (! tl)
     {
       a->head = b->head;
       a->length = b->length;
+      a->tail = tail(b);
     } 
   
   else
     {
       tl->next = b->head;
       a->length += b->length;
+      a->tail = tail(b);
     }
   return a;
 }
@@ -190,10 +228,18 @@ struct list *list_tail(struct list *l)
 
 void *list_head(struct list *l)
 {
+  assert(l->head);
   return l->head->data;
 }
 
-/* Drop the first list element satisfying eq */
+void *list_last(struct list *l) 
+{
+  assert(l->tail);
+  return l->tail->data;
+}
+
+
+/* Drop the first list element s{atisfying eq */
 void list_drop(struct list *l, eq_fn eq)
 {
   list_node prev, n;
@@ -211,6 +257,10 @@ void list_drop(struct list *l, eq_fn eq)
     scan_node(l->head->next,n) 
       {
 	if (eq(n->data)) {
+	  if (n == l->tail) {
+	    l->tail = prev;
+	    assert(n->next == NULL);
+	  }
 	  prev->next = n->next;
 	  l->length--;
 	  return;
@@ -233,9 +283,12 @@ struct list *list_filter(region r,struct list *l,eq_fn eq)
   
   scan_node(l->head,n)
     {
-      if (eq(n->data))
+      if (eq(n->data)) {
 	list_cons(n->data,result);
+      }
     }
+  
+  assert( (list_length(result) == 0) || result->tail);
   
   return result;
 }
@@ -260,6 +313,11 @@ struct list *list_keep(struct list *l, eq_fn eq)
       }
       else prev = n;
     }
+
+  l->tail = prev;
+
+  assert( (list_length(l) == 0) || l->tail);
+
   return l;
 }
 
@@ -404,6 +462,7 @@ struct list *list_sort(struct list *l, comparator_fn cmp)
   
   long pcount;
   l->head = sort_linked_list(l->head,1,compare,&pcount);
+  l->tail = fetch_tail(l->head);
   assert(pcount == l->length);
   return l;
 }
@@ -435,6 +494,7 @@ bool list_next(struct list_scanner *scan, void **data)
 void list_clear(struct list *l)
 { 
   l->head = NULL;
+  l->tail = NULL;
   l->length = 0;
 }
 
@@ -455,7 +515,7 @@ struct list *list_from_array(region r, void **data, int length)
   struct list *result = new_list(r);
   int i;
   
-  for (i = length -1; i >= 0; i--)
+  for (i = length - 1; i >= 0; i--)
     {
       list_cons(data[i],result);
     }

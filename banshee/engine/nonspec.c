@@ -1472,7 +1472,6 @@ void expr_print(FILE *f,gen_e e)
       {
 	if (setif_is_var(e))
 	  {
-	    //   fprintf(f,"%s[%d]", sv_get_name((setif_var)e),setif_get_stamp(e));
 	    fprintf(f,"%s", sv_get_name((setif_var)e));
 	  }
 	else if (setif_is_zero(e))

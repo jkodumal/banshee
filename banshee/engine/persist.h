@@ -54,11 +54,36 @@
    objects are just written out as addresses. During deserialization a second
    pass over the object graph will fill in these pointers after an initial 
    construction phase where all pointers are invalid (contain object id's,
-   not valid pointers).
+   not valid pointers). TODO -- what about embedded function pointers?
 
+   Each struct must provide the following methods to support persistence:
+   
+   a) bool serialize(FILE *f, void *obj) 
+
+      This function should serialize the struct. All pointer-valued fields
+      should be written out as addresses and the function serialize_object
+      called on them.
+
+   b) void *deserialize(FILE *f)
+
+      This function should deserialize the struct. All pointer-valued fields
+      should be read in. These pointers will NOT be valid until set_fields
+      has been called on them. This function should return the constructed
+      object
+
+   c) bool set_fields(void *obj)
+
+      This function should fill in all the pointer valued fields of the struct.
+      Essentially it should just do this:
+
+      obj->f1 = deserialize_get_obj(obj->f1)
+      ...
+      obj->fn = deserialize_get_obj(obj->fn)
+
+      This works because deserialize(...) is expected to store the object id's
+      in the fields temporarily. deserialize_get_obj(...) has a mapping from
+      these object id's to valid object pointers
 */
-
-
 
 #ifndef PERSIST_H
 #define PERSIST_H
@@ -73,7 +98,7 @@ typedef bool (*serialize_fn_ptr) (FILE *f,void *obj);
 typedef void * (*deserialize_fn_ptr) (FILE *f);
 
 /* In the 2nd deserialization stage, this is called on every object */
-/* it is expected to call deserialize_get_field for each field */
+/* it is expected to call deserialize_get_obj for each field */
 typedef bool (*set_fields_fn_ptr) (void *obj);
 
 /* Serialization */
@@ -82,8 +107,8 @@ bool serialize_object(int kind, void *obj);
 void serialize_end(void);
 
 /* Deserialization */
-bool deserialize(FILE *f, deserialize_fn_ptr deserialize_obj[], 
+bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[], 
 		set_fields_fn_ptr set_fields[], int length);
-void *deserialize_get_field(void *old_field);
+void *deserialize_get_obj(void *old_field);
 
 #endif /* PERSIST_H */

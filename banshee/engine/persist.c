@@ -62,7 +62,7 @@ static hash_table serialized_objects;
 /* Serialization */
 void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length)
 {
-  assert(current_state = persist_raw);
+  assert(current_state == persist_raw);
   assert(f); 
 
   persist_rgn = newregion();
@@ -85,6 +85,7 @@ static bool do_serialize_object(int kind, void *obj)
   assert(kind < num_kinds);
 
   success = fwrite((void *)&kind,sizeof(int),1,current_file);
+  success &= fwrite((void*)&obj, sizeof(void *), 1, current_file);
 
   success &= serialize_fns[kind](current_file, obj);
 
@@ -112,8 +113,10 @@ void serialize_end(void)
   persist_entry next_entry;
   assert(current_state == persist_serializing);
 
-  while( (next_entry = persist_entry_queue_head(serialize_queue)) != NULL) {
+  while(!persist_entry_queue_empty(serialize_queue)) {
+    next_entry = persist_entry_queue_head(serialize_queue);
     do_serialize_object(next_entry->kind, next_entry->obj);
+    persist_entry_queue_tail(serialize_queue);
   }
 
   deleteregion(persist_rgn);
@@ -172,7 +175,7 @@ static bool set_object_fields(set_fields_fn_ptr set_fields[], int length)
 }
 
 /* Deserialization */
-bool deserialize(FILE *f, deserialize_fn_ptr deserialize_obj[], 
+bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[], 
 		set_fields_fn_ptr set_fields[], int length)
 {
   assert(current_state == persist_raw);
@@ -191,7 +194,7 @@ bool deserialize(FILE *f, deserialize_fn_ptr deserialize_obj[],
   return TRUE;
 }
 
-void *deserialize_get_field(void *old_field)
+void *deserialize_get_obj(void *old_field)
 {
   persist_entry entry = NULL;
 

@@ -56,9 +56,11 @@ struct list *new_list(region r);
 int list_length(struct list *a);
 struct list *list_cons(void *data, struct list *a);
 struct list *list_append(struct list *a, struct list *b);
+struct list *list_append_tail(void *data, struct list *a);
 struct list *list_app(struct list *a,app_fn app);
 void *list_find(struct list *a,eq_fn eq);
 void *list_head(struct list *a);
+void *list_last(struct list *a);
 struct list *list_tail(struct list *a);
 void list_drop(struct list *a, eq_fn eq);
 struct list *list_filter(region r,struct list *a,eq_fn eq);
@@ -92,9 +94,11 @@ name new_ ## name(region r); \
 int name ## _length(name a); \
 name name ## _cons(type data, name a); \
 name name ## _append(name a, name b); \
+name name ## _append_tail(type data, name a); \
 name name ## _app(name a, name ## _app_fn app); \
 type name ## _find(name a, name ## _eq_fn eq); \
 type name ## _head(name a); \
+type name ## _last(name a); \
 name name ## _tail(name a); \
 void name ## _drop(name a, name ## _eq_fn eq); \
 name name ## _filter(region r,name a, name ## _eq_fn eq); \
@@ -129,6 +133,10 @@ name name ## _append(name a, name b) \
 { \
  return (name)list_append((struct list *)a,(struct list *)b);  \
 } \
+name name ## _append_tail(type data, name a) \
+{\
+  return (name)list_append_tail((void *)data,(struct list *) a); \
+} \
 name name ## _app(name a, name ## _app_fn app) \
 { \
  return (name)list_app((struct list *) a, (app_fn) app); \
@@ -145,6 +153,10 @@ type name ## _head(name a) \
 { \
  return (type)list_head((struct list *)a); \
 } \
+type name ## _last(name a) \
+{\
+  return (type)list_last((struct list *)a);\
+}\
 void name ## _drop(name a, name ## _eq_fn eq) \
 { \
  list_drop((struct list *)a, (eq_fn) eq); \
