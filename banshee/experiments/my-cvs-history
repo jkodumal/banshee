@@ -107,8 +107,7 @@ for ($i=0; $i < @history; $i++) {
   if ($curWhen ne $when) {
     # starting new section; print info
     $curWhen = $when;
-    #print("#####\n");
-    #print("$when    $who\n");
+    print("\n$when\n");
 
     # get log information about this
     if ($showLog) {
@@ -148,11 +147,10 @@ for ($i=0; $i < @history; $i++) {
     print("removed:  ");
   }
   else {
-    print("unknown:        ");    # unknown action
+    print("$kind:        ");    # unknown action
   }
 
-  print("$file\n");
-  print("#####\n");
+  print("$file ($rev)\n");
 }
 
 
