@@ -107,3 +107,27 @@ For C programs:
 ** Simulate only java projects
 
 ./run-bt-experiment.py -d ~/work/local_repositories/azureus --ext ".java" --analysis "./no_analysis.py" -c "./no_compile.sh" -p azureus2 --start-with 0 --end-with 2 -o out/azureus.out -l logs/azureus2.log
+
+
+* Cqual early
+
+This is the commit where cqual switches to automake
+2002-05-28 21:39 -0700
+
+This is a commit where cqual configures (still doesn't build):
+aclocal
+autoconf
+automake
+./configure
+make
+
+2002-05-29 14:41 -0700
+
+
+"2002-10-27 13:47" this works with
+
+aclocal
+autoconf
+automake
+./configure CC="/usr/local/gcc-2.95.3/bin/gcc"
+make CC="/usr/local/gcc-2.95.3/bin/gcc"
