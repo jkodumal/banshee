@@ -66,7 +66,7 @@ void name ## _update(name e1, type info);
 #define DEFINE_UFIND(name,type) \
 name new_ ## name(region r, type info) \
 { \
- return (name)new_uf_element(r,info);\
+ return (name)new_uf_element(r,(void *)info);\
 }\
 type name ## _get_info(name elem) \
 { \

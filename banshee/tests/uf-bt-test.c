@@ -29,6 +29,7 @@
  */
 
 /* Test the union find backtracking functionality */
+#include <stdio.h>
 #include <assert.h>
 #include "ufind.h"
 
@@ -49,18 +50,31 @@ int main()
   e3 = new_elt(scratchregion,3);
   e4 = new_elt(scratchregion,4);
 
-  elt_union(e1,e2);
+  elt_union(e1,e2);		// | e1 e2 | e3 | e4 | 
   assert(elt_get_info(e2) == elt_get_info(e1));
-  uf_backtrack();
+  uf_backtrack(); 		// | e1 | e2 | e3 | e4 | 
   assert(elt_get_info(e1) == 1);
   assert(elt_get_info(e2) == 2);
-  elt_union(e1,e2);
-  elt_union(e2,e3);
-  elt_union(e3,e4);
+  elt_union(e1,e2);		// | e1 e2 | e3 | e4 | 
+  elt_union(e2,e3);		// | e1 e2 e3 | e4 | 
+  elt_union(e3,e4);		// | e1 e2 e3 e4 | 
 
   assert(elt_get_info(e1) == elt_get_info(e4));
   
-  uf_backtrack();
+  uf_backtrack();		// | e1 e2 e3 | e4 | 
+  assert(elt_get_info(e4) == 4);
+//   printf("(%d,%d,%d,%d)",elt_get_info(e1),elt_get_info(e2),elt_get_info(e3),
+// 	 elt_get_info(e4));
+  assert(elt_get_info(e1) == elt_get_info(e3));
+  uf_backtrack();		// | e1 e2 | e3 | e4 |
+  assert(elt_get_info(e1) == elt_get_info(e2));
+  assert(elt_get_info(e3) == 3);
+  assert(elt_get_info(e4) == 4);
+  uf_backtrack();		// | e1 | e2 | e3 | e4 | 
+  assert(elt_get_info(e1) == 1);
+  assert(elt_get_info(e2) == 2);
+  assert(elt_get_info(e3) == 3);
   assert(elt_get_info(e4) == 4);
 
+  return 0;
 }
