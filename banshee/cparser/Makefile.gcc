@@ -26,7 +26,7 @@ region_dir = ../rlib
 endif
 
 ifdef DEBUG
-CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing
+CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing -DREGION_PROFILE
 else
 CFLAGS = -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing 
 endif

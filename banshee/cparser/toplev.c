@@ -827,9 +827,15 @@ static void rcc_aborting(int s)
 void *orig_brk;
 extern Updater extra_update_fn;
 extern Updater extra_update_fn2;
+extern region types_region;
 
 int update_type(translation t, void *m);
 int update_var_info(translation t, void *m);
+
+#define REGION_PROFILE
+#ifdef REGION_PROFILE
+void profile(void);
+#endif REGION_PROFILE
 
 int main(int argc, char **argv) deletes
 {
@@ -842,7 +848,8 @@ int main(int argc, char **argv) deletes
   char *input_pat;
   region main_region;
   region_init();
-  
+
+
   main_region = newregion();
 
   extra_update_fn = update_type;
@@ -858,6 +865,8 @@ int main(int argc, char **argv) deletes
 #endif
 #endif
   analysis_init();
+  types_region = newregion();
+  register_persistent_region(types_region, update_type);
 
   copy_argc = 0;
   copy_argv = xmalloc((argc + 1) * sizeof(*copy_argv));
@@ -1236,7 +1245,9 @@ int main(int argc, char **argv) deletes
     {
       analysis_print_graph();
     }
-  
+
+  printf("before region profile!\n");
+ /*  regprofile(); */
   
   /*     if (flag_print_memusage) */
   /*       { */

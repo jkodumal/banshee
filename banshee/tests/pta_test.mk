@@ -45,6 +45,9 @@ PTA_PERSIST :=
 PTA_PERSIST += ML-typecheck.preproc
 PTA_PERSIST += li.preproc
 
+PTA_RPERSIST :=
+PTA_RPERSIST += ML-typecheck.preproc
+
 PTA_EXEC := $(PARSER_DIR)/parser.exe
 
 PTA_NS_EXEC := $(PARSER_DIR)/parser_ns.exe
@@ -59,17 +62,22 @@ pta-bt-regr: $(PARSER_DIR)/parser.exe \
 pta-persist-regr: $(PARSER_DIR)/parser_ns.exe \
 	   $(patsubst %,pta-persist/%,$(PTA_PERSIST)) pta-persist-done
 
+pta-rpersist-regr: $(PARSER_DIR)/parser_ns.exe \
+	   $(patsubst %,pta-rpersist/%,$(PTA_RPERSIST)) pta-rpersist-done
+
 pta-regr/clean:
 	rm -f $(PTA_DIR)/*.out
 	rm -f andersen.out
 
-.PHONY: pta-done pta-bt-done pta-persist-done
+.PHONY: pta-done pta-bt-done pta-persist-done pta-rpersist-done
 
 pta-done:; @echo "PTA tests pass"
 
 pta-bt-done:; @echo "PTA backtracking tests pass"
 
 pta-persist-done:; @echo "PTA persistence tests pass"
+
+pta-rpersist-done:; @echo "PTA region persistence tests pass"
 
 pta-large/%:
 	$(PTA_EXEC) $(PTA_DIR)/$*/*.c 2> /dev/null | grep "Number of things pointed to" > $(PTA_DIR)/$*.out
@@ -82,6 +90,9 @@ pta-persist/%:
 	$(PTA_NS_EXEC) -fserialize-constraints $(PTA_DIR)/$*/*.c 2>/dev/null > /dev/null
 	$(PTA_NS_EXEC) -fdeserialize-constraints 2>/dev/null | grep "Number of things pointed to" > $(PTA_DIR)/$*_persist.out
 	diff $(COR_DIR)/$*.cor $(PTA_DIR)/$*_persist.out
+
+pta-rpersist/%:
+	./andersen-rpersist-test.py $(PTA_DIR)/$*/*.c
 
 $(PARSER_DIR)/parser.exe: 
 	$(MAKE) -C ../ points-to	

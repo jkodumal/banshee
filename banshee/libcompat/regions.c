@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004
+ * Copyright (c) 1999-2001
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -27,6 +31,10 @@
  * SUCH DAMAGE.
  *
  */
+/* Idea: clear on page alloc rather than individual alloc
+   Turns out not so good (on lcc at least, seems a wash on mudlle):
+   logically should be bad for small regions (less than a few pages)
+*/
 #undef PRECLEAR
 #undef REGION_PROFILE
 #include "stats.c"
@@ -413,6 +421,7 @@ void findrrefs(region r, region from)
   for (p = r->normal.bigpages; p; p = p->next)
     findrefs(r, (char *)&p->previous, (char *)p + p->pagecount * RPAGESIZE);
 }
+
 
 void delete_translation(translation d)
 {

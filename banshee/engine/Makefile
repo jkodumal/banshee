@@ -46,7 +46,7 @@ endif
 CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -Wall -Werror -fno-strict-aliasing 
+	 -Dparentptr= -Wall -Werror -fno-strict-aliasing
 
 ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
@@ -67,7 +67,7 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 TARGETS = libengine.a libnsengine.a 
 
 ifdef DEBUG
-CFLAGS := -pg -g ${CFLAGS}
+CFLAGS := -pg -g -DREGION_PROFILE ${CFLAGS}
 else
 CFLAGS := -DNDEBUG -O3 ${CFLAGS}
 endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004
+ * Copyright (c) 1999-2001
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,6 +44,7 @@ char *profile_rstralloc0(region r, size_t size, char *file, int line);
 char *profile_rstrdup(region r, const char *s, char *file, int line);
 char *profile_rstrextend(region r, const char *old, size_t newsize, char *file, int line);
 char *profile_rstrextend0(region r, const char *old, size_t newsize, char *file, int line);
+void *profile__rcralloc_small0(region r, size_t size, char *file, int line);
 
 #ifdef REGION_PROFILE
 #define typed_ralloc(r, size, type) profile_typed_ralloc(r, size, type, __FILE__, __LINE__)
@@ -52,8 +57,9 @@ char *profile_rstrextend0(region r, const char *old, size_t newsize, char *file,
 
 #define rstrextend(r, old, newsize) profile_rstrextend(r, old, newsize, __FILE__, __LINE__)
 #define rstrextend0(r, old, newsize) profile_rstrextend0(r, old, newsize, __FILE__, __LINE__)
+#define __rcralloc_small0(r, size) profile__rcralloc_small0(r, size, __FILE__, __LINE__)
 #endif
 
-void profile(void);
+void regprofile(void);
 
 #endif

@@ -29,9 +29,9 @@ CC=gcc
 
 ifdef DEBUG_RALLOC
 #CFLAGS = -Wall -Ddeletes="" -g -pg
-CFLAGS = -O3 -Wall -Ddeletes="" -DDEBUG_RALLOC -DNDEBUG -DNMEMDEBUG  -Werror
+CFLAGS = -g -pg -Wall -Ddeletes="" -DDEBUG_RALLOC -DNDEBUG -DNMEMDEBUG  -Werror -DREGION_PROFILE
 else
-CFLAGS = -O3 -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG -Werror
+CFLAGS = -g -pg -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG -Werror -DREGION_PROFILE
 endif
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
@@ -43,7 +43,10 @@ all: $(TARGETS)
 regions.o: regions.c pages.c alloc.c regions.h
 	gcc -c $(CFLAGS) -o regions.o regions.c
 
-libregions.a: regions.o
+profile.o: 
+	gcc -c $(CFLAGS) -o profile.o profile.c
+
+libregions.a: regions.o profile.o
 	$(AR) rcs $@ $^
 
 TAGS: $(TAGFILES)
@@ -52,4 +55,4 @@ TAGS: $(TAGFILES)
 .PHONY: clean
 
 clean:
-	rm -f $(TARGETS) regions.o *~
+	rm -f $(TARGETS) regions.o profile.o *~

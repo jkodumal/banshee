@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004
+ * Copyright (c) 1999-2001
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -27,6 +31,7 @@
  * SUCH DAMAGE.
  *
  */
+
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,7 +80,7 @@ static ainfo find_ainfo(char *file, int line)
 
   if (!registered_exit)
     {
-      if (atexit(profile))
+      if (atexit(regprofile))
 	fprintf(stderr, "Registration of profile at exit failed\n");
       registered_exit = 1;
     }
@@ -105,7 +110,7 @@ static ainfo find_ainfo(char *file, int line)
  *                                                                        *
  **************************************************************************/
 
-#define REGION_PROFILE_DEPTH 3
+#define REGION_PROFILE_DEPTH 6
 #undef TRACE_STACK
 #if defined(__GNUC__) && defined(__OPTIMIZE__) && REGION_PROFILE_DEPTH > 1
 #define TRACE_STACK
@@ -138,18 +143,39 @@ static cinfo find_cinfo(void)
   /* Compute the call chain.  This is an awful hack. */
   i = 0;
   if (i < REGION_PROFILE_DEPTH)
-    calls[i++] = __builtin_return_address(1);
+    {
+      if (__builtin_frame_address(2) == 0) goto finish;
+      calls[i++] = __builtin_return_address(2);
+    }
   if (i < REGION_PROFILE_DEPTH)
-    calls[i++] = __builtin_return_address(2);
+    {
+      if (__builtin_frame_address(3) == 0) goto finish;
+      calls[i++] = __builtin_return_address(3);
+    }
   if (i < REGION_PROFILE_DEPTH)
-    calls[i++] = __builtin_return_address(3);
+    {
+      if (__builtin_frame_address(4) == 0) goto finish;
+      calls[i++] = __builtin_return_address(4);
+    }
   if (i < REGION_PROFILE_DEPTH)
-    calls[i++] = __builtin_return_address(4);
+    {
+      if (__builtin_frame_address(5) == 0) goto finish;
+      calls[i++] = __builtin_return_address(5);
+    }
   if (i < REGION_PROFILE_DEPTH)
-    calls[i++] = __builtin_return_address(5);
+    {
+      if (__builtin_frame_address(6) == 0) goto finish;
+      calls[i++] = __builtin_return_address(6);
+    }
   if (i < REGION_PROFILE_DEPTH)
-    calls[i++] = __builtin_return_address(6);
+    {
+      if (__builtin_frame_address(7) == 0) goto finish;
+      calls[i++] = __builtin_return_address(7);
+    }
   /* Add more if you want a higher call-depth (why would you?) */
+ finish:
+  while (i < REGION_PROFILE_DEPTH)
+    calls[i++] = "top";
 
   /* Find it */
   for (ci = cinfos; ci; ci = ci->next)
@@ -243,6 +269,12 @@ char *profile_rstrextend0(region r, const char *old, size_t newsize,
 {
   add_alloc(file, line, newsize); /* XXX: Fix */
   return rstrextend0(r, old, newsize);
+}
+
+void *profile__rcralloc_small0(region r, size_t size, char *file, int line)
+{
+  add_alloc(file, line, size);
+  return __rc_ralloc_small0(r, size);
 }
 
 /**************************************************************************
@@ -494,10 +526,14 @@ static void print_cinfos(void)
 #endif
 
 
-void profile(void)
+void regprofile(void)
 {
-  if (profile_region == NULL)
+  printf("Profiling!\n");
+  
+  if (profile_region == NULL) {
+    printf("Profile region is null!\n");
     return;
+  }
 
   gather_finfo();
 

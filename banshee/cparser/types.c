@@ -366,15 +366,8 @@ int update_type(translation tr, void *m)
   return (sizeof (struct type));
 }
 
-extern Updater extra_update_fn;
-
 void init_types(void)
 {
-  types_region = newregion();
-
-  register_persistent_region(types_region, update_type);
-
-
   float_type = make_primitive(tp_float, sizeof(float), __alignof__(float));
   double_type = make_primitive(tp_double, sizeof(double), __alignof__(double));
   long_double_type = make_primitive

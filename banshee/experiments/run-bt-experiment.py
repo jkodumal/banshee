@@ -229,9 +229,13 @@ def compute_time(file, state):
 # back to file
 def compute_stack(modified, removed, file, state, time):
     # First, take the prefix of the list up to file
-    prefix = state[:state.index((file,time))]
+    try:
+	pivot = state.index((file,time))
+    except:
+	print ("File %s not found in stack" % file)
     # Next, take the suffix of filelist starting with file, but filtering out
     # any modifieds
+	prefix = state[:state.index((file,time))]
     suffix = [elem for elem,_ in state[state.index((file,time)):] if (not (elem in modified or elem in removed))]
     return (suffix + modified),prefix
 

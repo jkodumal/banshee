@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004
+ * Copyright (c) 1999-2001
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -27,11 +31,10 @@
  * SUCH DAMAGE.
  *
  */
-
 #ifndef REGIONS_H
 #define REGIONS_H
 
-#include "linkage.h"
+#include "../engine/linkage.h"
 
 EXTERN_C_BEGIN
 
@@ -100,6 +103,7 @@ extern char *__rc_file;
 #define RCDEBUG ((void)0)
 #endif
 
+#ifndef REGION_PROFILE
 #define typed_ralloc (RCDEBUG, __rc_typed_ralloc)
 #define typed_rarrayalloc (RCDEBUG, __rc_typed_rarrayalloc)
 #define typed_rarrayextend (RCDEBUG, __rc_typed_rarrayextend)
@@ -109,8 +113,7 @@ extern char *__rc_file;
 #define rstrextend (RCDEBUG, __rc_rstrextend)
 #define rstrextend0 (RCDEBUG, __rc_rstrextend0)
 #define __rcralloc_small0 (RCDEBUG, __rc_ralloc_small0)
-
-#ifdef REGION_PROFILE
+#else
 #include "profile.h"
 #endif
 

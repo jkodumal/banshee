@@ -51,7 +51,7 @@ CC = gcc
 
 ifdef DEBUG
 CFLAGS = -Wall -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes=	\
-         -Dtraditional= -Dsameregion= -Dparentptr= -Werror -fno-strict-aliasing
+         -Dtraditional= -Dsameregion= -Dparentptr= -Werror -fno-strict-aliasing -DREGION_PROFILE
 else
 CFLAGS = -DNDEBUG -O3 -I$(engine_dir) -I$(region_dir) -Ddeletes= \
          -Dtraditional= -Dsameregion= -Dparentptr= -Wall -Werror -fno-strict-aliasing
