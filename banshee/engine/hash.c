@@ -44,6 +44,7 @@ struct bucket_
 
 #define scan_bucket(b, var) for (var = b; var; var = var->next)
 
+/* #define BUCKETPTR_REGION bucketptr_region */
 #define BUCKETPTR_REGION banshee_ptr_region
 
 /* #define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region) */

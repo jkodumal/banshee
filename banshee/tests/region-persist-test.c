@@ -63,17 +63,18 @@ int update_node(translation t, void *m) {
 
 void update()
 {
-  Updater u[8];
+  Updater u[9];
   translation t;
   region temp = newregion();
   
+  u[8] = update_ptr_data;
   u[7] = update_list_strnode;
   u[6] = update_list_node;
   u[5] = update_list_header;
   u[4] = update_nonptr_data;
   u[3] = update_bucket;
   u[2] = update_hash_table;
-  u[1] = update_ptr_data;
+  u[1] = update_bucketptr;
   u[0] = update_node;
 
   t = deserialize("data", "offsets", u, temp);
@@ -108,7 +109,7 @@ void seed_fn_ptr_table(region r);
 
 int main(int argc, char *argv[])
 {
-  region r[9];
+  region r[10];
   int i = 0;
   node n = NULL;
   region node_region;
@@ -121,14 +122,15 @@ int main(int argc, char *argv[])
 
   node_region = newregion();
 
-  r[8] = NULL;
+  r[9] = NULL;
+  r[8] = banshee_ptr_region;
   r[7] = list_strnode_region;
   r[6] = list_node_region;
   r[5] = list_header_region;
   r[4] = banshee_nonptr_region;
   r[3] = bucket_region;
   r[2] = table_region;
-  r[1] = banshee_ptr_region;
+  r[1] = bucketptr_region;
   r[0] = node_region;
 
   thetable = make_persistent_string_hash_table(8, 1);

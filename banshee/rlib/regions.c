@@ -86,7 +86,7 @@ struct array_hdr
 #define PTRALIGNMENT __alignof(void *)
 #define ALIGNMENT_LONG __alignof(unsigned long)
 #else
-#define RALIGNMENT 8
+#define RALIGNMENT 4
 #define ALIGNMENT_HDR 4
 #define PTRALIGNMENT 4
 #define ALIGNMENT_LONG 4

@@ -4,7 +4,7 @@ import os
 import string
 import getopt
 
-options='c:d:p:l:o:s:he'
+options='c:d:p:l:o:s:heb'
 long_options=['start-with=','end-with=','analysis=',"help","stop-on-build-error"]
 
 # Default values for command line options
@@ -22,18 +22,20 @@ simfilename = "simulations/" + project + ".sim"
 modfilename = "simulations/" + project + ".mod"
 enhanced_mod_check = False
 stop_on_build_error = False
+use_bitkeeper = False
 
 # Print a usage message and exit
 def usage():
     print("Usage: %s [options]\n\n\
 options:\n\
   -c <script>:    run this script to compile the project\n\
-  -d <cvsroot>:   specify CVS root\n\
+  -d <cvsroot>:   specify CVS root (CVS mode only)\n\
   -p <project>:   name the repository (project) to analyze\n\
-  -l <logfile>:   read the CVS log from logfile\n\
+  -l <logfile>:   read commit log from logfile\n\
   -o <outfile>:   save output as outfile\n\
   -s <statefile>: read/write the analysis state from/to statefile\n\
   -e              used enhanced check to find modified files\n\
+  -b              analyze a bitkeeper (not CVS) project\n\
   -h              show this message\n"
 	  % sys.argv[0])
 
@@ -76,11 +78,13 @@ def parse_options():
             stop_on_build_error = True
 	if (o == '--analysis'):
 	    analysis = a
+	if (o == '-b'):
+	    use_bitkeeper = True
 
 # Get the next log entry, exit if we are past the desired stopping
 # point. Each entry is a pair consisting of a date string and a list
 # of (type, name, version) triples
-def next_log_entry(logfile):
+def next_cvs_log_entry(logfile):
     result = []
     date = logfile.readline()
     if (not date):
@@ -92,6 +96,26 @@ def next_log_entry(logfile):
 	else:
 	    result.append(entry)
     return (date,result)
+
+def next_bk_log_entry(logfile):
+    result = []
+    line = logfile.readline()
+    if (not line):
+	sys.exit(0);
+    return (string.split(line)[0],[])
+
+def next_log_entry(logfile):
+    if (use_bitkeeper):
+	return next_bk_log_entry(logfile)
+    else:
+	return next_cvs_log_entry(logfile)
+
+def run_checkout(repository, version, project):
+    if (use_bitkeeper):
+	os.system("bk export -r%s %s &>/dev/null" % (version, repository, project)
+    else:
+	os.system("cvs -d %s co -D \"%s\" %s &>/dev/null" % (repository, version, project))
+
 
 # Get a list of the files with a given extension that have been
 # modified in dir_b as compared to dir_a. The directory name will be
@@ -247,8 +271,8 @@ def main():
         entrynum = entrynum + 1
     # run one entry to prime the pump
     os.system("rm -rf %s" % project)
-    date,_ = next_log_entry(logfile)
-    os.system("cvs -d %s co -D \"%s\" %s >/dev/null" % (repository, date, project))
+    version,_ = next_log_entry(logfile)
+    run_checkout(repository, version, project)
     build_error = os.system("%s %s %d" % (compilescript, project, entrynum))
     entrynum = entrynum + 1
     if (build_error):
@@ -264,7 +288,7 @@ def main():
     os.system("mv %s %s" % (project, project_prev))
 
     # for each entry, do the following:
-    # 1. run cvs co -d -D date
+    # 1. run cvs co -d -D version
     # 2. mv to either project_odd or project_even
     # 3. compile it by running compilescript
     # 4. get the list of modified .i files with get_modified_files
@@ -277,8 +301,8 @@ def main():
 	os.system("rm -rf %s" % project)
 	statefile = open(statefilename + str(current-1), "r")
 	banshee_state = get_banshee_state(statefile)
- 	date,_ = next_log_entry(logfile)
-	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, date, project))
+ 	version,_ = next_log_entry(logfile)
+	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, version, project))
 	build_error = os.system("%s %s" % (compilescript, project))
 	if (build_error):
 	    print "Build error -- skipping this commit"

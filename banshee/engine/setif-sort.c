@@ -1570,10 +1570,15 @@ int update_setif_term(translation t, void *m)
       update_pointer(t, (void **)& ((setif_constant_)e)->name);
       return sizeof(struct setif_constant_);
     }
+  case ZERO_TYPE:
+    {
+      return (sizeof(void *));
+    }
   default:
     /* This is a degenerate case, where (hopefully) we've reached the
        end of the region and are just hitting garbage data */
-    return sizeof(void *);
+    assert(FALSE);
+    return 0;
   }
 }
 
