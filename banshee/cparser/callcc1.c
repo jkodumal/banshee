@@ -66,12 +66,12 @@ int exec_cc1(declaration the_program) deletes
   /* Relase all memory now if MEMHACK defined */
   memhack = getenv("MEMHACK") != NULL;
 
-  if (memhack)
-    {
-      extern void *orig_brk;
+ /*  if (memhack) */
+/*     { */
+/*       extern void *orig_brk; */
 
-      brk(orig_brk);
-    }
+/*       sbrk(orig_brk); */
+/*     } */
 
   for (;;)
     {
