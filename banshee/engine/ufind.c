@@ -50,6 +50,7 @@ DEFINE_LIST(union_stack,ustack_elt);
 struct uf_element {
   uf_kind kind;
   int rank;
+  int persist_kind;
   void *info;
   struct uf_element *link;
   elt_stack elt_stack;
@@ -58,7 +59,7 @@ struct uf_element {
 static region stackregion = NULL;
 static union_stack ustack = NULL;
 
-struct uf_element *new_uf_element(region r, void *info)
+struct uf_element *new_uf_element(region r, void *info, int persist_kind)
 {
   struct uf_element *result;
 
@@ -69,6 +70,7 @@ struct uf_element *new_uf_element(region r, void *info)
   result->info = info;
   result->link = NULL;
   result->elt_stack = NULL;
+  result->persist_kind = persist_kind;
 
   return result;
 }

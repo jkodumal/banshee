@@ -127,7 +127,6 @@ void serialize_end(void)
   current_state = persist_raw;
 }
 
-/* TODO-- put persist entries in the object map, NOT just objects */
 static bool create_objects(FILE *f, deserialize_fn_ptr deserialize_obj[], 
 			  int length)
 {
@@ -203,7 +202,8 @@ void *deserialize_get_obj(void *old_field)
   assert(current_state == persist_deserializing);
   assert(object_map); 
   
-  hash_table_lookup(object_map, old_field, (hash_data *)&entry);
-
-  return entry->obj;
+  if (! hash_table_lookup(object_map, old_field, (hash_data *)&entry)) {
+    return NULL;
+  }
+  else return entry->obj;
 }

@@ -63,7 +63,6 @@ struct cluster_cons_ {
 
 typedef struct cluster_cons_ *cluster_cons;
 
-DECLARE_LIST(dyck_node_list,dyck_node);
 DEFINE_LIST(dyck_node_list,dyck_node);
 
 /*****************************************************************************
@@ -77,6 +76,7 @@ static FILE *dotfile = NULL;
 #endif
 
 // A map from indices to the clustered open constructor containing that index 
+static hash_table constant_to_node_map = NULL;
 static hash_table clustered_indices = NULL;
 static hash_table unclustered_indices = NULL;
 static hash_table built_constructors = NULL; 
@@ -155,6 +155,7 @@ void dyck_init(bool pn)
   clustered_indices = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   unclustered_indices = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   built_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
+  constant_to_node_map = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   p_constructor = make_constructor(CONS_CLOSE,setif_sort,p_sig,1);
   all_nodes = new_dyck_node_list(dyckregion);
   state = dyck_inited;
@@ -193,6 +194,9 @@ dyck_node make_tagged_dyck_node(const char *name)
   my_call_setif_inclusion(result->node_constant, result->node_variable);
 
   dyck_node_list_cons(result, all_nodes);
+  hash_table_insert(constant_to_node_map, (hash_key) result->node_constant,
+		    (hash_data)result);
+
 
   return result;
 }
@@ -210,6 +214,9 @@ dyck_node make_untagged_dyck_node(const char *name)
   result->unique_name = rstrdup(dyckregion,unique_name);
 
   dyck_node_list_cons(result, all_nodes);
+  hash_table_insert(constant_to_node_map, (hash_key) result->node_constant,
+		    (hash_data)result);
+
 
   return result;
 }
@@ -461,13 +468,25 @@ bool dyck_check_reaches(dyck_node n1, dyck_node n2)
 // Search for target's pn reachability starting from current, assuming
 // that nodes in visited have already been searched
 static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
-				      hash_table visited_n, hash_table visited_p,
-				      bool seen_p)
+				      hash_table visited_n, 
+				      hash_table visited_p,
+				      bool seen_p,
+				      dyck_node_list all_constants)
 {
   hash_table visited = seen_p ? visited_p : visited_n;
   
   // Found the target
-  if (expr_eq(target,current)) return TRUE;
+  if (target == NULL && expr_is_constant(current)) {
+    dyck_node n = NULL;
+    assert(all_constants);
+    insist(hash_table_lookup(constant_to_node_map,
+			     (hash_key)current,
+			     (hash_data *)&n));
+    assert(n);
+    dyck_node_list_cons(n, all_constants);
+    
+  }
+  else if (target && expr_eq(target,current)) return TRUE;
   
   // Already searched from this point
   if (hash_table_lookup(visited,(void *)expr_stamp(current),NULL)) return FALSE;
@@ -486,8 +505,20 @@ static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
 
     while (gen_e_list_next(&scan,&next_lb)) {
       struct decon contents;
+
+      // If target is null, we're finding all PN reaches
+      if (target == NULL && expr_is_constant(next_lb)) {
+	dyck_node n = NULL;
+	assert(all_constants);
+	insist(hash_table_lookup(constant_to_node_map,
+				 (hash_key)next_lb,
+				 (hash_data *)&n));
+	assert(n);
+	dyck_node_list_cons(n, all_constants);
+      }
+      
       // Again, we've found the target
-      if (expr_eq(target,next_lb)) return TRUE;
+      else if (expr_eq(target,next_lb)) return TRUE;
 
       // Deconstruct any p's 
       // and search their contents
@@ -498,16 +529,18 @@ static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
 	assert(contents.elems);
 
 	if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
-				      visited_p,FALSE))
-	  return TRUE;
+				      visited_p,FALSE, all_constants)) {
+	  if (target) return TRUE;
+	}
       }
       else if (contents.name && string_eq(contents.name,CONS_CLOSE)) {
 	assert(contents.arity == 1);
 	assert(contents.elems);
 
 	if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
-				      visited_p,TRUE))
-	  return TRUE;
+				      visited_p,TRUE, all_constants)) {
+	  if (target) return TRUE;
+	}
       }
       
    
@@ -532,10 +565,65 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)
   visited_p = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
 
   return dyck_check_pn_reaches_aux(n1->node_constant,n2->node_variable,visited,
-				   visited_p, FALSE);
+				   visited_p, FALSE, NULL);
 
   deleteregion(scratch);
 }
+
+dyck_node_list dyck_reaches(dyck_node n)
+{
+  dyck_node_list result;
+  gen_e_list_scanner scan;
+  gen_e next_lb;
+  // compute the transitive lower bounds of n
+  gen_e_list tlb = setif_tlb(n->node_variable);
+  
+  assert(state == dyck_query);
+  
+  result = new_dyck_node_list(dyckregion);
+
+  gen_e_list_scan(tlb,&scan);
+  
+  while (gen_e_list_next(&scan,&next_lb)) {
+    if (expr_is_constant(next_lb)) {
+      dyck_node next_node = NULL;
+      insist(hash_table_lookup(constant_to_node_map, 
+			       (hash_key)next_lb, (hash_data *)&next_node));
+      assert(next_node);
+      dyck_node_list_cons(next_node,result);
+    }
+  }
+
+  return result;
+
+}
+
+dyck_node_list dyck_pn_reaches(dyck_node n)
+{
+  region scratch = NULL;
+  hash_table visited = NULL;
+  hash_table visited_p = NULL;
+  dyck_node_list all_constants = NULL;
+
+  assert (state == dyck_query);
+
+  if (!pn_reach) fail("PN reachability not enabled.");
+
+  scratch = newregion();
+  visited = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
+  visited_p = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
+  all_constants = new_dyck_node_list(dyckregion);
+
+  dyck_check_pn_reaches_aux(NULL, n->node_variable,visited,
+			    visited_p, FALSE, all_constants);
+
+  deleteregion(scratch);
+
+  return all_constants;
+}
+
+
+
 // Print (in dot format) a representation of the closed CFL graph, w/o
 // PN edges
 void dyck_print_closed_graph(FILE *f)

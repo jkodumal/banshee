@@ -42,47 +42,50 @@
    Each object is written out as a triple (kind, id, data). The
    meaning of these fields is as follows:
    
-   1. kind -- an unsigned int identifying the type of the object. Clients
-   of the persistence manager must provide a mapping from kinds to 
-   serialization function pointers (for serialization) or from kinds to
-   deserialization function pointers (for deserialization).
+   1. kind -- an unsigned int identifying the type of the
+   object. Clients of the persistence manager must provide a mapping
+   from kinds to serialization function pointers (for serialization)
+   or from kinds to deserialization function pointers (for
+   deserialization).
 
    2. id -- this is simply the address of the object. It is needed to
    reconstruct the object graph during deserialization.
    
-   3. data -- the contents of the object. It is expected that pointer-valued
-   objects are just written out as addresses. During deserialization a second
-   pass over the object graph will fill in these pointers after an initial 
-   construction phase where all pointers are invalid (contain object id's,
-   not valid pointers). TODO -- what about embedded function pointers?
+   3. data -- the contents of the object. It is expected that
+   pointer-valued objects are just written out as addresses. During
+   deserialization a second pass over the object graph will fill in
+   these pointers after an initial construction phase where all
+   pointers are invalid (contain object id's, not valid
+   pointers). TODO -- what about embedded function pointers, generics?
 
-   Each struct must provide the following methods to support persistence:
+   Each struct must provide the following methods to support
+   persistence:
    
-   a) bool serialize(FILE *f, void *obj) 
+   a) bool serialize(FILE *f, void *obj)
 
-      This function should serialize the struct. All pointer-valued fields
-      should be written out as addresses and the function serialize_object
-      called on them.
+      This function should serialize the struct. All pointer-valued
+      fields should be written out as addresses and the function
+      serialize_object called on them.
 
    b) void *deserialize(FILE *f)
 
-      This function should deserialize the struct. All pointer-valued fields
-      should be read in. These pointers will NOT be valid until set_fields
-      has been called on them. This function should return the constructed
-      object
+      This function should deserialize the struct. All pointer-valued
+      fields should be read in. These pointers will NOT be valid until
+      set_fields has been called on them. This function should return
+      the constructed object
 
    c) bool set_fields(void *obj)
 
-      This function should fill in all the pointer valued fields of the struct.
-      Essentially it should just do this:
+      This function should fill in all the pointer valued fields of
+      the struct.  Essentially it should just do this:
 
       obj->f1 = deserialize_get_obj(obj->f1)
       ...
       obj->fn = deserialize_get_obj(obj->fn)
 
-      This works because deserialize(...) is expected to store the object id's
-      in the fields temporarily. deserialize_get_obj(...) has a mapping from
-      these object id's to valid object pointers
+      This works because deserialize(...) is expected to store the
+      object id's in the fields temporarily. deserialize_get_obj(...)
+      has a mapping from these object id's to valid object pointers
 */
 
 #ifndef PERSIST_H

@@ -908,6 +908,7 @@ char *setif_get_constant_name(gen_e e)
 
 void setif_init(void)
 {
+  sv_init();
   setif_region = newregion();
   tlb_cache_region = newregion(); 
   setif_vars = new_setif_var_list(setif_region);
@@ -969,6 +970,8 @@ void setif_reset(void) deletes
   setif_vars = new_setif_var_list(setif_region);
   tlb_var_cache = new_setif_var_list(tlb_cache_region);
   setif_hash = make_term_hash(setif_region);
+
+  sv_reset();
 }
 
 static jcoll tlb_aux(gen_e e)

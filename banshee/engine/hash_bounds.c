@@ -55,7 +55,6 @@ unsigned long stamp_hash(hash_key key)
   return keyval;
 }
 
-
 static bool stamp_eq(hash_key s1, hash_key s2)
 {
   return s1 == s2;

@@ -40,9 +40,9 @@
 #include "bool.h"
 #include "list.h"
 
-// DECLARE_LIST(string_list,char *);
-
 typedef struct dyck_node_ * dyck_node;
+
+DECLARE_LIST(dyck_node_list, dyck_node);
 
 // If true, inclusion constraints will be printed
 extern int flag_dyck_print_constraints; 
@@ -127,6 +127,15 @@ bool dyck_check_reaches(dyck_node n1, dyck_node n2);
 
 // Return true if n1 reaches n2 by pn-dyck reachability (requires enable_pn)
 bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2);
+
+// Return the list of nodes that reach this node
+dyck_node_list dyck_reaches(dyck_node n);
+
+// Return the list of nodes that PN reach this node
+/* TODO -- an ugly corner case-- some nodes might appear multiple times if
+   they reach by more than one of P, N, and M
+*/
+dyck_node_list dyck_pn_reaches(dyck_node n);
 
 /*****************************************************************************
  *                                                                           *

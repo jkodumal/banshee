@@ -34,6 +34,7 @@
 #include "setif-var.h"
 #include "ufind.h"
 #include "bounds.h"
+#include "banshee_persist_kinds.h"
 
 struct sv_info
 {
@@ -42,8 +43,8 @@ struct sv_info
   bounds sameregion ubs;
   jcoll tlb_cache;
   gen_e_list ub_projs;
-  char *name;
   uf_element component;
+  char *name;
 };
 
 typedef struct sv_info *sv_info;
@@ -64,6 +65,19 @@ struct setif_var /* extends gen_e */
   int type;
   sv_elt elt;
 };
+
+static region sv_region = NULL;
+
+void sv_init(void)
+{
+  sv_region = newregion();
+}
+
+void sv_reset(void)
+{
+  deleteregion(sv_region);
+  sv_region = newregion();
+}
     
 bool sv_lt(setif_var v1, setif_var v2)
 {
@@ -86,7 +100,7 @@ static setif_var make_var(region r, const char *name, stamp st)
   info->tlb_cache = NULL;
   info->ub_projs = new_gen_e_list(r);
   info->name = name ? rstrdup(r,name) : "fv";
-  info->component = new_uf_element(r, NULL);
+  info->component = new_uf_element(r, NULL, BANSHEE_PERSIST_KIND_null);
 
   result->type = VAR_TYPE;
   result->elt = new_sv_elt(r,info); 
@@ -195,7 +209,6 @@ gen_e_list sv_get_ub_projs(setif_var v)
   return get_info(v)->ub_projs;
 }
 
-
 bool sv_union_component(setif_var v1, setif_var v2)
 {
   if (uf_eq(get_info(v1)->component,get_info(v2)->component))
@@ -223,7 +236,101 @@ void sv_clear_tlb_cache(setif_var v)
   get_info(v)->tlb_cache = NULL;
 }
 
-/* TODO */
-void sv_serialize(FILE *f, setif_var v)
+/* Persistence support for setif_var */
+bool sv_serialize(FILE *f, void *obj)
 {
+  setif_var var;
+  assert(f);
+  assert(obj);
+
+  var = (setif_var)obj;
+
+#ifdef NONSPEC
+  fwrite((void *)&var->sort, sizeof(int), 1, f);
+#endif /* NONSPEC */
+
+  /* No need to serialize the type, since it must be VAR_TYPE */
+  
+  /* Serialize the sv_elt's id */
+  fwrite((void *)&var->elt, sizeof(void *), 1, f);
+
+  /* Mark the uf element for serialization */
+  serialize_banshee_object(uf_element, var->elt);
+
+  return TRUE;
+}
+
+void *sv_deserialize(FILE *f)
+{
+  setif_var var;
+  assert(f);
+
+  var = ralloc(sv_region, struct setif_var);
+
+#ifdef NONSPEC
+  fread((void*)&var->sort, sizeof(int), 1, f);
+#endif /* NONSPEC */
+  
+  var->type = VAR_TYPE;
+  fread((void*)&var->elt, sizeof(void *), 1, f);
+
+  return var;
+}
+
+bool sv_set_fields(void *obj)
+{
+  setif_var var = (setif_var)obj;
+  assert(obj);
+
+  var->elt = deserialize_get_obj(var->elt);
+
+  assert(var->elt);
+
+  return TRUE;
+}
+
+/* Persistence support for sv_info */
+bool sv_info_serialize(FILE *f, void *obj)
+{
+  sv_info info = (sv_info) obj;
+
+  assert(info);
+  assert(f);
+
+  fwrite((void *)&info->st, sizeof(stamp), 1, f);
+  fwrite((void *)&info->lbs, sizeof(bounds), 1, f);
+  fwrite((void *)&info->ubs, sizeof(bounds), 1, f);
+  fwrite((void *)&info->tlb_cache, sizeof(jcoll), 1, f);
+  fwrite((void *)&info->ub_projs, sizeof(gen_e_list), 1, f);
+  fwrite((void *)&info->component, sizeof(uf_element), 1, f);
+  fprintf(f, "%s",info->name);
+
+  serialize_banshee_object(bounds, info->lbs);
+  serialize_banshee_object(bounds, info->ubs);
+  serialize_banshee_object(jcoll, info->tlb_cache);
+  serialize_banshee_object(list, info->ub_projs);
+  serialize_banshee_object(uf_element, info->component);
+
+  return TRUE;
+}
+
+void *sv_info_deserialize(FILE *f)
+{
+  char buf[512];
+  assert(f);
+  assert(sv_region);
+
+  sv_info info = ralloc(sv_region, struct sv_info);
+  
+  fread((void *)&info->st, sizeof(stamp), 1, f);
+  fread((void *)&info->lbs, sizeof(bounds), 1, f);
+  fread((void *)&info->ubs, sizeof(bounds), 1, f);
+  fread((void *)&info->tlb_cache, sizeof(jcoll), 1, f);
+  fread((void *)&info->ub_projs, sizeof(gen_e_list), 1, f);
+  fread((void *)&info->component, sizeof(uf_element), 1, f);
+  fscanf(f,"%s",buf);
+
+  info->name = rstrdup(sv_region,buf);
+
+  return info;  
 }

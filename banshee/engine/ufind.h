@@ -33,6 +33,7 @@
 #include "linkage.h"
 #include "regions.h"
 #include "bool.h"
+#include "banshee_persist_kinds.h"
 
 /* Type safe, generic union-find data structure with support for
  * backtracking. Use DECLARE_UFIND and DEFINE_UFIND macros to get type
@@ -57,7 +58,7 @@ typedef uf_info (*combine_fn_ptr)(const uf_info, const uf_info);
 void uf_init();
 
 /* Create a new union find element with info i in region r  */
-struct uf_element *new_uf_element(region r,uf_info i);  
+struct uf_element *new_uf_element(region r,uf_info i, int persist_kind);  
 
 /* Return the info associated with the element's equivalence class */
 uf_info uf_get_info(struct uf_element *); 
@@ -99,7 +100,7 @@ void name ## _update(name e1, type info);
 #define DEFINE_UFIND(name,type) \
 name new_ ## name(region r, type info) \
 { \
- return (name)new_uf_element(r,(void *)info);\
+  return (name)new_uf_element(r,(void *)info, BANSHEE_PERSIST_KIND_ ## type);\
 }\
 type name ## _get_info(name elem) \
 { \

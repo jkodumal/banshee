@@ -41,7 +41,10 @@ EXTERN_C_BEGIN
 typedef struct setif_var *setif_var;
 
 DECLARE_LIST(setif_var_list,setif_var);
-    
+
+
+void sv_init(void);
+void sv_reset(void);    
 bool sv_lt(setif_var v1, setif_var v2);
 bool sv_eq(setif_var v1, setif_var v2);
 setif_var sv_fresh(region r, const char *name);
@@ -70,7 +73,11 @@ gen_e_list sv_get_ub_projs(setif_var v);
 
 bool sv_union_component(setif_var v1, setif_var v2);
 
-void sv_serialize(FILE *f, setif_var v);
+bool sv_serialize(FILE *f, void *obj);
+void *sv_deserialize(FILE *f);
+bool sv_set_fields(void *obj);
+
+
 
 EXTERN_C_END
 
