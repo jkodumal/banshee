@@ -282,9 +282,11 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
   // printf("Term unify: %d == %d\n", ((gen_term)a)->st, ((gen_term)b)->st); 
   
 
+#ifdef BANSHEE_ROLLBACK
   if (!banshee_check_rollback(term_sort)) {
     term_register_rollback();
   }
+#endif /* BANSHEE_ROLLBACK */
 
   if (term_is_wild(e1) || term_is_wild(e2)) 
     {
@@ -364,9 +366,12 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 void term_cunify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 		 gen_e e1, gen_e e2)
 {
+
+#ifdef BANSHEE_ROLLBACK
   if (!banshee_check_rollback(term_sort)) {
     term_register_rollback();
   }
+#endif /* BANSHEE_ROLLBACK */
 
   if (term_is_wild(e1) || term_is_wild(e2)) {
     return;

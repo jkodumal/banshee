@@ -47,6 +47,8 @@ DEFINE_NONPTR_LIST(contents_type_list, contents_type);
 
 extern int flag_print_constraints;
 
+T bottom;
+
 /* Hooks for debugging */
 static void T_cunify_hook(T t1, T t2)
 {
@@ -150,6 +152,7 @@ static argT fun_rec_T(T_list args)
 
 void pta_init() {
   steensgaard_terms_init();
+  bottom = T_zero();
 }
 
 void pta_reset() {
@@ -174,26 +177,30 @@ T pta_make_ref(const char *id) {
 
 /* The no information case  */
 T pta_bottom(void) {
-  return T_zero();
+  return bottom;
 }
 
 /* Join t1 and t2's contents, but not their tags  */
 T pta_join(T t1, T t2) {
-  T ptr;
-  L fun;  
-  
-  ptr = T_fresh("join_ptr");
-  fun = L_fresh("join_fun");
-  
-  struct contents_type_ c1 = decompose_ref_or_fresh(t1);
-  struct contents_type_ c2 = decompose_ref_or_fresh(t2);
-  
-  T_cunify_hook(c1.ptr, ptr);
-  T_cunify_hook(c2.ptr, ptr);
-  L_cunify_hook(c1.fun, fun);
-  L_cunify_hook(c2.fun, fun);
-  
-  return ref(alabel_t_fresh("wild"), ptr, fun);
+  if (t1 == bottom) return t2;
+  else if (t2 == bottom) return t1;
+  else {
+    T ptr;
+    L fun;  
+    
+    ptr = T_fresh("join_ptr");
+    fun = L_fresh("join_fun");
+    
+    struct contents_type_ c1 = decompose_ref_or_fresh(t1);
+    struct contents_type_ c2 = decompose_ref_or_fresh(t2);
+    
+    T_cunify_hook(c1.ptr, ptr);
+    T_cunify_hook(c2.ptr, ptr);
+    L_cunify_hook(c1.fun, fun);
+    L_cunify_hook(c2.fun, fun);
+    
+    return ref(alabel_t_wild(), ptr, fun);
+  }
 }
 
 /* ref(tag, ptr, fun) --> ptr */
