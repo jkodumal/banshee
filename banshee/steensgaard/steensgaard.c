@@ -321,10 +321,12 @@ contents_type pta_get_contents(T t) {
   return contents;
 }
 
+#ifndef NOTAG
 static void pr_tag_elem(alabel_t t) {
   printf(",");
   alabel_t_print(stdout,t);
 }
+#endif
 
 /* TODO : doesn't print or count fun ptrs */
 void pta_pr_ptset(contents_type c) {
