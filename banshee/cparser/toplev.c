@@ -1114,7 +1114,7 @@ int main(int argc, char **argv) deletes
 	end_time(&rollback_time);
       }
     }
-  if (flag_points_to && flag_debug_region_deserialization)
+  else if (flag_points_to && flag_debug_region_deserialization)
     {
       translation t;
       region temp = newregion();

@@ -1495,15 +1495,26 @@ void setif_set_fields(void)
 
 void write_module_setif(FILE *f)
 {
+  fwrite((void *)&setif_current_rollback_info,
+	 sizeof(setif_rollback_info), 1, f);
+  fwrite((void *)&setif_hash, sizeof(term_hash), 1, f);
+  fwrite((void *)&zero, sizeof(void *), 1, f);
+  fwrite((void *)&one, sizeof(void *), 1, f);
   return;
 }
 
 void update_module_setif(translation t, FILE *f)
 {
+  fread((void *)&setif_current_rollback_info,
+	 sizeof(setif_rollback_info), 1, f);
+  fread((void *)&setif_hash, sizeof(term_hash), 1, f);
+  fread((void *)&zero, sizeof(void *), 1, f);
+  fread((void *)&one, sizeof(void *), 1, f);
+
   update_pointer(t, (void **)&setif_current_rollback_info);
   update_pointer(t, (void **)&setif_hash);
-  update_pointer(t, (void **)&setif_zero);
-  update_pointer(t, (void **)&setif_one);
+  update_pointer(t, (void **)&zero);
+  update_pointer(t, (void **)&one);
 }
 
 bool added_ub_proj_info_serialize(FILE *f, void *obj)

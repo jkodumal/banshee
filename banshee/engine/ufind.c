@@ -431,11 +431,13 @@ void uf_set_fields()
 
 void write_module_uf(FILE *f)
 {
+  fwrite((void *)&ustack, sizeof(union_stack), 1, f);
   return;
 }
 
 void update_module_uf(translation t, FILE *f)
 {
+  fread((void *)&ustack, sizeof(union_stack), 1, f);
   update_pointer(t, (void **)&ustack);
 }
 

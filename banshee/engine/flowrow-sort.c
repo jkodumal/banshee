@@ -1567,30 +1567,36 @@ void flowrow_set_fields(void)
 
 void write_module_flowrow(FILE *f)
 {
+  fwrite(&flowrow_hash, sizeof(term_hash), 1, f);
+  fwrite(&flowrow_current_rollback_info, 
+	 sizeof(flowrow_rollback_info), 1, f);
   return;
 }
 
 void update_module_flowrow(translation t, FILE *f)
 {
+  fread(&flowrow_hash, sizeof(term_hash), 1, f);
+  fread(&flowrow_current_rollback_info, sizeof(flowrow_rollback_info), 1, f);
   update_pointer(t, (void **)&flowrow_hash);
   update_pointer(t, (void **)&flowrow_current_rollback_info);
 
-#ifdef NONSPEC
-  update_pointer(t, (void **)&term_zero_row);
-  update_pointer(t, (void **)&term_one_row);
-  update_pointer(t, (void **)&term_abs_row);
-  update_pointer(t, (void **)&term_wild_row);
+  /* TODO -- fix */
+/* #ifdef NONSPEC */
+/*   update_pointer(t, (void **)&term_zero_row); */
+/*   update_pointer(t, (void **)&term_one_row); */
+/*   update_pointer(t, (void **)&term_abs_row); */
+/*   update_pointer(t, (void **)&term_wild_row); */
   
-  update_pointer(t, (void **)&setif_zero_row);
-  update_pointer(t, (void **)&setif_one_row);
-  update_pointer(t, (void **)&setif_abs_row);
-  update_pointer(t, (void **)&setif_wild_row);
+/*   update_pointer(t, (void **)&setif_zero_row); */
+/*   update_pointer(t, (void **)&setif_one_row); */
+/*   update_pointer(t, (void **)&setif_abs_row); */
+/*   update_pointer(t, (void **)&setif_wild_row); */
   
-  update_pointer(t, (void **)&setst_zero_row);
-  update_pointer(t, (void **)&setst_one_row);
-  update_pointer(t, (void **)&setst_abs_row);
-  update_pointer(t, (void **)&setst_wild_row);
-#endif /* NONSPEC */
+/*   update_pointer(t, (void **)&setst_zero_row); */
+/*   update_pointer(t, (void **)&setst_one_row); */
+/*   update_pointer(t, (void **)&setst_abs_row); */
+/*   update_pointer(t, (void **)&setst_wild_row); */
+/* #endif /\* NONSPEC *\/ */
 }
 
 int update_flowrow_rollback_info(translation t, void *m)

@@ -490,11 +490,13 @@ void term_set_fields(void)
 
 void write_module_term(FILE *f)
 {
+  fwrite((void *)&term_current_rollback_info, sizeof(term_rollback_info), 1, f);
   return;
 }
 
 void update_module_term(translation t, FILE *f)
 {
+  fread((void *)&term_current_rollback_info, sizeof(term_rollback_info), 1, f);
   update_pointer(t, (void **)&term_current_rollback_info);
 }
 

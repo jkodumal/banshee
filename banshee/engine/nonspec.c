@@ -2279,7 +2279,7 @@ void update_module_nonspec(translation t, FILE *f)
   assert(f);
   
   /* Reset the constraint solver */
-  engine_reset();
+  //engine_reset();
 
   /* Update any static data (pointer and nonpointer) in f */
   update_module_engine(t, f);

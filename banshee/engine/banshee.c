@@ -301,10 +301,12 @@ void engine_set_fields(void)
 void update_module_engine(translation t, FILE *f)
 {
   fread((void *)&banshee_clock, sizeof(int), 1, f);
+  fread((void *)&rb_stack, sizeof(void *), 1, f);
   update_pointer(t, (void **)&rb_stack);
 }
 
 void write_module_engine(FILE *f)
 {
   fwrite((void *)&banshee_clock, sizeof(int), 1, f);
+  fwrite((void *)&rb_stack, sizeof(void *), 1, f);
 }

@@ -44,7 +44,10 @@ struct bucket_
 
 #define scan_bucket(b, var) for (var = b; var; var = var->next)
 
-#define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region)
+/* #define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region) */
+
+/* TODO -- switch this back */
+#define bucket_region(t) bucket_region
 
 extern const int num_fn_ptrs;
 
@@ -573,13 +576,20 @@ int update_hash_table(translation t, void *m)
 
 int update_bucket(translation t, void *m)
 {
-  update_pointer(t, (void **) &((struct bucket_ *) m)->data);
-  update_pointer(t, (void **) &((struct bucket_ *) m)->next);
+  struct bucket_ *b = (struct bucket_ *)m;
+
+  update_pointer(t, (void **) &b->key);
+  update_pointer(t, (void **) &b->data);
+  update_pointer(t, (void **) &b->next);
+
+/*   assert(b->key); */
+/*   assert(b->data); */
   return(sizeof(struct bucket_));
 }
 
 int update_strbucket(translation t, void *m)
 {
+  update_pointer(t, (void **) &((struct bucket_ *) m)->key);
   update_pointer(t, (void **) &((struct bucket_ *) m)->next);
   return(sizeof(struct bucket_));
 }

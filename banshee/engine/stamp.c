@@ -157,8 +157,10 @@ void write_module_stamp(FILE *f)
   int success = 0;
 
   success = fwrite((void *)counts,sizeof(int),3,f);
+  success += fwrite((void *)&str_hash, sizeof(hash_table), 1, f);
 
-  fwrite((void *)counts,sizeof(int),3,f);
+  if (success != 4) fail("Failed to serialize stamp module\n");
+
   return;
 }
 
@@ -168,6 +170,7 @@ void update_module_stamp(translation t, FILE *f)
   int success = 0;
 
   success = fread((void *)counts,sizeof(int),3,f);
+  success += fread((void *)&str_hash, sizeof(hash_table), 1, f);
 
   if (success != 4) fail("Failed to deserialize stamp module\n");
   count1 = counts[0];

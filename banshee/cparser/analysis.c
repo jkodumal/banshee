@@ -147,7 +147,7 @@ static bool var_info_insert(var_info v_info)
   snprintf(buf, MAX_STR, "%s::%d", v_info->name, acnt.collection_count++);
 
   if(v_info->visible)
-    hash_table_insert(collection_hash,(hash_key)strdup(buf),
+    hash_table_insert(collection_hash,(hash_key)rstrdup(banshee_nonptr_region, buf),
 		      (hash_data)v_info->t_type);
   switch (v_info->kind)
     {
@@ -1591,8 +1591,24 @@ void analysis_region_serialize(const char *filename)
 {
   FILE *f = fopen(filename, "wb");
   assert(f);
+ 
+  fwrite((void *)&state, sizeof(struct persistence_state), 1, f);
   fwrite((void *)&acnt, sizeof(struct counts), 1, f);
 
+  {
+    int count = 0;
+    char *name;
+    T ttype;
+    hash_table_scanner scan;
+    
+    hash_table_scan(collection_hash, &scan);
+    
+    while(hash_table_next(&scan, (hash_key)&name,(hash_data)&ttype)) {
+      count++;
+    }
+  }
+
+  andersen_terms_region_serialize(f);
 }
 
 void analysis_region_deserialize(translation t, const char *filename)
@@ -1600,13 +1616,19 @@ void analysis_region_deserialize(translation t, const char *filename)
   FILE *f = fopen(filename, "rb");
   assert(f);
 
+  fread((void *)&state, sizeof(struct persistence_state), 1, f);
   fread((void *)&acnt, sizeof(struct counts), 1, f);
+  //update_pointer(t, (void **)&collection_hash);
   update_pointer(t, (void **)&state.scopes);
   update_pointer(t, (void **)&state.collection_counts);
   update_pointer(t, (void **)&state.string_counts);
   update_pointer(t, (void **)&state.next_allocs);
   update_pointer(t, (void **)&state.banshee_times);
   update_pointer(t, (void **)&state.collection_envs);
+  //assert(hash_table_list_last(state.collection_envs) == collection_hash);
+  collection_hash = hash_table_list_last(state.collection_envs);
+
+  andersen_terms_region_deserialize(t, f);
 }
 
 void analysis_deserialize(const char *filename)
@@ -1636,7 +1658,8 @@ void analysis_deserialize(const char *filename)
     hash_table_list_append_tail(result[i], collection_envs);
   }
   state.collection_envs = collection_envs;
-  assert(hash_table_list_last(state.collection_envs) == collection_hash);
+  /* This really shouldn't work... */
+  //assert(hash_table_list_last(state.collection_envs) == collection_hash);
 }
 
 
@@ -1646,7 +1669,7 @@ void print_analysis_results() deletes
   region temp_region;
   struct list *visibles;
   T ptset, ttype;
-  const char *name;
+  char *name;
   T_list_scanner scan;
   hash_table_scanner hs;
 
@@ -1659,6 +1682,8 @@ void print_analysis_results() deletes
  
   hash_table_scan(collection_hash, &hs);
   while(hash_table_next(&hs, (hash_key*)&name, (hash_data *)&ttype)) {
+    assert(ttype);
+    assert(name);
     T_list_cons(pta_get_contents(ttype),ptset_list);
     num_vars++;
   }
