@@ -1246,7 +1246,6 @@ int main(int argc, char **argv) deletes
       analysis_print_graph();
     }
 
-  printf("before region profile!\n");
  /*  regprofile(); */
   
   /*     if (flag_print_memusage) */

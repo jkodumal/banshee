@@ -245,6 +245,7 @@ static void var_info_clear(void) deletes
 
 static void collect_state(void)
 { 
+#ifdef BANSHEE_ROLLBACK
   hash_table_list_append_tail(hash_table_copy(NULL, collection_hash), state.collection_envs);  
   hash_table_list_append_tail(hash_table_copy(NULL, global_var_hash), state.global_var_envs);
   int_list_append_tail(acnt.scope, state.scopes);
@@ -252,6 +253,7 @@ static void collect_state(void)
   int_list_append_tail(acnt.string_count, state.string_counts); 
   int_list_append_tail(acnt.next_alloc, state.next_allocs);
   int_list_append_tail(banshee_get_time(), state.banshee_times);
+#endif /* BANSHEE_ROLLBACK */
 }
 
 void analyze(declaration program) deletes

@@ -35,6 +35,10 @@ endif
 #CFLAGS := -DANDERSEN_ST= ${CFLAGS}
 #endif
 
+ifndef NO_BANSHEE_ROLLBACK
+CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
+endif
+
 EXTRA_OBJS =  
 
 all: parser.exe parser_st.exe parser_ns.exe
