@@ -25,7 +25,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-ifdef HASHBOUNDS
+
+# if HASH_BOUNDS is defined, use hash_bounds.o, otherwise, use bounds.o
+ifdef HASH_BOUNDS
 FILTERBOUNDS = bounds.o
 else
 FILTERBOUNDS = hash_bounds.o
@@ -37,6 +39,10 @@ CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
 	 -Dparentptr= -Wall -Werror
+
+ifdef BANSHEE_ROLLBACK
+CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
+endif
 
 HDRS = $(wildcard *.h)
 
@@ -59,9 +65,11 @@ endif
 all: $(TARGETS) TAGS
 
 libengine.a: $(OBJS)
+	@echo $(OBJS)
 	$(AR) rc $@ $^
 
 libnsengine.a: $(NSOBJS) 
+	@echo $(NSOBJS)
 	$(AR) rc $@ $^
 
 nonspec.o: nonspec.c nonspec.h
@@ -78,7 +86,7 @@ nonspec.o: nonspec.c nonspec.h
 TAGS: $(TAGFILES)
 	etags ${TAGFILES}
 clean:
-	-rm -f $(NFOBJS) $(NSOBJS) $(TARGETS) *~ 
+	-rm -f *.o $(TARGETS) *~ 
 
 
 

@@ -123,7 +123,6 @@ char *sv_get_name(setif_var v)
   return get_info(v)->name;
 }
 
-
 static sv_info combine(const sv_info i1, const sv_info i2)
 {
   if (i1->st < i2->st)
@@ -179,7 +178,6 @@ bool sv_is_lb(setif_var v, stamp s)
     in_bounds = bounds_query(get_info(v)->lbs,s);
   
   return (self_edge || in_bounds);
-
 }
 
 void sv_add_ub_proj(setif_var v, gen_e e)

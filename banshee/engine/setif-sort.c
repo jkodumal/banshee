@@ -74,7 +74,7 @@ typedef struct setif_rollback_info_ {
   banshee_time time;
   sort_kind kind;
   hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
-                                /* TODO : undo information for ubproj */
+  hash_table added_ub_projs;     /* TODO : undo information for ub_proj */
 } *setif_rollback_info;
 
 typedef struct setif_inter_ *setif_inter_;
@@ -85,7 +85,7 @@ static setif_var_list setif_vars;
 static region tlb_cache_region;
 static setif_var_list tlb_var_cache;
 static jcoll_dict tlb_dict;
-static setif_rollback_info current_rollback_info = NULL;
+setif_rollback_info setif_current_rollback_info = NULL;
 
 region setif_region;
 term_hash setif_hash;
@@ -323,24 +323,31 @@ static setif_var_list cycle_detect_rev(region r, setif_var v1, setif_var v2)
 
 static void setif_register_rollback(void) 
 {
-  current_rollback_info = ralloc(banshee_rollback_region,
+#ifdef BANSHEE_ROLLBACK
+  setif_current_rollback_info = ralloc(banshee_rollback_region,
 				 struct setif_rollback_info_);
-  banshee_set_time((banshee_rollback_info)current_rollback_info);
-  current_rollback_info->kind = setif_sort;
-  current_rollback_info->added_edges = 
+  banshee_set_time((banshee_rollback_info)setif_current_rollback_info);
+  setif_current_rollback_info->kind = setif_sort;
+  setif_current_rollback_info->added_edges = 
+    make_hash_table(banshee_rollback_region,
+		    4, ptr_hash, ptr_eq);
+
+  setif_current_rollback_info->added_ub_projs = 
     make_hash_table(banshee_rollback_region,
 		    4, ptr_hash, ptr_eq);
   
-  banshee_register_rollback((banshee_rollback_info)current_rollback_info);
+  banshee_register_rollback((banshee_rollback_info)setif_current_rollback_info);
+#endif /* BANSHEE_ROLLBACK */
 }
 
-static void setif_register_edge(const bounds b, stamp st) {
+void setif_register_edge(const bounds b, stamp st) {
+#ifdef BANSHEE_ROLLBACK
   stamp_list sl = NULL;
-  assert(current_rollback_info);
+  assert(setif_current_rollback_info);
   
   /* The current rollback info already has an edge list associated
    * with this bounds */
-  if (hash_table_lookup(current_rollback_info->added_edges,
+  if (hash_table_lookup(setif_current_rollback_info->added_edges,
 			(hash_key)b,
 			(hash_data *)&sl)) {
     assert(sl);
@@ -349,10 +356,32 @@ static void setif_register_edge(const bounds b, stamp st) {
   else {
     sl = new_stamp_list(banshee_rollback_region);
     stamp_list_cons(st,sl);
-    hash_table_insert(current_rollback_info->added_edges,
+    hash_table_insert(setif_current_rollback_info->added_edges,
 		      (hash_key)b,
 		      (hash_data)sl);
   }
+#endif /* BANSHEE_ROLLBACK */
+}
+
+void setif_register_ub_proj(gen_e_list ub_projs, gen_e e) {
+#ifdef BANSHEE_ROLLBACK
+  gen_e_list el = NULL;
+  assert(setif_current_rollback_info);
+  
+  if (hash_table_lookup(setif_current_rollback_info->added_ub_projs,
+			(hash_key)ub_projs,
+			(hash_data *)&el)) {
+    assert(el);
+    gen_e_list_cons(e,el);
+  }
+  else {
+    el = new_gen_e_list(banshee_rollback_region);
+    gen_e_list_cons(e,el);
+    hash_table_insert(setif_current_rollback_info->added_ub_projs,
+		      (hash_key)ub_projs,
+		      (hash_data)el);
+  }
+#endif /* BANSHEE_ROLLBACK */
 }
 
 void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj, 
@@ -1051,7 +1080,8 @@ bool setif_proj_merge(setif_var v, gen_e se, get_proj_fn_ptr get_proj,
       proj_cons = proj_con(proj_var);
 
       sv_add_ub_proj(v, proj_cons);
-      
+      setif_register_ub_proj(sv_get_ub_projs(v),proj_cons);
+
       /* apply the transitive rule to each of v's lower bounds */ 
       bounds_scan(sv_get_lbs(v),&scan);
       while (bounds_next(&scan,&lb))

@@ -55,7 +55,7 @@ region term_sort_region;
 term_hash term_sort_hash;
 bool flag_occurs_check = FALSE;
 
-static term_rollback_info current_rollback_info = NULL;
+term_rollback_info term_current_rollback_info = NULL;
 
 struct term_stats term_stats;
 
@@ -204,24 +204,27 @@ bool term_eq(gen_e e1, gen_e e2)
 
 static void term_register_rollback(void) 
 {
-  current_rollback_info = 
+#ifdef BANSHEE_ROLLBACK
+  term_current_rollback_info = 
     ralloc(banshee_rollback_region, struct term_rollback_info_); 
-  banshee_set_time((banshee_rollback_info)current_rollback_info);
-  current_rollback_info->kind = term_sort;
-  current_rollback_info->added_edges = 
+  banshee_set_time((banshee_rollback_info)term_current_rollback_info);
+  term_current_rollback_info->kind = term_sort;
+  term_current_rollback_info->added_edges = 
     make_hash_table(banshee_rollback_region,
 		    4, ptr_hash, ptr_eq);
   
-  banshee_register_rollback((banshee_rollback_info)current_rollback_info);
+  banshee_register_rollback((banshee_rollback_info)term_current_rollback_info);
+#endif /* BANSHEE_ROLLBACK */
 }
 
 static void term_register_edge(const bounds b, stamp st) {
+#ifdef BANSHEE_ROLLBACK
   stamp_list sl = NULL;
-  assert(current_rollback_info);
+  assert(term_current_rollback_info);
   
   /* The current rollback info already has an edge list associated
    * with this bounds */
-  if (hash_table_lookup(current_rollback_info->added_edges,
+  if (hash_table_lookup(term_current_rollback_info->added_edges,
 			(hash_key)b,
 			(hash_data *)&sl)) {
     assert(sl);
@@ -230,10 +233,11 @@ static void term_register_edge(const bounds b, stamp st) {
   else {
     sl = new_stamp_list(banshee_rollback_region);
     stamp_list_cons(st,sl);
-    hash_table_insert(current_rollback_info->added_edges,
+    hash_table_insert(term_current_rollback_info->added_edges,
 		      (hash_key)b,
 		      (hash_data)sl);
   }
+#endif /* BANSHEE_ROLLBACK */ 
 }
 
 void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,

@@ -37,6 +37,9 @@
 #include "list.h"
 #include "utils.h"
 
+/* Define to enable support for rollback in sorts */
+/* #define BANSHEE_ROLLBACK */
+
 #define ALIAS_TYPE -2
 #define VAR_TYPE -1
 #define ZERO_TYPE 0

@@ -422,7 +422,8 @@ class setsort_gen =
 		   c = EPRIME_fresh(NULL);\n\
 		   e = CONSTRUCTOR_patNUMBER(c);\n\
 		   sv_add_ub_proj(v,e);\n\
-		   bounds_scan(sv_get_lbs(v),&scan);\n\
+		   setif_register_ub_proj(sv_get_ub_projs(v),e);\n\
+                   bounds_scan(sv_get_lbs(v),&scan);\n\
 		   while (bounds_next(&scan,&lb))\n\
 		   {\n\
 		    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,lb,e);\n\
