@@ -81,10 +81,18 @@ struct field_split
   flowrow_map nomatch2;
 };
 
+typedef struct flowrow_rollback_info_ { /* extends banshee_rollback_info */
+  banshee_time time;
+  sort_kind kind;
+  hash_table added_edges;	/* a mapping from bounds to the gen_e's added */
+  flow_var_list set_aliases;    /* a list of flow_var's that have become aliases. Call fv_unset_alias on them */
+} *flowrow_rollback_info;
+
 region flowrow_region;
 term_hash flowrow_hash;
 struct flowrow_stats flowrow_stats;
 static void fields_print(FILE *f,flowrow_map m,field_print_fn_ptr field_print) deletes;
+flowrow_rollback_info flowrow_current_rollback_info = NULL;
 
 stamp flowrow_get_stamp(gen_e e)
 {
@@ -205,6 +213,52 @@ static struct field_split split_fields(region r, flowrow_map fields1,
     }
   
   return split;
+}
+
+static void flowrow_register_rollback(void)
+{
+#ifdef BANSHEE_ROLLBACK
+  flowrow_current_rollback_info = ralloc(banshee_rollback_region,
+					 struct flowrow_rollback_info_);
+  banshee_set_time((banshee_rollback_info)flowrow_current_rollback_info);
+  flowrow_current_rollback_info->kind = flowrow_sort;
+  flowrow_current_rollback_info->added_edges = 
+    make_hash_table(banshee_rollback_region,
+		    4, ptr_hash, ptr_eq);
+  flowrow_current_rollback_info->set_aliases = 
+    new_flow_var_list(banshee_rollback_region);
+#endif /* BANSHEE_ROLLBACK */
+}
+
+void flowrow_register_set_alias(flow_var v)
+{
+#ifdef BANSHEE_ROLLBACK
+  assert(flowrow_current_rollback_info);
+  flow_var_list_cons(v, flowrow_current_rollback_info->set_aliases);
+#endif /* BANSHEE_ROLLBACK */
+}
+
+void flowrow_register_edge(const bounds b, stamp st) {
+#ifdef BANSHEE_ROLLBACK
+  stamp_list sl = NULL;
+  assert(flowrow_current_rollback_info);
+  
+  /* The current rollback info already has an edge list associated
+   * with this bounds */
+  if (hash_table_lookup(flowrow_current_rollback_info->added_edges,
+			(hash_key)b,
+			(hash_data *)&sl)) {
+    assert(sl);
+    stamp_list_cons(st,sl);
+  }
+  else {
+    sl = new_stamp_list(banshee_rollback_region);
+    stamp_list_cons(st,sl);
+    hash_table_insert(flowrow_current_rollback_info->added_edges,
+		      (hash_key)b,
+		      (hash_data)sl);
+  }
+#endif /* BANSHEE_ROLLBACK */
 }
 
 static bool flowrow_is_normalized(gen_e r)
@@ -363,8 +417,8 @@ static gen_e contour_instantiate(fresh_fn_ptr fresh,
     }
 }
 
-static contour get_contour(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp, 
-			   gen_e zero_elem,gen_e e)
+static contour make_contour(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp, 
+			    gen_e zero_elem,gen_e e)
 {
   if (flowrow_is_row(e))
     {
@@ -451,15 +505,17 @@ static  void update_lower_bound(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 	  fv_unify_contour(v,(flow_var)e);
 	  redundant = fv_add_lb(v,e,flowrow_get_stamp(e));
 	  
-	  if (! redundant)
+	  if (! redundant) {
+	    flowrow_register_edge(fv_get_lbs(v),flowrow_get_stamp(e));
 	    trans_ubs(fresh,get_stamp,field_incl,zero_elem,v,e);
+	  }
 	      
 	}
     }
   else /* we have c(...) <= v, and v has no contour */
     {
       gen_e shape = NULL;
-      fv_set_contour(v,get_contour(fresh,get_stamp,zero_elem,e));
+      fv_set_contour(v,make_contour(fresh,get_stamp,zero_elem,e));
       
       shape = fv_instantiate_contour(v);
       fv_set_alias(v,shape);
@@ -512,15 +568,16 @@ static  void update_upper_bound(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 	  fv_unify_contour(v,(flow_var)e);
 	  redundant = fv_add_ub(v,e,flowrow_get_stamp(e));
 
-	  if (! redundant)
+	  if (! redundant) {
+	    flowrow_register_edge(fv_get_ubs(v), flowrow_get_stamp(e));
 	    trans_lbs(fresh,get_stamp,field_incl,zero_elem,v,e);
-	      
+	  }
 	}
     }
   else /* we have v <= c(...), and v has no contour */
     {
       gen_e shape = NULL;
-      fv_set_contour(v,get_contour(fresh,get_stamp,zero_elem,e));
+      fv_set_contour(v,make_contour(fresh,get_stamp,zero_elem,e));
 	  
       shape = fv_instantiate_contour(v);
 
@@ -542,13 +599,16 @@ static  void update_upper_bound(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 
 // END
 
-
 void flowrow_inclusion(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp, 
 		       incl_fn_ptr field_incl, gen_e zero_elem, gen_e a, 
 		       gen_e b) deletes
 {
   gen_e e1 = normalize_row(get_stamp, a),
     e2 = normalize_row(get_stamp, b);
+
+  if (!banshee_check_rollback(flowrow_sort)) {
+    flowrow_register_rollback();
+  }
 
   if (eq(e1,e2))
     return;
@@ -781,157 +841,6 @@ gen_e flowrow_fresh_large(const char *name)
 }
 
 #else
-// static struct flowrow_gen term_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,term_sort};
-// static struct flowrow_gen term_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,term_sort};
-// static struct flowrow_gen term_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,term_sort};
-// static struct flowrow_gen term_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,term_sort};
-
-
-// static struct flowrow_gen setif_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,setif_sort};
-// static struct flowrow_gen setif_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,setif_sort};
-// static struct flowrow_gen setif_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,setif_sort};
-// static struct flowrow_gen setif_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,setif_sort};
-
-// static struct flowrow_gen setst_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,setst_sort};
-// static struct flowrow_gen setst_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,setst_sort};
-// static struct flowrow_gen setst_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,setst_sort};
-// static struct flowrow_gen setst_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,setst_sort};
-
-
-// gen_e flowrow_zero(sort_kind base_sort)
-// {
-//   switch (base_sort)
-//     {
-//     case setif_sort:
-//       return (gen_e)&setif_zero_row;
-//     case setst_sort:
-//       return (gen_e)&setst_zero_row;
-//     case term_sort:
-//       return (gen_e)&term_zero_row;
-//     default:
-//       {
-// 	fail("No matching base sort: flowrow_zero\n");
-// 	return NULL;
-//       }
-//     }
-  
-//   return NULL;
-// }
-
-// gen_e flowrow_one(sort_kind base_sort)
-// {
-//   switch (base_sort)
-//     {
-//     case setif_sort:
-//       return (gen_e)&setif_one_row;
-//     case setst_sort:
-//       return (gen_e)&setst_one_row;
-//     case term_sort:
-//       return (gen_e)&term_one_row;
-//     default:
-//       {
-// 	fail("No matching base sort: flowrow_one\n");
-// 	return NULL;
-//       }
-//     }
-  
-//   return NULL;
-// }
-
-// gen_e flowrow_abs(sort_kind base_sort)
-// {
-//   switch (base_sort)
-//     {
-//     case setif_sort:
-//       return (gen_e)&setif_abs_row;
-//     case setst_sort:
-//       return (gen_e)&setst_abs_row;
-//     case term_sort:
-//       return (gen_e)&term_abs_row;
-//     default:
-//       {
-// 	fail("No matching base sort: flowrow_abs\n");
-// 	return NULL;
-//       }
-//     }
-  
-//   return NULL;
-// }
-
-// gen_e flowrow_wild(sort_kind base_sort)
-// {
-
-//   switch (base_sort)
-//     {
-//     case setif_sort:
-//       return (gen_e)&setif_wild_row;
-//     case setst_sort:
-//       return (gen_e)&setst_wild_row;
-//     case term_sort:
-//       return (gen_e)&term_wild_row;
-//     default:
-//       {
-// 	fail("No matching base sort: flowrow_wild\n");
-// 	return NULL;
-//       }
-//     }
-  
-//   return NULL;
-// }
-
-// gen_e flowrow_fresh(const char *name,sort_kind base_sort)
-// {
-
-//   switch (base_sort)
-//     {
-//     case setif_sort:
-//       return 
-//     case setst_sort:
-//       return (gen_e)&setst_one_row;
-//     case term_sort:
-//       return (gen_e)&term_one_row;
-//     default:
-//       {
-// 	fail("No matching base sort: flowrow_one\n");
-// 	return NULL;
-//       }
-//     }
-  
-//   return NULL;
-// }
-
-// gen_e flowrow_fresh_small(sort_kind base_sort)
-// {
-
-//   switch (base_sort)
-//     {
-//     case setif_sort:
-//       return (gen_e)&setif_one_row;
-//     case setst_sort:
-//       return (gen_e)&setst_one_row;
-//     case term_sort:
-//       return (gen_e)&term_one_row;
-//     default:
-//       {
-// 	fail("No matching base sort: flowrow_one\n");
-// 	return NULL;
-//       }
-//     }
-  
-//   return NULL;
-// }
-
-// gen_e flowrow_fresh_large(sort_kind base_sort)
-// {
-
-// }
-
-// sort_kind flowrow_base_sort(gen_e e)
-// {
-
-// }
-
-
 static struct flowrow_gen term_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,term_sort};
 static struct flowrow_gen term_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,term_sort};
 static struct flowrow_gen term_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,term_sort};
@@ -1258,5 +1167,29 @@ DEFINE_LIST(flowrow_map,flowrow_field);
 
 void flowrow_rollback(banshee_rollback_info info)
 {
-  assert(0);
+  hash_table_scanner hash_scan;
+  stamp_list_scanner stamp_scan;
+  bounds next_bounds;
+  stamp_list next_edges;
+  stamp next_stamp;
+  flow_var_list_scanner alias_scan;
+  flow_var next_aliased;
+  
+  flowrow_rollback_info rinfo = (flowrow_rollback_info)info;
+  
+  assert(rinfo->kind = flowrow_sort);
+  
+  hash_table_scan(rinfo->added_edges, &hash_scan);
+  while(hash_table_next(&hash_scan,(hash_key *)&next_bounds,
+			(hash_data *) &next_edges)) {
+    stamp_list_scan(next_edges, &stamp_scan);
+    while(stamp_list_next(&stamp_scan,&next_stamp)) {
+      bounds_remove(next_bounds,next_stamp);
+    }
+  }
+
+  flow_var_list_scan(rinfo->set_aliases,&alias_scan);
+  while(flow_var_list_next(&alias_scan,&next_aliased)) {
+    fv_unset_alias(next_aliased);
+  }
 }

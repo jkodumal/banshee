@@ -85,6 +85,11 @@ static void default_error_handler(gen_e e1, gen_e e2,banshee_error_kind k)
   fail("Unhandled banshee error: code %d\n",k);
 }
 
+banshee_time banshee_get_time(void)
+{
+  return (banshee_time) {banshee_clock};
+}
+
 void banshee_set_time(banshee_rollback_info info)
 {
   info->time = (banshee_time) {banshee_clock};
@@ -142,7 +147,7 @@ static void banshee_rollback_dispatch(banshee_rollback_info info) {
   }
 }
 
-void banshee_backtrack()
+void banshee_rollback()
 {
   banshee_rollback_stack_scanner scan;
   banshee_rollback_info info;
@@ -156,6 +161,12 @@ void banshee_backtrack()
     banshee_rollback_dispatch(info);
   }
   banshee_clock--;
+}
+
+void banshee_backtrack(banshee_time t)
+{
+  while(banshee_clock > t.time)
+    banshee_rollback();  
 }
 
 banshee_error_handler_fn handle_error = default_error_handler;

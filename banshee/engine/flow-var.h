@@ -69,6 +69,7 @@ void *fv_get_extra_info(flow_var v);
 void fv_set_extra_info(flow_var v, void *extra_info);
 
 void fv_set_alias(flow_var v, gen_e e);
+void fv_unset_alias(flow_var v);
 gen_e fv_get_alias(flow_var v);
 void fv_set_contour(flow_var v, contour c);
 bool fv_has_contour(flow_var v);

@@ -28,8 +28,6 @@
  *
  */
 
-/* TODO: change pending representation from gen_e_list to bounds  */
-
 #include <stdio.h>
 #include <assert.h>
 #include "regions.h"

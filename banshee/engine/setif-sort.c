@@ -70,7 +70,7 @@ struct setif_constant_ /* extends gen_e */
   char *name;
 };
 
-typedef struct setif_rollback_info_ {
+typedef struct setif_rollback_info_ { /* extends banshee_rollback_info */
   banshee_time time;
   sort_kind kind;
   hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
@@ -540,9 +540,9 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
     }
 
   // pr(stdout,e1);
-//   fprintf(stdout,"<=");
-//   pr(stdout,e2);
-//   fprintf(stdout,"\n");
+  //   fprintf(stdout,"<=");
+  //   pr(stdout,e2);
+  //   fprintf(stdout,"\n");
   if (!banshee_check_rollback(setif_sort)) {
     setif_register_rollback();
   }
@@ -1273,3 +1273,6 @@ void setif_rollback(banshee_rollback_info info)
   }
 
 }
+
+
+

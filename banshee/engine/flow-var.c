@@ -139,8 +139,16 @@ void fv_set_alias(flow_var v, gen_e e)
   v->alias = e;
 }
 
+void fv_unset_alias(flow_var v)
+{
+  assert(v->type == ALIAS_TYPE);
+  v->type = VAR_TYPE;
+  v->alias = NULL;
+}
+
 gen_e fv_get_alias(flow_var v)
 {
+  assert(v->type == ALIAS_TYPE);
   return v->alias;
 }
 
@@ -154,7 +162,7 @@ void fv_set_contour(flow_var v, contour c)
   contour_elt_update(v->elt,c);
 }
 
-static contour combine_contour(const contour c1,const contour c2)
+static contour combine_contour(const contour c1, const contour c2)
 {
   if (c1 == NULL)
     return c2;

@@ -55,8 +55,9 @@ the top-level constraints. Inclusion calls return this counter to the
 user. To pop a constraint, the user calls backtrack(n), which will
 effectively roll back the constraint system to its state just prior to
 the addition of the nth constraint. Note that this will only rollback
-the constraints; terms created after the addition of the nth
-constraint remain valid.
+the constraints; normal terms created after the addition of the nth
+constraint remain valid. However, some terms actually add constraints,
+and for these, those terms will be invalid.
 
 Internally, this is implemented with a map that associates a list of
 bounds with each counter n. When a backtrack is requested, any bound
@@ -104,6 +105,13 @@ so, here are the tasks:
        latter case. All we have to do is restore the old info. In the first two
        cases 'nonroot' will be a nonroot as we expect.
 
+       Also, now note that the args to combine_fn_ptr in ufind.h are
+       const. The idea is that combine shouldn't destructively update
+       its arguments, rather it should merely select one of the two,
+       or create a new info by joining the two existing infos. However,
+       the original infos should remain unchanged for the purposes of
+       undoing.
+
    -x- Add rollback control structure
 
        DONE.	
@@ -141,7 +149,7 @@ so, here are the tasks:
        constraints are solved online should be transparent to the
        interface, and operations should all be fixed to maintain this
        illusion. Identity is more of a concern with incremental
-       analysis than rollback
+       analysis than rollback.
 
        What about internal constraints added due to the creation of
        terms (e.g. proj)? We don't ever want to undo these. One
@@ -160,10 +168,26 @@ so, here are the tasks:
         --- Cache entries (e.g. ubproj)
         --- Row additions
         --- Lists of conditional unifiers
- 
-   --- Add rollback support to terms
 
-       -- change pending representation to bounds       
+       Support each of the following sorts:
+
+        -x- Term
+        -x- FlowRow
+           Keep track of:
+           -x- normalization (non destructive)
+           -x- contour instantiation (probably don't have to do
+	 	                      anything, see fv_set_contour)
+           -x- bounds additions (need to register)
+           -x- fv_set_alias (unset alias)
+           -x- fv_set_contour should automatically be undone (ufind)
+           -x- contour unifications should automatically be undone (ufind)
+        --- SetIF
+        --- SetST
+
+
+   -x- Add rollback support to terms
+
+       -x- change pending representation to bounds       
 
    -x- Add rollback support to bounds
   
@@ -175,6 +199,10 @@ so, here are the tasks:
  
        Really just undo unifications and repair bounds
 
-   --- Make projection merging support rollback
+   -x- Make projection merging support rollback
       
-       Remove entries from ub_projs?
+       -x- Remove entries from ub_projs
+
+
+
+
