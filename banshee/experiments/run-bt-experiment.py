@@ -181,13 +181,21 @@ def get_new_stack_and_time(modified, state):
     print "Warning: failed to compute rollback time and new stack; presumably the commit just added some files..."
     return (state[-1][1], modified, state)
 
-def write_simulation_data(files, prefix,simfile):
+def write_simulation_data(modified, files, prefix,simfile):
     prefiles = []
     for (file,_) in prefix:
 	prefiles.append(file)
-    reanalysis_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(files)).readlines()[0].split()[0])
-    savings_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(prefiles)).readlines()[0].split()[0])
-    simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + savings_size, float(reanalysis_size) / float(reanalysis_size + savings_size)))
+    if (len(files) > 0):
+	reanalysis_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(files)).readlines()[0].split()[0])
+    else:
+	reanalysis_size = 0
+    if (len(prefiles) > 0):
+	preanalyzed_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(prefiles)).readlines()[0].split()[0])
+    else:
+	preanalyzed_size = 0
+    simfile.write("modified files: %s\n" % list_to_string_nolf(modified) )
+    simfile.write("analyzed files: %s\n" % list_to_string_nolf(files) )
+    simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + preanalyzed_size, float(reanalysis_size) / float(reanalysis_size + preanalyzed_size)))
 
 # Entry point 
 def main():
@@ -244,15 +252,15 @@ def main():
 	print cmd
 	output = os.popen(cmd).readlines()
 	process_andersen_output(current,output,prefix)
-	write_simulation_data(files, prefix, simfile)
+	write_simulation_data(modified, files, prefix, simfile)
   	os.system("rm -rf %s" % project_prev)
 	os.system("mv %s %s" % (project, project_prev))
 
     logfile.close()
     simfile.close()
-#    os.system("rm -rf %s" % project)
-#    os.system("rm -rf %s" % project_prev)
-#    os.system("rm -f andersen.out")
+    os.system("rm -rf %s" % project)
+    os.system("rm -rf %s" % project_prev)
+    os.system("rm -f andersen.out")
 
 if __name__ == "__main__":
     main()
