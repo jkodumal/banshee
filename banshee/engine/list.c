@@ -32,7 +32,7 @@
 #include "list.h"
 #include "utils.h"
 #include "banshee_persist_kinds.h"
-
+#include "banshee_region_persist_kinds.h"
 
 struct list_node_
 {  
@@ -42,15 +42,21 @@ struct list_node_
 
 #define scan_node(b,var) for (var = b; var; var = var->next)
 
+#define node_region(l) l->persist_kind > 0 ? list_node_region : (l->persist_kind == 0 ? list_strnode_region : banshee_ephemeral_region)
+
 struct list 
 {
-  region sameregion r;
   int st;
   int length;
   int persist_kind;
   list_node sameregion head;
   list_node sameregion tail;
 };
+
+
+region list_header_region = NULL;
+region list_node_region = NULL;
+region list_strnode_region = NULL;
 
 int stamp_fresh();
 
@@ -60,8 +66,12 @@ struct list *new_list(region r, int persist_kind)
 
   assert(r);
   
-  result = ralloc(r,struct list);
-  result->r = r;
+  if (persist_kind >= 0) {
+    result = ralloc(list_header_region,struct list);
+  }
+  else {
+    result = ralloc(r, struct list);
+  }
   result->persist_kind = persist_kind;
   result->length = 0;
   result->head = NULL;
@@ -78,7 +88,7 @@ int list_length(struct list *l)
 
 struct list *list_cons(void *data, struct list *l)
 {
-  list_node newnode = ralloc(l->r, struct list_node_);
+  list_node newnode = ralloc(node_region(l), struct list_node_);
   newnode->next = l->head;
   newnode->data = data;
 
@@ -102,7 +112,7 @@ struct list *list_append_tail(void *data, struct list *l)
     list_cons(data, l);
   }
   else {
-    list_node newnode = ralloc(l->r, struct list_node_);
+    list_node newnode = ralloc(node_region(l), struct list_node_);
     assert(l->tail->next == NULL);
     newnode->next = NULL;
     newnode->data = data;
@@ -178,7 +188,6 @@ struct list *list_append(struct list *a, struct list *b)
 
   assert( a && b );
   assert( a != b);
-  assert( ptr_eq(a->r,b->r) );
 
   tl = tail(a);
 
@@ -331,7 +340,7 @@ struct list *list_keep(struct list *l, eq_fn eq)
 
 struct list *list_filter2(struct list *l,eq_fn eq)
 {
-  return list_filter(l->r,l,eq);
+  return list_filter(node_region(l),l,eq);
 }
 
 struct list *list_copy(region r, struct list *l)
@@ -638,4 +647,40 @@ int list_stamp(struct list *l)
   return l->st;
 }
 
+void list_init()
+{
+  list_header_region = newregion();
+  list_node_region = newregion();
+  list_strnode_region = newregion();
+}
 
+void list_reset()
+{
+  deleteregion(list_header_region);
+  deleteregion(list_node_region);
+  deleteregion(list_strnode_region);
+  list_init();
+}
+
+
+int update_list_header(translation t, void *m)
+{
+  struct list *l = (struct list *)m;
+
+  update_pointer(t, (void **)&l->head);
+  update_pointer(t, (void **)&l->tail);
+  return (sizeof (struct list));
+}
+
+int update_list_node(translation t, void *m)
+{
+  update_pointer(t, (void **)&((struct list_node_ *)m)->data);
+  update_pointer(t, (void **)&((struct list_node_ *)m)->next);
+  return (sizeof (struct list_node_));
+}
+
+int update_list_strnode(translation t, void *m)
+{
+  update_pointer(t, (void **)&((struct list_node_ *)m)->next);
+  return (sizeof (struct list_node_));
+}

@@ -230,10 +230,10 @@ type *name ##_array_from_list(region r, name a) \
  return (type *)array_from_list(r,(struct list *)a);\
 }
 
-#define DEFINE_NONPTR_LIST(name,type) \
+#define DEFINE_KIND_LIST(name,type,kind)		\
 name new_ ## name(region r) \
 { \
-  return (name)new_list(r,0);\
+  return (name)new_list(r,kind);\
 } \
 int name ## _length(name a) \
 { \
@@ -340,7 +340,8 @@ type *name ##_array_from_list(region r, name a) \
  return (type *)array_from_list(r,(struct list *)a);\
 }
 
-
+void list_init();
+void list_reset();
 
 EXTERN_C_END
 

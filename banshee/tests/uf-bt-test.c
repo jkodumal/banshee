@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "ufind.h"
+#include "list.h"
 
 DECLARE_UFIND(elt,int);
 DEFINE_NONPTR_UFIND(elt,int);
@@ -41,6 +42,7 @@ int main()
   elt e1,e2,e3,e4;
   region scratchregion;
   region_init();
+  list_init();
   uf_init();
 
   scratchregion = newregion();

@@ -33,6 +33,7 @@
 #include "regions.h"
 #include "utils.h"
 #include "persist.h"
+#include "banshee_region_persist_kinds.h"
 
 struct bucket_
 {
@@ -63,16 +64,17 @@ struct Hash_table
 
 region bucket_region = NULL;
 region table_region = NULL;
-region bucketptr_region = NULL;
 region strbucket_region = NULL;
 
 static void rehash(hash_table ht);
 
 extern hash_table fn_ptr_table;
-hash_table make_persistent_hash_table(region r, unsigned long size, 
+
+static hash_table make_hash_table_int(region r, unsigned long size, 
 				      hash_fn hash, keyeq_fn cmp,
 				      int key_persist_kind,
-				      int data_persist_kind)
+				      int data_persist_kind,
+				      bool persistent)
 {
   hash_table result;
 
@@ -80,7 +82,8 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
   assert(table_region);
   assert(bucket_region);
 
-  result = ralloc(table_region, struct Hash_table);
+  result = ralloc(persistent? table_region : banshee_ephemeral_region, 
+		  struct Hash_table);
   result->r = r;
   result->hash = hash;
   result->cmp = cmp;
@@ -94,8 +97,14 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
 		      (hash_data*)&result->keyeq_fn_id);
   }
 
-  result->key_persist_kind = key_persist_kind;
-  result->data_persist_kind = data_persist_kind;
+  if (persistent) {
+    result->key_persist_kind = key_persist_kind;
+    result->data_persist_kind = data_persist_kind;
+  }
+  else {
+    result->key_persist_kind = -1;
+    result->data_persist_kind = -1;
+  }
 
   /* Force size to a power of 2 */
   while (result->size < size)
@@ -104,10 +113,19 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
       result->log2size++;
     }
   result->used = 0;
-  result->table = rarrayalloc(bucketptr_region, result->size, bucket);
+  result->table = rarrayalloc(persistent? banshee_ptr_region : banshee_ephemeral_region, result->size, bucket);
 
   return result;
+}
 
+
+hash_table make_persistent_hash_table(region r, unsigned long size, 
+				      hash_fn hash, keyeq_fn cmp,
+				      int key_persist_kind,
+				      int data_persist_kind)
+{
+  return make_hash_table_int(r, size, hash, cmp, key_persist_kind, 
+			     data_persist_kind, TRUE);
 }
 
 /* Make a new hash table, with size buckets initially.  Hash table
@@ -115,16 +133,15 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
 hash_table make_hash_table(region r, unsigned long size, hash_fn hash,
 			   keyeq_fn cmp)
 {
-  return make_persistent_hash_table(r, size, hash, cmp, NONPTR_PERSIST_KIND, 
-				    NONPTR_PERSIST_KIND);
+  return make_hash_table_int(r, size, hash, cmp, -1, -1, FALSE);
 }
 
 hash_table make_persistent_string_hash_table(region rhash, unsigned long size,
 					     int data_persist_kind)
 {
-  return make_persistent_hash_table(rhash, size, (hash_fn)string_hash,
-				    (keyeq_fn)string_eq, 
-				    STRING_PERSIST_KIND, data_persist_kind);
+  return make_hash_table_int(rhash, size, (hash_fn)string_hash,
+			     (keyeq_fn)string_eq, 
+			     STRING_PERSIST_KIND, data_persist_kind, TRUE);
 }
 					     
 
@@ -216,7 +233,7 @@ bool hash_table_insert(hash_table ht, hash_key k, hash_data d)
 	}
       cur = &(*cur)->next;
     }
-  *cur = ralloc(ht->data_persist_kind? bucket_region : strbucket_region, 
+  *cur = ralloc(ht->data_persist_kind > 0 ? bucket_region : (ht->data_persist_kind == 0 ? strbucket_region : banshee_ephemeral_region), 
 		struct bucket_);
   (*cur)->key = k;
   (*cur)->data = d;
@@ -266,7 +283,8 @@ hash_table hash_table_copy(region r, hash_table ht)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(ht->data_persist_kind? bucket_region : strbucket_region, struct bucket_);
+	  newbucket = ralloc(ht->data_persist_kind > 0 ? bucket_region : (ht->data_persist_kind == 0 ? strbucket_region : banshee_ephemeral_region), 
+			     struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = cur->data;
 	  newbucket->next = NULL;
@@ -294,7 +312,7 @@ static void rehash(hash_table ht)
   ht->size = ht->size*2;
   ht->log2size = ht->log2size + 1;
   ht->used = 0;
-  ht->table = rarrayalloc(bucketptr_region, ht->size, bucket);
+  ht->table = rarrayalloc(banshee_ptr_region, ht->size, bucket);
 
   for (i = 0; i < old_table_size; i++)
     scan_bucket(old_table[i], cur)
@@ -366,7 +384,8 @@ hash_table hash_table_map(region r, hash_table ht, hash_map_fn f, void *arg)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(ht->data_persist_kind? bucket_region : strbucket_region, struct bucket_);
+	  newbucket =  ralloc(ht->data_persist_kind > 0 ? bucket_region : (ht->data_persist_kind == 0 ? strbucket_region : banshee_ephemeral_region), 
+			      struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = f(cur->key, cur->data, arg);
 	  newbucket->next = NULL;
@@ -580,7 +599,6 @@ void hash_table_init()
 {
   table_region = newregion();
   bucket_region = newregion();
-  bucketptr_region = newregion();
   strbucket_region = newregion();
 }
 
@@ -588,7 +606,7 @@ void hash_table_init()
 /* { */
 /*   deleteregion(table_region); */
 /*   deleteregion(bucket_region); */
-/*   deleteregion(bucketptr_region); */
+/*   deleteregion(banshee_ptr_region); */
   
 /*   hash_table_init(); */
 /* } */

@@ -1593,8 +1593,7 @@ void analysis_deserialize(const char *filename)
   FILE *f = fopen(filename, "rb");
   assert(f);
 
-  collection_envs = new_hash_table_list(permanent);
-
+  
   fread((void *)&acnt, sizeof(struct counts), 1, f);
   state.scopes = read_int_list(f);
   state.collection_counts = read_int_list(f);
@@ -1603,6 +1602,7 @@ void analysis_deserialize(const char *filename)
   state.banshee_times = read_int_list(f);
 
   result = pta_deserialize(f);
+  collection_envs = new_hash_table_list(permanent);
 
   length = int_list_length(state.scopes);
 

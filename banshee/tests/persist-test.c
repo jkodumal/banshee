@@ -38,6 +38,8 @@
 #include "persist.h"
 #include "hash.h"
 #include "utils.h"
+#include "banshee_region_persist_kinds.h"
+#include "list.h"
 
 #define DEFAULT_FILENAME "persist-test.out"
 
@@ -280,6 +282,8 @@ int main(int argc, char **argv)
   assert(argc > 0);
 
   region_init();
+  list_init();
+  banshee_region_persistence_init();
   hash_table_init();
   seed_fn_ptr_table(permanent);
 

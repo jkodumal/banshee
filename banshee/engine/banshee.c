@@ -38,6 +38,7 @@
 #include "term-sort.h"
 #include "ufind.h"
 #include "list.h"
+#include "banshee_region_persist_kinds.h"
 
 DECLARE_LIST(banshee_rollback_stack, banshee_rollback_info);
 DEFINE_LIST(banshee_rollback_stack, banshee_rollback_info);
@@ -57,9 +58,10 @@ static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
 
 void engine_init(void)
 {
-  region_init(); 
+  banshee_region_persistence_init();
   hash_table_init();
   stamp_init();
+  list_init();
   uf_init();
 
   engine_region = newregion();
@@ -73,7 +75,10 @@ void engine_init(void)
 void engine_reset(void) deletes
 {
   stamp_reset();
+  // TODO: figure out what to do about this: list_reset();
   uf_reset();
+  /* TODO -- need to rename this because the name hash_table_reset is
+     taken  */
 /*   hash_table_reset(); */
 
   banshee_clock = 0;
@@ -266,12 +271,6 @@ bool banshee_rollback_info_set_fields(void *obj)
 
   return banshee_rollback_set_fields_dispatch((banshee_rollback_info)obj);
 }
-
-/* static int banshee_clock = 0; */
-/* static banshee_rollback_stack rb_stack; */
-/* static region engine_region; */
-/* region banshee_rollback_region; */
-/* banshee_error_handler_fn handle_error = NULL; */
 
 void engine_serialize(FILE *f)
 {
