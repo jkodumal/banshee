@@ -8,9 +8,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#ifndef NMEMDEBUG
-static int from_update_ablock = 0;
-#endif 
 
 /*
   The region allocator keeps pages in two lists: REGULAR single page
@@ -178,7 +175,7 @@ requires that pages be aligned at addresses where the last SHIFT bits are 0's.
 */
 inline void *translate_pointer(translation map, void *old_address) {
 #ifndef NMEMDEBUG 
-  if (!from_update_ablock && old_address && *(map->map + (((unsigned int) old_address) >> SHIFT)) == 0) 
+  if (old_address && (*(map->map + (((unsigned int) old_address) >> SHIFT)) == 0)) 
     fprintf(stderr,"Warning: The pointer %x has no translation.\n", (unsigned int) (map->map + (((unsigned int) old_address) >> SHIFT)));
 #endif
   return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + (((unsigned int) old_address) & 0x00001FFF);
@@ -278,20 +275,13 @@ void allocate_regions(int state, translation map) {
   be update in the region objects.
 */
 void update_ablock(translation map, struct ablock *a, struct ablock *old) {
-#ifndef NMEMDEBUG
-  from_update_ablock = 1;
-#endif 
   a->allocfrom = translate_pointer(map, (void *) old->allocfrom); 
-#ifndef NMEMDEBUG
-  from_update_ablock = 0;
-#endif 
-
 }
 
 void update_allocator(translation map, struct allocator *a, struct allocator *b) {
   update_ablock(map, &(a->page), &(b->page));
-  update_ablock(map, &(a->superpage), &(b->superpage));
-  update_ablock(map, &(a->hyperpage), &(b->hyperpage));
+  /*  update_ablock(map, &(a->superpage), &(b->superpage));
+  update_ablock(map, &(a->hyperpage), &(b->hyperpage)); */
 }
 
 
@@ -310,10 +300,13 @@ must be large enough to hold at least its first object, so this implementation i
 
 */
 void update_page(char *current, char *end, translation map, Updater update) {
+  int size = 0;
+  if (current >= end) return;
   for(;; ) {
     current = PALIGN(current, RALIGNMENT);
-    if (current >= end) break;
-    current += update(map, current);
+    if (current + size > end) break;
+    size = update(map, current);
+    current += size;
   }
 }
 
@@ -376,7 +369,7 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
       *r = save_new_region;
       /* update the allocation state of the region */
       update_allocator(map, &(r->normal), &(save_old_region.normal));
-      update_allocator(map, &(r->atomic), &(save_old_region.atomic));
+      /*      update_allocator(map, &(r->atomic), &(save_old_region.atomic)); */
       /* bump the allocation pointer past the region structure */
       mem += sizeof(struct region); 
     }
