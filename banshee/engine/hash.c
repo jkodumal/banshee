@@ -44,13 +44,13 @@ struct bucket_
 
 #define scan_bucket(b, var) for (var = b; var; var = var->next)
 
-/* #define BUCKETPTR_REGION bucketptr_region */
-#define BUCKETPTR_REGION banshee_ptr_region
+#define BUCKETPTR_REGION bucketptr_region
+/* #define BUCKETPTR_REGION banshee_ptr_region */
 
-/* #define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region) */
+#define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region)
 
 /* TODO -- switch this back */
-#define bucket_region(t) bucket_region
+/* #define bucket_region(t) bucket_region */
 
 extern const int num_fn_ptrs;
 
@@ -564,16 +564,17 @@ int update_hash_table(translation t, void *m)
   hash_table tab = (hash_table)m;
   
   assert(fn_ptr_table);
-  if (tab->hash_fn_id < num_fn_ptrs) {
-    tab->hash = update_funptr_data(tab->hash_fn_id);
-    hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
-		      (hash_data*)&tab->hash_fn_id);
-  }
-  if (tab->keyeq_fn_id < num_fn_ptrs) {
-    tab->cmp = update_funptr_data(tab->keyeq_fn_id);
-    hash_table_lookup(fn_ptr_table, (hash_key)tab->hash,
-		      (hash_data*)&tab->keyeq_fn_id);
-  }
+  assert(tab->hash_fn_id < num_fn_ptrs);
+  assert(tab->keyeq_fn_id < num_fn_ptrs);
+  
+  tab->hash = update_funptr_data(tab->hash_fn_id);
+  hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
+		    (hash_data*)&tab->hash_fn_id);
+
+  tab->cmp = update_funptr_data(tab->keyeq_fn_id);
+  hash_table_lookup(fn_ptr_table, (hash_key)tab->cmp,
+		    (hash_data*)&tab->keyeq_fn_id);
+
   update_pointer(t, (void **) &tab->table);
 
   return (sizeof(struct Hash_table));
@@ -601,10 +602,9 @@ int update_strbucket(translation t, void *m)
 
 int update_bucketptr(translation t, void *m)
 {
-  update_pointer(t, &m);
+  update_pointer(t, m);
   return(sizeof(void *));
 }
-
 
 void hash_table_init()
 {

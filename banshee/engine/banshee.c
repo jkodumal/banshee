@@ -59,7 +59,12 @@ static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
 void engine_init(void)
 {
   region_init();
+
+  engine_region = newregion();
+
   hash_table_init();
+  seed_fn_ptr_table(engine_region);
+
   banshee_region_persistence_init();
   bounds_init();
   stamp_init();
@@ -67,11 +72,9 @@ void engine_init(void)
   uf_init();
   term_hash_init();
 
-  engine_region = newregion();
   rb_stack = new_persistent_banshee_rollback_stack();
   handle_error = default_error_handler;
 
-  seed_fn_ptr_table(engine_region);
 }
 
 void engine_reset(void) deletes

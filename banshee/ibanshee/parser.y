@@ -35,6 +35,7 @@
 #include "regions.h"
 #include "hash.h"
 #include "banshee_persist_kinds.h"
+#include "banshee_region_persist_kinds.h"
 
 static region ibanshee_region;
 static hash_table constructor_env;
@@ -76,6 +77,45 @@ static void save_cs(const char *filename)
 
   serialize_cs(f, entry_points, 3);
 }
+
+static void rsave_cs(const char *filename)
+{
+  FILE *f;
+  f = fopen(filename, "wb");
+  assert(f);
+
+  fwrite((void *)&constructor_env, sizeof(hash_table), 1, f);
+  fwrite((void *)&named_env, sizeof(hash_table), 1, f);
+  fwrite((void *)&var_env, sizeof(hash_table), 1, f);
+  
+  serialize(get_persistent_regions("extras"), "data", "offsets");
+  write_module_nonspec(f);
+}
+
+extern region *get_persistent_regions(const char *filename);
+
+static void rload_cs(const char *filename)
+{
+  FILE *f;
+  translation t;
+  region temp = newregion();
+  f = fopen(filename, "rb");
+
+  assert(f);
+
+  t = deserialize("data","offsets", get_updater_functions("extras"), temp);
+
+  fread((void *)&constructor_env, sizeof(hash_table), 1, f);
+  fread((void *)&named_env, sizeof(hash_table), 1, f);
+  fread((void *)&var_env, sizeof(hash_table), 1, f);
+
+  update_pointer(t, (void **)&constructor_env);
+  update_pointer(t, (void **)&named_env);
+  update_pointer(t, (void **)&var_env);
+
+  update_module_nonspec(t, f);
+}
+
 
 static void load_cs(const char *filename)
 {
@@ -121,6 +161,8 @@ Commands         : !help\n\
                    !quit\n\
                    !save \"filename\"\n\
                    !load \"filename\"\n\
+                   !rsave\n\
+                   !rload\n\
                    !exit\n");
 }
 
@@ -285,7 +327,7 @@ decl:      TOK_VAR TOK_COLON esort
                  fresh_var = flowrow_fresh($1,term_sort); 
 		 break;
 	       }	     
-	       hash_table_insert(var_env,$1,fresh_var);
+	       hash_table_insert(var_env,rstrdup(banshee_nonptr_region,$1),fresh_var);
 	       printf("var: ");
 	       expr_print(stdout, fresh_var);
 	       printf("\n");
@@ -298,7 +340,7 @@ decl:      TOK_VAR TOK_COLON esort
 	       YYABORT;
 	     }
 	     else {
-	       hash_table_insert(named_env,$1,(hash_data)$3);
+	       hash_table_insert(named_env,rstrdup(banshee_nonptr_region, $1),(hash_data)$3);
 	       printf("%s: ",$1);
 	       expr_print(stdout,$3);
 	       printf("\n");
@@ -316,7 +358,7 @@ decl:      TOK_VAR TOK_COLON esort
  	     }
 	     else {
                constructor c = make_constructor($1,$3,NULL,0);
-	       hash_table_insert(constructor_env,$1,(hash_data)c);
+	       hash_table_insert(constructor_env,rstrdup(banshee_nonptr_region, $1),(hash_data)c);
 	       printf("constructor: %s\n", $1);
 	     }
            }
@@ -332,7 +374,7 @@ decl:      TOK_VAR TOK_COLON esort
  	     }
 	     else {
                constructor c = make_constructor_from_list($1,$6,sig_elt_list_reverse($3));
-	       hash_table_insert(constructor_env,$1,c);
+	       hash_table_insert(constructor_env,rstrdup(banshee_nonptr_region, $1),c);
 	       printf("constructor: %s\n", $1);
 	     }
            }
@@ -353,21 +395,21 @@ signature: sig_elt
 
 sig_elt:   TOK_POS sort
            {
-	     sig_elt *eltptr = ralloc(ibanshee_region,sig_elt);
+	     sig_elt *eltptr = ralloc(banshee_nonptr_region,sig_elt);
 	     eltptr->variance = vnc_pos;
 	     eltptr->sort = $2;
 	     $$ = eltptr;
            }
          | TOK_NEG sort
             {
-	     sig_elt *eltptr = ralloc(ibanshee_region,sig_elt);
+	     sig_elt *eltptr = ralloc(banshee_nonptr_region,sig_elt);
 	     eltptr->variance = vnc_neg;
 	     eltptr->sort = $2;
 	     $$ = eltptr;
            }
          | TOK_EQ sort
              {
-	     sig_elt *eltptr = ralloc(ibanshee_region,sig_elt);
+	     sig_elt *eltptr = ralloc(banshee_nonptr_region,sig_elt);
 	     eltptr->variance = vnc_non;
 	     eltptr->sort = $2;
 	     $$ = eltptr;
@@ -603,6 +645,12 @@ cmd:       TOK_CMD TOK_IDENT
 	     }
 	     else if (!strcmp($2,"help")) {
 	       show_help();
+	     }
+	     else if (!strcmp($2,"rsave")) {
+	       rsave_cs("statics");
+	     }
+	     else if (!strcmp($2,"rload")) {
+	       rload_cs("statics");
 	     }
              else if (!strcmp($2,"save") || !strcmp($2,"load")) {
 	       fprintf(stderr,"Missing filename\n");

@@ -68,7 +68,7 @@ int update_nonptr_data(translation t, void *m)
 
 int update_ptr_data(translation t, void *m)
 {
-  update_pointer(t, &m);
+  update_pointer(t, m);
   return sizeof(void *);
 }
 
