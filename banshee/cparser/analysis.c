@@ -1377,6 +1377,7 @@ static void analyze_statement(statement s)
 	expression e = rs->arg1;
 
 	// we must be in the context of a function
+	if (! current_fun_decl) return;
 	assert(current_fun_decl); 
 	
 	if (e)
