@@ -1,3 +1,34 @@
+/*
+ * Copyright (c) 2000-2004
+ *      The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+
 /* Parser for iBanshee */
 %{
 #include "nonspec.h"
@@ -28,6 +59,42 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek)
   fprintf(stderr," and ");
   expr_print(stderr,e2);
   fprintf(stderr,"\n");
+}
+
+static void show_help()
+{
+  printf("--- iBanshee Quick Reference ---\n\
+ident            : [A-Z a-z]([A-Z a-z 0-9 _])*\n\
+integers (i)     : [0-9]+\n\
+\n\
+Variables (v)    : '{ident}\n\
+Constructors (c) : {ident}\n\
+Labels (l)       : {ident}\n\
+Names (n)        : {ident}\n\
+\n\
+Expressions (e)  : v | c | n | c(e1,...,en) | e1 && e2 | e1 || e2\n\
+                 | <l1=e1,...,ln=en [| e]> | 0:s | 1:s | _:s\n\
+                 | pat(c,i,e) | proj(c,i,e) | ( e ) | c^-i(e)\n\
+\n\
+sorts            : basesort | row(basesort)\n\
+\n\
+basesort         : setIF | term\n\
+\n\
+Var decl         : v : sort\n\
+Constructor decl : c(s1,...,sn) : basesort\n\
+Name decl        : n = e \n\
+Sig (s)          : + sort | - sort | = sort\n\
+\n\
+Constraints      : e1 <= e2 | e1 == e2\n\
+\n\
+Commands         : !help\n\
+                   !tlb e\n\
+                   !ecr e\n\
+                   !undo [i]\n\
+                   !time\n\
+                   !trace [i]\n\
+                   !quit\n\
+                   !exit\n");
 }
 
 static void print_tlb(gen_e e) 
@@ -65,6 +132,8 @@ static void ibanshee_init(void) {
   named_env = make_string_hash_table(ibanshee_region,32);
   var_env = make_string_hash_table(ibanshee_region,32);
 }
+
+void flush_lexer(void);
 
 %}			
 
@@ -152,69 +221,75 @@ toplev:    decl
            { }
 ;
 
-decl:      TOK_DECL TOK_VAR TOK_COLON sort
+decl:      TOK_VAR TOK_COLON sort
            { 
 	     gen_e fresh_var;
 
-	     if (hash_table_lookup(var_env,$2,NULL)) {
-	       yyerror("Attempted to redefine existing variable");
+	     if (hash_table_lookup(var_env,$1,NULL)) {
+	      fprintf(stderr,"Attempted to redefine existing variable: %s",$1);
+	       YYABORT;
 	     }
 	     else {
-	       switch($4) {
+	       switch($3) {
 	       case setif_sort:
-		 fresh_var = setif_fresh($2);
+		 fresh_var = setif_fresh($1);
 		 break;
 	       case term_sort:
-		 fresh_var = term_fresh($2);
+		 fresh_var = term_fresh($1);
 		 break;
 	       case flowrow_sort:
-		 fresh_var = flowrow_fresh($2);
+		 fresh_var = flowrow_fresh($1);
 		 break;
 	       }	     
-	       hash_table_insert(var_env,$2,fresh_var);
+	       hash_table_insert(var_env,$1,fresh_var);
 	       printf("var: ");
 	       expr_print(stdout, fresh_var);
 	       printf("\n");
 	     }
 	   }
-         | TOK_DECL TOK_IDENT TOK_EQ expr
+         | TOK_IDENT TOK_EQ expr
            {
-	     if (hash_table_lookup(constructor_env,$2,NULL)) {
-	       yyerror("Attempted to redefine existing constructor\n");
+	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+	       fprintf(stderr,"Attempted to redefine existing constructor: %s",$1);
+	       YYABORT;
 	     }
 	     else {
-	       hash_table_insert(named_env,$2,(hash_data)$4);
+	       hash_table_insert(named_env,$1,(hash_data)$3);
 	       printf("%s: ");
-	       expr_print(stdout,$4);
+	       expr_print(stdout,$3);
 	       printf("\n");
 	     }
            }
-         | TOK_DECL TOK_IDENT TOK_COLON basesort
+         | TOK_IDENT TOK_COLON basesort
            {
-	     if (hash_table_lookup(constructor_env,$2,NULL)) {
-               yyerror("Attempted to redefine existing constructor\n");
+	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+               fprintf(stderr,"Attempted to redefine existing constructor: %s\n",$1);
+	       YYABORT;
 	     }
-             else if (hash_table_lookup(named_env,$2,NULL)) {
-	       yyerror("Attempted to redefine existing expression\n");
+             else if (hash_table_lookup(named_env,$1,NULL)) {
+	       fprintf(stderr,"Attempted to redefine existing expression: %s\n",$1);
+	       YYABORT;
  	     }
 	     else {
-               constructor c = make_constructor($2,$4,NULL,0);
-	       hash_table_insert(constructor_env,$2,(hash_data)c);
-	       printf("constructor: %s\n", $2);
+               constructor c = make_constructor($1,$3,NULL,0);
+	       hash_table_insert(constructor_env,$1,(hash_data)c);
+	       printf("constructor: %s\n", $1);
 	     }
            }
-         | TOK_DECL TOK_IDENT TOK_LPAREN signature TOK_RPAREN TOK_COLON basesort
+         | TOK_IDENT TOK_LPAREN signature TOK_RPAREN TOK_COLON basesort
            { 
-	     if (hash_table_lookup(constructor_env,$2,NULL)) {
-               yyerror("Attempted to redefine existing constructor\n");
+	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+               fprintf(stderr,"Attempted to redefine existing constructor: %s\n",$1);
+	       YYABORT;
 	     }
-             else if (hash_table_lookup(named_env,$2,NULL)) {
-	       yyerror("Attempted to redefine existing expression\n");
+             else if (hash_table_lookup(named_env,$1,NULL)) {
+	       fprintf(stderr,"Attempted to redefine existing expression: %s\n",$1);
+	       YYABORT;
  	     }
 	     else {
-               constructor c = make_constructor_from_list($2,$7,sig_elt_list_reverse($4));
-	       hash_table_insert(constructor_env,$2,c);
-	       printf("constructor: %s\n", $2);
+               constructor c = make_constructor_from_list($1,$6,sig_elt_list_reverse($3));
+	       hash_table_insert(constructor_env,$1,c);
+	       printf("constructor: %s\n", $1);
 	     }
            }
 ;
@@ -266,7 +341,8 @@ esort:      basesort
              switch($1) {
  	       case setif_sort: $$ = e_setif_sort; break;
                case term_sort: $$ = e_term_sort; break;
-	     default: yyerror("Bad base sort\n");
+	     default: fprintf(stderr,"Bad base sort\n");
+	       YYABORT;
 	     } 
            }
          | TOK_ROW TOK_LPAREN basesort TOK_RPAREN
@@ -274,7 +350,8 @@ esort:      basesort
              switch($3) {
 	       case setif_sort: $$ = e_flowrow_setif_sort; break;
                case term_sort: $$ = e_flowrow_term_sort; break;
-	     default: yyerror("Bad base sort\n");
+	     default: fprintf(stderr,"Bad base sort\n");
+	       YYABORT;
 	     }
            } 
 ;
@@ -299,7 +376,8 @@ expr:    TOK_VAR
 	       $$ = v;
 	     }
 	     else {
-	       yyerror("Could not find variable\n",$1);
+	       fprintf(stderr,"Could not find variable: %s\n",$1);
+	       YYABORT;
 	     }
            }
          | TOK_IDENT /* constant or named expression */
@@ -313,10 +391,11 @@ expr:    TOK_VAR
 	       $$ = n;
 	     }
 	     else {
-	       yyerror("Could not find constant or named expression\n");
+	       fprintf(stderr,"Could not find constant or named expression: %s\n",$1);
+	       YYABORT;
 	     }
            }
-         | TOK_IDENT TOK_LPAREN expr_list TOK_RPAREN /* a constructed term */
+         | TOK_IDENT TOK_LPAREN expr_list TOK_RPAREN /* constructed term */
            {
 	     constructor c = NULL;
 
@@ -327,7 +406,8 @@ expr:    TOK_VAR
 				  gen_e_list_length($3));
 	     }
 	     else {
-	       yyerror("Could not find constructor\n");
+	       fprintf(stderr,"Could not find constructor: %s\n",$1);
+	       YYABORT;
 	     }
            }
          | expr TOK_UNION expr	/* the union of e1 and e2 */
@@ -356,7 +436,8 @@ expr:    TOK_VAR
 	       case e_term_sort: $$ = term_one(); break;
 	       case e_flowrow_setif_sort: $$ = flowrow_one(setif_sort); break;
 	       case e_flowrow_term_sort: $$ = flowrow_one(term_sort); break;
-	       default: yyerror("Invalid sort for zero expression\n");
+	       default: fprintf(stderr,"Invalid sort for zero expression\n");
+		 YYABORT;
               } 
 
              }
@@ -366,11 +447,13 @@ expr:    TOK_VAR
 	       case e_term_sort: $$ = term_zero(); break;
 	       case e_flowrow_setif_sort: $$ = flowrow_zero(setif_sort); break;
 	       case e_flowrow_term_sort: $$ = flowrow_zero(term_sort); break;
-	       default: yyerror("Invalid sort for one expression\n");
+	       default: fprintf(stderr,"Invalid sort for one expression\n");
+		 YYABORT;
 	      } 
 	     }
              else {
-               yyerror("Invalid expression\n");
+               fprintf(stderr,"Invalid expression\n");
+	       YYABORT;
 	     }
            }
          | TOK_WILD TOK_COLON esort	/* wildcard */
@@ -378,7 +461,8 @@ expr:    TOK_VAR
              switch($3) {
 	     case e_flowrow_setif_sort: $$ = flowrow_wild(setif_sort); break;
 	     case e_flowrow_term_sort: $$ = flowrow_wild(term_sort); break;
-	     default: yyerror("Invalid sort for wildcard expression\n");
+	     default: fprintf(stderr,"Invalid sort for wildcard expression\n");
+	       YYABORT;
              }  
            }
          | TOK_PAT pattern	/* a projection pattern */
@@ -395,7 +479,8 @@ expr:    TOK_VAR
 	     constructor c = NULL;
 
 	     if (!hash_table_lookup(constructor_env,$1,(hash_data *)&c)) {
-	       yyerror("Could not find constructor\n");
+	       fprintf(stderr,"Could not find constructor: %s\n",$1);
+	       YYABORT;
 	     }
              assert(c);
              $$ = setif_proj(c,$4,$6);
@@ -449,7 +534,8 @@ pattern:   TOK_LPAREN TOK_IDENT TOK_COMMA TOK_INTEGER TOK_COMMA expr TOK_RPAREN
 	       $$ = (pattern){c,$4,$6}; 
 	     }
 	     else {
-	       yyerror("Could not find constructor\n",$2);
+	       fprintf(stderr,"Could not find constructor: %s\n",$2);
+	       YYABORT;
 	     }
 	   }
 ;
@@ -467,6 +553,13 @@ cmd:       TOK_CMD TOK_IDENT
 	     else if (!strcmp($2,"undo")) {
 	       banshee_rollback();
 	     }
+	     else if (!strcmp($2,"help")) {
+	       show_help();
+	     }
+	     else {
+	       fprintf(stderr,"Unrecognized command: %s\n",$2);
+	       YYABORT;
+	     }
 	   }
         |  TOK_CMD TOK_IDENT TOK_INTEGER
            {
@@ -477,10 +570,11 @@ cmd:       TOK_CMD TOK_IDENT
         |  TOK_CMD TOK_IDENT expr
            { 
 	         if (!strcmp($2,"tlb")) {
-	       		print_tlb($3);
+		   print_tlb($3);
 	       	 }
 	       	 else if (!strcmp($2,"ecr")) {
-				expr_print(stdout,term_get_ecr($3));
+		   expr_print(stdout,term_get_ecr($3));
+		   printf("\n");
 	       	 }
 	     
            }
@@ -494,7 +588,10 @@ int main() {
     int time = banshee_get_time().time;
     printf("[%d] > ",time);
     fflush(stdout);
-    yyparse();
+				
+    if (yyparse()) { /* error parsing the line, ignore the remaining input */
+      flush_lexer();
+    }
   }
   while (1);
 }

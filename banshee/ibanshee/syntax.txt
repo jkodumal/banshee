@@ -10,16 +10,16 @@ Labels (l)       : {ident}
 Names (n)        : {ident}
 
 Expressions (e)  : v | c | n | c(e1,...,en) | e1 && e2 | e1 || e2
-                 | <l1=e1,...,ln=en [| e]> | 0:s | 1:s | _:s | 
+                 | <l1=e1,...,ln=en [| e]> | 0:s | 1:s | _:s
                  | pat(c,i,e) | proj(c,i,e) | ( e ) | c^-i(e)
 
 sorts            : basesort | row(basesort)
 
 basesort         : setIF | term
 
-Var decl         : #v : sort
-Constructor decl : #c(s1,...,sn) : basesort
-Name decl        : #n = e 
+Var decl         : v : sort
+Constructor decl : c(s1,...,sn) : basesort
+Name decl        : n = e 
 Sig (s)          : + sort | - sort | = sort
 
 Constraints      : e1 <= e2 | e1 == e2
@@ -31,3 +31,5 @@ Commands : !help
            !time
            !trace [i]
            !quit
+	   !exit
+

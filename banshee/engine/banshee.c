@@ -150,20 +150,24 @@ void banshee_rollback()
 {
   banshee_rollback_stack_scanner scan;
   banshee_rollback_info info;
-  
-  uf_rollback();
-  
-  banshee_rollback_stack_scan(rb_stack,&scan);
-  
-  while(banshee_rollback_stack_next(&scan,&info)) {
-    if (info->time.time < banshee_clock) break;
-    banshee_rollback_dispatch(info);
+
+  if (banshee_clock > 0) {
+
+    uf_rollback();
+    
+    banshee_rollback_stack_scan(rb_stack,&scan);
+    
+    while(banshee_rollback_stack_next(&scan,&info)) {
+      if (info->time.time < banshee_clock) break;
+      banshee_rollback_dispatch(info);
+    }
+    banshee_clock--;
   }
-  banshee_clock--;
 }
 
 void banshee_backtrack(banshee_time t)
 {
+  if (t.time < 0) return;
   while(banshee_clock > t.time)
     banshee_rollback();  
 }
