@@ -142,12 +142,12 @@ static void test_dyck_isomorphism()
   }
 
   // Print the closed graph
-  {
-    FILE *f = fopen("closed_graph.dot","w");
-    assert(f);
-    dyck_print_closed_graph(f);
-    fclose(f);
-  }
+/*   { */
+/*     FILE *f = fopen("closed_graph.dot","w"); */
+/*     assert(f); */
+/*     dyck_print_closed_graph(f); */
+/*     fclose(f); */
+/*   } */
 
   
   printf("Passed dyck isomorphism test\n");
@@ -225,12 +225,12 @@ static void test_dyck_reduction()
   assert(!mr_dyck_check_reaches(d5,d9)); // no matched reachability using a global
 
   // Print the closed graph
-  {
-    FILE *f = fopen("mr_closed_graph.dot","w");
-    assert(f);
-    mr_dyck_print_closed_graph(f);
-    fclose(f);
-  }
+/*   { */
+/*     FILE *f = fopen("mr_closed_graph.dot","w"); */
+/*     assert(f); */
+/*     mr_dyck_print_closed_graph(f); */
+/*     fclose(f); */
+/*   } */
   
   printf("Passed dyck reduction test\n");
 }

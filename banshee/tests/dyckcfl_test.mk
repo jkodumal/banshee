@@ -25,61 +25,23 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-.PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
-        docs points-to install
+.PHONY: dyckcfl-check clean
+dyckcfl-check: dyckcfl-regr
 
-all: banshee tests points-to docs
+DYCKCFL_TEST_EXEC = ./dyckcfl-test.exe
+DYCKCFL_RTEST_EXEC = ./dyckcfl-random-test.exe 
 
-banshee: libcompat codegen engine
+.PHONY: dyckcfl-regr
+dyckcfl-regr: dyckcfl-test dyckcfl-rtest dyckcfl-done
 
-libcompat: 
-	$(MAKE) -C libcompat
+.PHONY: dyckcfl-done dyckcfl-test dyckcfl-rtest
 
-codegen: 
-	$(MAKE) -C codegen
+dyckcfl-done:; @echo "DYCKCFL tests pass"
 
-engine:
-	$(MAKE) -C engine
+dyckcfl-test:
+	$(DYCKCFL_TEST_EXEC)
 
-rca: banshee
-	$(MAKE) -C rca
+dyckcfl-rtest:
+	$(DYCKCFL_RTEST_EXEC)
 
-andersen: banshee
-	$(MAKE) -C andersen
-
-points-to: andersen
-	$(MAKE) -C cparser
-
-lambda: banshee
-	$(MAKE) -C lambda
-
-dyckcfl: banshee
-	$(MAKE) -C dyckcfl
-
-tests: banshee rca andersen lambda dyckcfl
-	$(MAKE) -C tests
-
-docs: 
-	$(MAKE) -C docs
-
-check: points-to tests
-	$(MAKE) -C tests -f pta_test.mk
-	$(MAKE) -C tests -f dyckcfl_test.mk
-
-install:
-	@echo "banshee does not have an install target."
-
-clean:
-	$(MAKE) -C libcompat clean
-	$(MAKE) -C codegen clean
-	$(MAKE) -C engine clean
-	$(MAKE) -C rca clean
-	$(MAKE) -C andersen clean
-	$(MAKE) -C cparser clean
-	$(MAKE) -C lambda clean
-	$(MAKE) -C dyckcfl clean
-	$(MAKE) -C tests clean
-	$(MAKE) -C docs clean
-	$(MAKE) -C tests -f pta_test.mk clean
-	rm -rf *~
-
+clean: 

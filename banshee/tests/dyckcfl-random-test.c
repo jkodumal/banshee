@@ -55,11 +55,11 @@
 
 // If both implementations are enabled,
 // turn on the consistency checks
-// #ifdef ENABLE_MR_DYCK
-// #ifdef ENABLE_DYCK
-// #define ENABLE_CONSISTENCY_CHECK
-// #endif
-// #endif
+#ifdef ENABLE_MR_DYCK
+#ifdef ENABLE_DYCK
+#define ENABLE_CONSISTENCY_CHECK
+#endif
+#endif
 
 #ifdef DYCK_RANDOM_DEBUG
 #define DOT_DEBUG
@@ -523,6 +523,7 @@ int main(int argc, char **argv)
 
 #ifdef DYCK_RANDOM_DEBUG
 {
+  printf("Fooey\n");
   FILE *f = fopen("closed_graph.dot","w");
   FILE *mr_f = fopen("mr_closed_graph.dot","w");
   assert(f);
