@@ -67,19 +67,14 @@ typedef struct sig_elt_ sig_elt;
 typedef struct constructor_ *constructor;
 typedef struct flowrow_field_ *flowrow_field;
 
-/* Time structure. */
-typedef struct banshee_time_ {
-  int time;
-} banshee_time;
-
 /* Read the global banshee clock */
-banshee_time banshee_get_time(void);
+int banshee_get_time(void);
 
 /* Backtrack 1 constraint */
 void banshee_rollback(void);
 
 /* Backtrack to time t. If t is >= the current time, this has no effect */
-void banshee_backtrack(banshee_time t);
+void banshee_backtrack(int t);
 
 DECLARE_LIST(sig_elt_list,sig_elt*);
 DECLARE_LIST(flowrow_map,flowrow_field);

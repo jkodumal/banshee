@@ -604,7 +604,7 @@ cmd:       TOK_CMD TOK_IDENT
         |  TOK_CMD TOK_IDENT TOK_INTEGER
            {
 	     if (!strcmp($2,"undo")) {
-	       banshee_backtrack((banshee_time){$3});
+	       banshee_backtrack($3);
 	     }
 	     /* TODO */
 	     else if (!strcmp($2,"trace")) {
@@ -662,7 +662,7 @@ int main(int argc, char **argv) {
   if (interactive) {
     printf("iBanshee version 0.1\n");
     do {
-      int time = banshee_get_time().time;
+      int time = banshee_get_time();
       printf("[%d] > ",time);
       fflush(stdout);
       
