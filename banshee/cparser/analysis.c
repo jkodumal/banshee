@@ -79,7 +79,7 @@ typedef struct var_info
   type c_type;
   var_kind kind;
   char *name;
-  bool visible;
+  int visible;
   int scope;
 } *var_info;
 
@@ -212,7 +212,7 @@ static var_info new_var(const char *name,type c_type,
   v_info->name = rstrdup(analysis_rgn,name);
   v_info->c_type = c_type;
   v_info->kind = kind;
-  v_info->visible = is_visible;
+  v_info->visible = (int)is_visible;
 
   if ( (kind == vk_global) )
     v_info->scope = 0;
@@ -374,12 +374,12 @@ static void fun_type(function_decl fdecl,char *ret_name)
   pta_assignment(fun_ref,f_type);
 }
 
-static bool is_fun_ret(const char *name)
+bool is_fun_ret(const char *name)
 {
   return ((*name) == '@');
 }
 
-static bool is_global_name(const char *name)
+bool is_global_name(const char *name)
 {
   int i;
   char *suffixes[] = {"@0","@0[]","@0$",NULL};
@@ -405,7 +405,7 @@ static char *get_fun_ret(const char *name)
   return ret_name;
 }
 
-static bool is_global_scope()
+bool is_global_scope()
 {
   return (env_parent(local_env) == NULL);
 }
@@ -552,7 +552,7 @@ static type unary_oper_type(ast_kind kind,type t)
   return ptr_void_type;
 }
 
-static bool will_generate_assignment(expression lhs, type lhs_type, 
+bool will_generate_assignment(expression lhs, type lhs_type, 
 				     expression e)
 {
   if (type_array(lhs_type) && type_char(type_array_of(lhs_type)) 
@@ -1416,7 +1416,7 @@ static void analyze_statement(statement s)
     case kind_continue_stmt:
       break;
     default:
-      printf(stderr,"Warning, unhandled stmt kind: %d\n", s->kind );
+      fprintf(stderr,"Warning, unhandled stmt kind: %d\n", s->kind );
       break;
     }
 }
@@ -1453,7 +1453,7 @@ void print_analysis_results() deletes
   while (env_next(&es,&name,(void **)&v_info))
     {
       T_list_cons(pta_get_contents(v_info->t_type),ptset_list);
-      list_cons((list_data) v_info->visible,visibles);
+      list_cons( (list_data) v_info->visible,visibles);
       if (v_info->visible)
 	{
 	  /*  printf("%s\n",v_info->name); */
@@ -1467,7 +1467,7 @@ void print_analysis_results() deletes
 
   while (T_list_next(&scan,&ptset))
     {
-      if ( (bool) list_head(visibles) )
+      if ( list_head(visibles) )
 	{
 	  int size = pta_get_ptsize(ptset);
 	  non_empty_sets += size ? 1 : 0;

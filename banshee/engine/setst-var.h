@@ -33,6 +33,7 @@
 
 #include "linkage.h"
 #include "banshee.h"
+#include "bounds.h"
 #include "jcollection.h"
 
 EXTERN_C_BEGIN
@@ -48,9 +49,9 @@ setst_var st_fresh_small(region r, const char *name);
 stamp st_get_stamp(setst_var v);
 char *st_get_name(setst_var v);
 void st_unify(setst_var v,setst_var_list vars);
-setst_var_list st_get_lbs(setst_var v); 
-gen_e_list st_get_sources(setst_var v);
-gen_e_list st_get_sinks(setst_var v);
+bounds st_get_lbs(setst_var v); 
+bounds st_get_sources(setst_var v);
+bounds st_get_sinks(setst_var v);
 gen_e st_get_ub_proj(setst_var v, get_proj_fn_ptr get_proj);
 bool st_add_lb(setst_var v, setst_var lb);
 bool st_add_source(setst_var v, gen_e source, stamp s);

@@ -305,8 +305,8 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"print-stats",&flag_print_stats,1},
   {"points-to",&flag_points_to,1},
 #ifndef ANDERSEN_ST
-  {"cycle_elim",&flag_eliminate_cycles,1},
-  {"proj-merge",&flag_merge_projections,1},
+  {"cycle_elim",(int*)&flag_eliminate_cycles,1},
+  {"proj-merge",(int*)&flag_merge_projections,1},
 #endif
   {"print-vars",&flag_print_vars,1},
   {"print-graph",&flag_print_graph,1},
@@ -436,7 +436,7 @@ static struct timeval start_time, finish_time;
 /* Begin timing */
 static void begin_time(void)
 {
-    timerisset(&start_time);
+   /*  timerisset(&start_time); */
     gettimeofday(&start_time, NULL);
 }
 
@@ -445,7 +445,7 @@ static void end_time(struct timeval *timer)
 {
     struct timeval diff_time;
 
-    timerisset(&start_time);
+  /*   timerisset(&start_time); */
     gettimeofday(&finish_time, NULL);
     timersub(&finish_time, &start_time, &diff_time);
     timeradd(timer, &diff_time, timer);

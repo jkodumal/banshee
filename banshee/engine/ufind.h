@@ -27,13 +27,18 @@
  * SUCH DAMAGE.
  *
  */
-
 #ifndef UFIND_H
 #define UFIND_H
 
 #include "linkage.h"
 #include "regions.h"
 #include "bool.h"
+
+/* Type safe, generic union-find data structure with support for
+ * backtracking. Use DECLARE_UFIND and DEFINE_UFIND macros to get type
+ * safety. DO NOT USE the untyped defs. This module *must* be
+ * initialized prior to use via a call to uf_init()  */
+
 
 EXTERN_C_BEGIN
 
@@ -42,21 +47,44 @@ struct uf_element;
 typedef struct uf_element *uf_element;
 typedef void *uf_info;
 
-/* Given two infos, return an equivalence class representative for
-   them. They are const so that the original (unmutated) information
-   can be saved and restored in the event of a de-union */
+/* Given two infos, return a representative for them. The infos are
+ * const so that the original information for the separate equivalence
+ * classes can be saved and restored in the event of a rollback */
 typedef uf_info (*combine_fn_ptr)(const uf_info, const uf_info);
 
+/* Initialize the union find module. Must be called before any other
+ * call to uf_ */
 void uf_init();
+
+/* Create a new union find element with info i in region r  */
 struct uf_element *new_uf_element(region r,uf_info i);  
+
+/* Return the info associated with the element's equivalence class */
 uf_info uf_get_info(struct uf_element *); 
+
+/* Put two elements in the same equivalence class. The information for
+ * the equivalence class is determined by the combine_fn_ptr */
 bool uf_unify(combine_fn_ptr, struct uf_element *, struct uf_element *);
+
+/* Put two elements in the same equivalence class. The information for
+ * the equivalence class is picked from one of the two elements */
 bool uf_union(struct uf_element *,struct uf_element *);
+
+/* Check whether two elements are in the same equivalence class  */
 bool uf_eq(struct uf_element *, struct uf_element *);
+
+/* Update the information associated with the element's equivalence
+ * class */
 void uf_update(struct uf_element *,uf_info i);
-void uf_tick();			/* Put a mark on the history for rollback */
-void uf_backtrack();		/* Undo the last union/unify/update/tick */
-void uf_rollback(); 		/* Backtrack to the last tick */
+
+/* Put a mark on the history for rollback */
+void uf_tick();		
+
+/* Undo just the last union/unify/update/tick */
+void uf_backtrack();		
+
+/* Backtrack to the last tick */
+void uf_rollback(); 		
 
 #define DECLARE_UFIND(name,type) \
 typedef struct name *name; \

@@ -106,7 +106,7 @@ data_declaration declare_region_temporary(region r, compound_stmt block)
   return declare_temporary(r, block, region_type);
 }
 
-static void print_vars(bitset vars, data_declaration *vmap)
+void print_vars(bitset vars, data_declaration *vmap)
 {
   int vid;
 

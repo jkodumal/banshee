@@ -2919,6 +2919,8 @@ static char *rid_name_int(int id)
     case RID_COMPLEX: return "__complex";
     default: assert(0);
     }
+  assert(0);
+  return NULL;
 }
 
 /* Returns name of r */

@@ -28,6 +28,9 @@
  *
  */
 
+/* There are multiple implementations of this interface (see,
+ * e.g. bounds.c, hash_bounds.c) */
+
 #ifndef BOUNDS_H
 #define BOUNDS_H
 
@@ -35,21 +38,48 @@
 #include "banshee.h"
 #include "stamp.h"
 #include "hashset.h"
+#include "list.h"
+#include "hash.h"
 
 EXTERN_C_BEGIN
 
-typedef struct bounds *bounds;
+typedef struct bounds_ *bounds;
 
+/* Hack: throw in all the necessary scanner implementations */
+struct bounds_scanner_ {
+  struct list_scanner ls;
+  hash_table_scanner hs;
+}; /* Opaque type: do not edit the fields!  */
+
+typedef struct bounds_scanner_ bounds_scanner;
+
+/* Create a new bounds representation */
 bounds bounds_create(region r);
 
+/* Replace with iterator */
 gen_e_list bounds_exprs(bounds);
 
-/* returns true if the bound was already present */
+void bounds_scan(bounds, bounds_scanner *);
+
+bool bounds_next(bounds_scanner *, gen_e *e);
+
+/* Returns true if the bound was already present */
 bool bounds_add(bounds,gen_e,stamp);
+
+/* Returns true if the bound was removed */
+bool bounds_remove(bounds,gen_e,stamp);
+
+/* Returns true if the bound was present */
 bool bounds_query(bounds,stamp); 
+
+/* Returns true if there are no bounds */
 bool bounds_empty(bounds);
+
 void bounds_delete(bounds);  
-void bounds_set(bounds,gen_e_list);
+
+void bounds_set(bounds, gen_e_list);
+
+int bounds_size(bounds);
 
 EXTERN_C_END
 

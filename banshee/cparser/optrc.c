@@ -125,7 +125,7 @@ bool collapse_graph(function_decl fd, data_declaration local,
   return superblack != NULL;
 }
 
-static long collapsed_cfg_size(function_decl fd)
+long collapsed_cfg_size(function_decl fd)
 {
   node parentptr *gnodes = fd->postorder_nodes;
   long i, nnodes = fd->postorder_size, size = 0;
@@ -182,7 +182,7 @@ static long mark_grey(node n, node white, node black)
   return cnt + 1;
 }
 
-static void count_grey_components(function_decl fd, node white, node black)
+void count_grey_components(function_decl fd, node white, node black)
 {
   node parentptr *gnodes = fd->postorder_nodes;
   long nnodes = fd->postorder_size, i;

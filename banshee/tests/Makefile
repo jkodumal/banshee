@@ -41,7 +41,7 @@ ENGINE_LIB = $(engine_dir)/libengine.a
 CC = gcc
 
 CFLAGS = -g -pg -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
-         -Dsameregion= -Dparentptr= -Wall
+         -Dsameregion= -Dparentptr= -Wall -Werror
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 

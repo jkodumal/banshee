@@ -33,6 +33,7 @@
 
 #include "linkage.h"
 #include "banshee.h"
+#include "bounds.h"
 #include "jcollection.h"
 
 EXTERN_C_BEGIN
@@ -49,8 +50,12 @@ setif_var sv_fresh_small(region r, const char *name);
 stamp sv_get_stamp(setif_var v);
 char *sv_get_name(setif_var v);
 void sv_unify(setif_var v,setif_var_list vars);
-gen_e_list sv_get_lbs(setif_var v);
-gen_e_list sv_get_ubs(setif_var v);
+
+/* gen_e_list sv_get_lbs(setif_var v); */
+/* gen_e_list sv_get_ubs(setif_var v); */
+bounds sv_get_lbs(setif_var v);
+bounds sv_get_ubs(setif_var v);
+
 bool sv_add_ub(setif_var v, gen_e e, stamp st);
 bool sv_add_lb(setif_var v, gen_e e, stamp st);
 bool sv_is_ub(setif_var v, stamp st);

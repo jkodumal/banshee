@@ -58,6 +58,8 @@ data_declaration get_parameter(declaration d)
     default:
       assert(0);
     }
+  assert(0);
+  return NULL;
 }
 
 data_declaration base_identifier(data_declaration d)

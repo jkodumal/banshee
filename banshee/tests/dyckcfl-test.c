@@ -86,7 +86,7 @@ static void test_dyck_isomorphism()
 
   assert(dyck_check_reaches(d1,d1)); // check that reflexivity works
   assert(dyck_check_reaches(d1,d2)); // check that subtyping alone works
-  assert(dyck_check_reaches(d0,d3));	// check that an open/close matching works
+  assert(dyck_check_reaches(d0,d3)); // check that an open/close matching works
   assert(dyck_check_reaches(d5,d4)); // check another open/close matching
 
   assert(!dyck_check_reaches(d0,d4)); // make sure that (_1 )_2 doesn't work

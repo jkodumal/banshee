@@ -215,12 +215,12 @@ static setif_var_list search_ubs(region r, setif_var v1, setif_var goal)
 	}
       else 
 	{
-	  gen_e_list_scanner scan;
+	  bounds_scanner scan;
 	  gen_e ub;
-	  gen_e_list ubs = sv_get_ubs(v);
+	  bounds ubs = sv_get_ubs(v);
 	  
-	  gen_e_list_scan(ubs,&scan);
-	  while (gen_e_list_next(&scan,&ub))
+	  bounds_scan(ubs,&scan);
+	  while (bounds_next(&scan,&ub))
 	  {
 	    if (setif_is_var(ub))
 	      {
@@ -261,12 +261,12 @@ static setif_var_list search_lbs(region r, setif_var v1, setif_var goal)
 	}
       else
 	{
-	  gen_e_list_scanner scan;
+	  bounds_scanner scan;
 	  gen_e lb;
-	  gen_e_list lbs = sv_get_lbs(v);
+	  bounds lbs = sv_get_lbs(v);
 	  
-	  gen_e_list_scan(lbs,&scan);
-	  while (gen_e_list_next(&scan,&lb))
+	  bounds_scan(lbs,&scan);
+	  while (bounds_next(&scan,&lb))
 	  {
 	    if (setif_is_var(lb))
 	      {
@@ -322,7 +322,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 			    setif_var_list cycle) deletes
     {
       gen_e lb;
-      gen_e_list_scanner scan_bounds;
+      bounds_scanner scan_bounds;
       setif_var_list_scanner scan_cycle;
       setif_var var;
 
@@ -336,16 +336,16 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       while(setif_var_list_next(&scan_cycle,&var))
 	{
 	  assert( sv_get_stamp(var) > lowest);
-	  gen_e_list_scan(sv_get_lbs(var),&scan_bounds);
-	  while(gen_e_list_next(&scan_bounds,&lb))
+	  bounds_scan(sv_get_lbs(var),&scan_bounds);
+	  while(bounds_next(&scan_bounds,&lb))
 	    bounds_add(b,lb,setif_get_stamp(lb));
 	}
 
       sv_unify(witness,cycle);
       assert(sv_get_stamp(witness) == lowest);
       
-      gen_e_list_scan(bounds_exprs(b),&scan_bounds);
-      while (gen_e_list_next(&scan_bounds,&lb))
+      bounds_scan(b,&scan_bounds);
+      while (bounds_next(&scan_bounds,&lb))
 	setif_inclusion(con_match,res_proj,pr,lb, (gen_e) witness);
       
       bounds_delete(b);
@@ -359,7 +359,8 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 			    setif_var_list cycle) deletes
     {
       gen_e ub;
-      gen_e_list_scanner scan_bounds;
+      bounds_scanner scan_bounds;
+      gen_e_list_scanner scan_projs;
       setif_var_list_scanner scan_cycle;
       setif_var var;
 
@@ -374,20 +375,20 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	{ 
 	  assert( sv_get_stamp(var) > lowest);
 
-	  gen_e_list_scan(sv_get_ubs(var),&scan_bounds);
-	  while(gen_e_list_next(&scan_bounds,&ub))
+	  bounds_scan(sv_get_ubs(var),&scan_bounds);
+	  while(bounds_next(&scan_bounds,&ub))
 	    bounds_add(b,ub,setif_get_stamp(ub));
 	  
-	  gen_e_list_scan(sv_get_ub_projs(var),&scan_bounds);
-	  while(gen_e_list_next(&scan_bounds,&ub))
+	  gen_e_list_scan(sv_get_ub_projs(var),&scan_projs);
+	  while(gen_e_list_next(&scan_projs,&ub))
 	    bounds_add(b,ub,setif_get_stamp(ub));
 	}
 
       sv_unify(witness,cycle);
       assert(sv_get_stamp(witness) == lowest);
 
-      gen_e_list_scan(bounds_exprs(b),&scan_bounds);
-      while (gen_e_list_next(&scan_bounds,&ub))
+      bounds_scan(b,&scan_bounds);
+      while (bounds_next(&scan_bounds,&ub))
 	setif_inclusion(con_match,res_proj,pr,(gen_e) witness, ub);
 	
       bounds_delete(b);
@@ -412,6 +413,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	{
 	  gen_e_list_scanner scan;
 	  gen_e ub;
+	  bounds_scanner scan_bounds;
 	  
 	  if (setif_is_var(e))
 	    setif_stats.added_succ++;
@@ -420,8 +422,8 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	  
 	  invalidate_tlb_cache();
 
-	  gen_e_list_scan(sv_get_ubs(v),&scan);
-	  while(gen_e_list_next(&scan,&ub))
+	  bounds_scan(sv_get_ubs(v),&scan_bounds);
+	  while(bounds_next(&scan_bounds,&ub))
 	    setif_inclusion(con_match,res_proj,pr,e,ub);
 	  
 	  gen_e_list_scan(sv_get_ub_projs(v),&scan);
@@ -445,7 +447,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       
       else
 	{
-	  gen_e_list_scanner scan;
+	  bounds_scanner scan;
 	  gen_e lb;
 
 	  if (setif_is_var(e))
@@ -455,8 +457,8 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 
 	  invalidate_tlb_cache();
 	  
-	  gen_e_list_scan(sv_get_lbs(v),&scan);
-	  while (gen_e_list_next(&scan,&lb))
+	  bounds_scan(sv_get_lbs(v),&scan);
+	  while (bounds_next(&scan,&lb))
 	    setif_inclusion(con_match,res_proj,pr,lb,e);
 
 	}
@@ -898,11 +900,11 @@ static jcoll tlb_aux(gen_e e)
 	  jcoll result;
 	  gen_e_list sources = new_gen_e_list(tlb_cache_region);
 	  jcoll_list jvars = new_jcoll_list(tlb_cache_region);
-	  gen_e_list_scanner scan;
+	  bounds_scanner scan;
 	  gen_e lb;
 
-	  gen_e_list_scan(sv_get_lbs(v),&scan);
-	  while (gen_e_list_next(&scan,&lb))
+	  bounds_scan(sv_get_lbs(v),&scan);
+	  while (bounds_next(&scan,&lb))
 	    {
 	      if (setif_is_var(lb))
 		jcoll_list_cons(tlb_aux(lb),jvars);
@@ -986,7 +988,7 @@ bool setif_proj_merge(setif_var v, gen_e se, get_proj_fn_ptr get_proj,
   
   else
     {
-      gen_e_list_scanner scan;
+      bounds_scanner scan;
       gen_e lb;
       
       gen_e proj_var;
@@ -1002,8 +1004,8 @@ bool setif_proj_merge(setif_var v, gen_e se, get_proj_fn_ptr get_proj,
       sv_add_ub_proj(v, proj_cons);
       
       /* apply the transitive rule to each of v's lower bounds */ 
-      gen_e_list_scan(sv_get_lbs(v),&scan);
-      while (gen_e_list_next(&scan,&lb))
+      bounds_scan(sv_get_lbs(v),&scan);
+      while (bounds_next(&scan,&lb))
 	{
 	  set_incl(lb,proj_cons);
 	}

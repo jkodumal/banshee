@@ -32,7 +32,7 @@ other tasks (a wishlist)
   -x- set up test suite
   -x- update copyrights (year)
   -x- fix all <>-style includes to "", and remove engine/ in codegen
-  -x- add semicolon to end of all DECLARE_XXXX macros  in codegen
+  -x- add semicolon to end of all DECLARE_XXXX macros in codegen
   -x- write script for banshee to run output through indent (just through make)
   -x- fix etags dependencies
   -x- tests/Makefile dependencies are not right (they seem correct now)

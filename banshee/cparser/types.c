@@ -1179,9 +1179,11 @@ type common_type(type t1, type t2)
 
 	      while (args1)
 		{
-		  (argtype = weird_common_parameter(args1->t, args2->t)) ||
-		  (argtype = weird_common_parameter(args2->t, args1->t)) ||
-		  (argtype = common_type(args1->t, args2->t));
+		  int waste = 
+		    (argtype = weird_common_parameter(args1->t, args2->t)) ||
+		    (argtype = weird_common_parameter(args2->t, args1->t)) ||
+		    (argtype = common_type(args1->t, args2->t));
+		  assert(waste || !waste);
 		  typelist_append(args, argtype);
 
 		  args1 = args1->next;

@@ -28,91 +28,99 @@
  *
  */
 
-/* Hashset/list based bounds implementation. Deletion is an
- * expensive operation. */
+/* Hashtable based bounds implementation */
 
 #include <stdlib.h>
 #include <assert.h>
+#include "hash.h"
 #include "bounds.h"
+#include "stamp.h"
 
-struct bounds_
-{
-  hash_set set;
-  gen_e_list elems;
+struct bounds_ {
+  hash_table table;
 };
+
+/* From here: http://www.concentric.net/~Ttwang/tech/inthash.htm  */
+unsigned long stamp_hash(hash_key key)
+{
+  unsigned long keyval = (unsigned long)key;
+  keyval += (keyval << 12);
+  keyval ^= (keyval >> 22);
+  keyval += (keyval << 4);
+  keyval ^= (keyval >> 9);
+  keyval += (keyval << 10);
+  keyval ^= (keyval >> 2);
+  keyval += (keyval << 7);
+  keyval ^= (keyval >> 12);
+  return keyval;
+}
+
+
+static bool stamp_eq(hash_key s1, hash_key s2)
+{
+  return s1 == s2;
+}
 
 bounds bounds_create(region r)
 {
   bounds result;
-  
   result = ralloc(r, struct bounds_);
-  result->set = hs_create(r);
-  result->elems = new_gen_e_list(r);
-
+  result->table = make_hash_table(r, 8, stamp_hash, stamp_eq);
+  
   return result;
 }
 
+/* TODO */
 gen_e_list bounds_exprs(bounds b)
 {
-  return b->elems;
-}
-
-void bounds_scan(bounds b, bounds_scanner *bs)
-{
-  gen_e_list_scan(b->elems, &(bs->ls));
-}
-
-bool bounds_next(bounds_scanner *bs, gen_e *e)
-{
-  return gen_e_list_next(&(bs->ls), e);
-}
-
-bool bounds_add(bounds b, gen_e e, stamp s)
-{
-  bounds_query(b,s);
-  if (hs_member(b->set, s))	
-    return TRUE;
-  
-  else
-    {
-      gen_e_list_cons(e,b->elems);
-      return FALSE;
-    }
-}
-
-/* TODO */
-bool bounds_remove(bounds b, gen_e e, stamp s)
-{
-  fprintf(stderr,"Bounds remove not implemented!\n");
   assert(0);
-  return FALSE;
+  return NULL;
 }
 
-bool bounds_empty(bounds b)
+void bounds_scan(bounds b, bounds_scanner *scan)
 {
-  return (gen_e_list_empty(b->elems));
+  hash_table_scan(b->table,&scan->hs);
+}
+
+bool bounds_next(bounds_scanner *scan, gen_e *e)
+{
+  return hash_table_next(&scan->hs,NULL,(hash_data *) e);
+}
+
+bool bounds_add(bounds b, gen_e e, stamp st)
+{
+  return !hash_table_insert(b->table, (hash_key)st, (hash_data) e);
+}
+
+/* Returns TRUE if e was in the bounds */
+bool bounds_remove(bounds b, gen_e e, stamp st)
+{
+  return hash_table_remove(b->table,(hash_key)st);
 }
 
 bool bounds_query(bounds b, stamp st)
 {
-  bool result = (hs_query(b->set, st));
+  bool result = hash_table_lookup(b->table, (hash_key)st, NULL);
   return result;
 }
 
-void bounds_set(bounds b,gen_e_list l)
+bool bounds_empty(bounds b)
 {
-  b->elems = l;
-}
-
-int bounds_size(bounds b)
-{
-  return gen_e_list_length(b->elems);
+  return (hash_table_size(b->table) == 0);
 }
 
 void bounds_delete(bounds b)
 {
-  hs_delete(b->set);
-  gen_e_list_clear(b->elems);
+  hash_table_reset(b->table);
 }
 
+/* TODO */
+void bounds_set(bounds b, gen_e_list el)
+{
+  assert(0);
+}
 
+int bounds_size(bounds b)
+{
+  return hash_table_size(b->table);
+}

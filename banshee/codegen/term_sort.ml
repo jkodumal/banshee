@@ -100,11 +100,11 @@ class termsort_gen =
 	 {\n \
 	     return term_fresh(name);\n\
 	 }\n\n\
-	 static EXPRID EXPRID_fresh_small(const char *name)\n\
+	 EXPRID EXPRID_fresh_small(const char *name)\n\
 	 {\n \
 	    return term_fresh_small(name);\n\
 	 }\n\n\
-	 static EXPRID EXPRID_fresh_large(const char *name)\n\
+	 EXPRID EXPRID_fresh_large(const char *name)\n\
 	 {\n \
 	     return term_fresh_large(name);\n\
 	 }\n\n\
@@ -134,7 +134,7 @@ class termsort_gen =
          {\n \
 	    return term_get_stamp(e1) - term_get_stamp(e2);\n\
 	 }\n\n\
-	 static void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
+	 void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
 	 {\n \
 	    term_unify(EXPRID_con_match,EXPRID_occurs,e2,e1);\n\
 	 }\n\n\

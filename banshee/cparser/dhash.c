@@ -84,7 +84,7 @@ void *dhlookup(dhash_table h, void *x)
 void dhadd(dhash_table h, void *x)
 {
   unsigned long hash = h->hash(x);
-  unsigned long i;
+  unsigned long i = 0;
 
   h->used++;
   if (h->used > 3 * h->size / 4)

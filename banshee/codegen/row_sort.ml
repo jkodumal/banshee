@@ -92,11 +92,11 @@ class row_sort_gen (e' : exprid) =
          {\n\
             return flowrow_fresh(name);\n\
          }\n\n\
-         static EXPRID EXPRID_fresh_small(const char *name)\n\
+         EXPRID EXPRID_fresh_small(const char *name)\n\
          {\n\
             return flowrow_fresh_small(name);\n\
          }\n\n\
-         static EXPRID EXPRID_fresh_large(const char *name)\n\
+         EXPRID EXPRID_fresh_large(const char *name)\n\
          {\n\
             return flowrow_fresh_large(name);\n\
          }\n\n\
@@ -129,7 +129,7 @@ class row_sort_gen (e' : exprid) =
          flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion,\
 			       EPRIME_zero(), row1,row2);\n\
          }\n\n\
-         static void EXPRID_inclusion_contra(EXPRID row1, EXPRID row2) \n\
+         void EXPRID_inclusion_contra(EXPRID row1, EXPRID row2) \n\
          {\n\
          flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion,\
 			       EPRIME_zero(), row2,row1);\n\

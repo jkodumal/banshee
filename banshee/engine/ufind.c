@@ -303,8 +303,6 @@ void uf_tick()
   union_stack_cons(NULL,ustack);
 }
 
-
-
 void uf_init()
 {
   stackregion = newregion();

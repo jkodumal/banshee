@@ -172,11 +172,11 @@ static void fire_pending(term_var v, gen_e e,
 			 con_match_fn_ptr con_match, 
 			 occurs_check_fn_ptr occurs)
 {
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
   gen_e temp;
 
-  gen_e_list_scan(tv_get_pending(v),&scan);
-  while (gen_e_list_next(&scan,&temp))
+  bounds_scan(tv_get_pending(v),&scan);
+  while (bounds_next(&scan,&temp))
     {
       term_unify(con_match,occurs,temp,e);
     }
@@ -215,21 +215,21 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 	fire_pending(v,e2,con_match,occurs);
 
       if (term_is_var(e2)) {
-	gen_e_list_scanner scan;
+	bounds_scanner scan;
 	gen_e temp;
-	gen_e_list pending1 = tv_get_pending((term_var)e2),
+	bounds pending1 = tv_get_pending((term_var)e2),
 	  pending2 = tv_get_pending(v);
 	tv_unify_vars(v,(term_var)e2);
 	
-	gen_e_list_scan(pending1,&scan);
+	bounds_scan(pending1,&scan);
 
-	while(gen_e_list_next(&scan,&temp)) {
+	while(bounds_next(&scan,&temp)) {
 	  tv_add_pending(v,temp,term_get_stamp(temp));
 	}
 	
-	gen_e_list_scan(pending2, &scan);
+	bounds_scan(pending2, &scan);
 	
-	while(gen_e_list_next(&scan,&temp)) {
+	while(bounds_next(&scan,&temp)) {
 	  tv_add_pending(v,temp,term_get_stamp(temp));
 	}
 

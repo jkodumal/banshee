@@ -97,9 +97,9 @@ char *tv_get_name(term_var v)
   return tv_get_v_ecr(v)->name;
 }
 
-gen_e_list tv_get_pending(term_var v)
+bounds tv_get_pending(term_var v)
 {
-  return bounds_exprs(tv_get_v_ecr(v)->pending);
+  return tv_get_v_ecr(v)->pending;
 }
 
 void tv_add_pending(term_var v,gen_e e, stamp st)

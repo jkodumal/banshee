@@ -599,15 +599,15 @@ gen_e setif_proj(constructor c, int i, gen_e e)
       else
 	{
 	  gen_e pat;
-	  gen_e_list_scanner scan;
+	  bounds_scanner scan;
 	  gen_e lb;
 	  //	  proj_var = get_proj_var(c->sig[i].sort,FALSE);
 	  proj_var = get_vinv_proj_var(c->sig[i].sort,c,i,e);
 	  pat = setif_proj_pat(c,i,proj_var);
 	  sv_add_ub_proj(v,pat);
 	  
-	  gen_e_list_scan(sv_get_lbs(v),&scan);
-	  while (gen_e_list_next(&scan,&lb))
+	  bounds_scan(sv_get_lbs(v),&scan);
+	  while (bounds_next(&scan,&lb))
 	    {
 	      setif_inclusion_ind(lb,pat);
 	    }

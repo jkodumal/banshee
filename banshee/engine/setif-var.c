@@ -144,14 +144,14 @@ void sv_unify(setif_var v,setif_var_list vars)
     }
 }
 
-gen_e_list sv_get_lbs(setif_var v)
+bounds sv_get_lbs(setif_var v)
 {
-  return bounds_exprs(get_info(v)->lbs);
+  return get_info(v)->lbs;
 }
 
-gen_e_list sv_get_ubs(setif_var v)
+bounds sv_get_ubs(setif_var v)
 {
-  return bounds_exprs(get_info(v)->ubs);
+  return get_info(v)->ubs;
 }
 
 bool sv_add_ub(setif_var v, gen_e e, stamp s)

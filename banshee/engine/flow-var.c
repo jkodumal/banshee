@@ -95,14 +95,14 @@ char * fv_get_name(flow_var v)
   return v->name;
 }
 
-gen_e_list fv_get_lbs(flow_var v)
+bounds fv_get_lbs(flow_var v)
 {
-  return bounds_exprs(v->lbs);
+  return v->lbs;
 }
 
-gen_e_list fv_get_ubs(flow_var v)
+bounds fv_get_ubs(flow_var v)
 {
-  return bounds_exprs(v->ubs);
+  return v->ubs;
 }
 
 bool fv_add_ub(flow_var v, gen_e e, stamp st)

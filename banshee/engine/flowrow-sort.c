@@ -34,6 +34,7 @@
 #include "regions.h"
 #include "flowrow-sort.h"
 #include "termhash.h"
+#include "bounds.h"
 
 #include "setif-sort.h"
 
@@ -390,10 +391,10 @@ static  void trans_lbs(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 		       flow_var v, gen_e e) deletes
 {
   gen_e temp;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
   
-  gen_e_list_scan(fv_get_lbs(v),&scan);
-  while (gen_e_list_next(&scan,&temp))
+  bounds_scan(fv_get_lbs(v),&scan);
+  while (bounds_next(&scan,&temp))
       flowrow_inclusion(fresh,get_stamp,field_incl,zero_elem,temp,e);
   
 }
@@ -403,10 +404,10 @@ static  void trans_ubs(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 		       flow_var v, gen_e e) deletes
 {
   gen_e temp;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
   
-  gen_e_list_scan(fv_get_ubs(v),&scan);
-  while (gen_e_list_next(&scan,&temp))
+  bounds_scan(fv_get_ubs(v),&scan);
+  while (bounds_next(&scan,&temp))
     flowrow_inclusion(fresh,get_stamp,field_incl,zero_elem,e,temp);
 }
 

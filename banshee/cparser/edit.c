@@ -489,7 +489,7 @@ data_declaration stabilise_lvalue(region r, compound_stmt block,
 				  expression lvalue,
 				  expression *use, expression *stabiliser)
 {
-  data_declaration temp;
+  data_declaration temp = NULL;
 
   switch (lvalue->kind)
     {

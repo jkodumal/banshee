@@ -61,8 +61,10 @@ int main()
   elt_union(e2,e3);		// | e1 e2 e3 | e4 | 
   elt_union(e3,e4);		// | e1 e2 e3 e4 | 
 
+  assert(elt_get_info(e1) == elt_get_info(e2));
+  assert(elt_get_info(e2) == elt_get_info(e3));
   assert(elt_get_info(e1) == elt_get_info(e4));
-  
+    
   uf_backtrack();		// | e1 e2 e3 | e4 | 
   assert(elt_get_info(e4) == 4);
 //   printf("(%d,%d,%d,%d)",elt_get_info(e1),elt_get_info(e2),elt_get_info(e3),

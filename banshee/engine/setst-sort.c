@@ -456,11 +456,11 @@ static void set_tlb_cache(setst_var v,jcoll j)
 static void collect_sinks(bounds b,setst_var v)
 {
   gen_e sink;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
 
-  gen_e_list_scan(st_get_sinks(v),&scan);
+  bounds_scan(st_get_sinks(v),&scan);
 
-  while (gen_e_list_next(&scan,&sink))
+  while (bounds_next(&scan,&sink))
     {
       bounds_add(b,sink,setst_get_stamp(sink));
     }  
@@ -469,11 +469,11 @@ static void collect_sinks(bounds b,setst_var v)
 static void collect_sources(bounds b, setst_var v)
 {
   gen_e source;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
 
-  gen_e_list_scan(st_get_sources(v),&scan);
+  bounds_scan(st_get_sources(v),&scan);
 
-  while (gen_e_list_next(&scan,&source))
+  while (bounds_next(&scan,&source))
     {
       bounds_add(b,source,setst_get_stamp(source));
     }  
@@ -481,25 +481,25 @@ static void collect_sources(bounds b, setst_var v)
 
 static void collect_lower_bounds(bounds b, setst_var v)
 {
-  setst_var lb;
-  setst_var_list_scanner scan;
+  gen_e lb;
+  bounds_scanner scan;
 
-  setst_var_list_scan(st_get_lbs(v),&scan);
+  bounds_scan(st_get_lbs(v),&scan);
 
-  while (setst_var_list_next(&scan,&lb))
+  while (bounds_next(&scan,&lb))
     {
-      bounds_add(b,(gen_e)lb,st_get_stamp(lb));
+      bounds_add(b,lb,setst_get_stamp(lb));
     }  
 }
  
 static void apply_sources(setst_var witness, bounds sources)
 {
   gen_e source;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
 
-  gen_e_list_scan(bounds_exprs(sources),&scan);
+  bounds_scan(sources,&scan);
 
-  while (gen_e_list_next(&scan,&source))
+  while (bounds_next(&scan,&source))
     {
       if ( st_add_source(witness,source,setst_get_stamp(source)))
 	setst_stats.redundant_source++;
@@ -514,11 +514,11 @@ static void apply_sources(setst_var witness, bounds sources)
 static void apply_sinks(setst_var witness, bounds sinks)
 {
   gen_e sink;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
 
-  gen_e_list_scan(bounds_exprs(sinks),&scan);
+  bounds_scan(sinks,&scan);
 
-  while (gen_e_list_next(&scan,&sink))
+  while (bounds_next(&scan,&sink))
     {
       if (st_add_sink(witness,sink,setst_get_stamp(sink)))
 	setst_stats.redundant_sink++;
@@ -533,11 +533,11 @@ static void apply_sinks(setst_var witness, bounds sinks)
 static void apply_lower_bounds(setst_var witness,bounds lower)
 {
   gen_e lb;
-  gen_e_list_scanner scan;
+  bounds_scanner scan;
 
-  gen_e_list_scan(bounds_exprs(lower),&scan);
+  bounds_scan(lower,&scan);
 
-  while (gen_e_list_next(&scan,&lb))
+  while (bounds_next(&scan,&lb))
     {
       if (st_add_lb(witness,(setst_var)lb))
 	setst_stats.redundant_var++;
@@ -667,19 +667,26 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	      else 
 		{
 		  jcoll result;
-		  setst_var_list_scanner scan;
-		  setst_var lb;
+		  gen_e temp;
+		  bounds_scanner b_scan;
+		  gen_e lb;
 		  jcoll_list jvars = new_jcoll_list(tlb_cache_region);
 		  
-		  gen_e_list sources = gen_e_list_copy(tlb_cache_region,
-						       st_get_sources(v));
+		  gen_e_list sources = new_gen_e_list(tlb_cache_region); 
 		  
+		  bounds_scan(st_get_sources(v),&b_scan);
+		  
+		  while(bounds_next(&b_scan,&temp)) {
+		    gen_e_list_cons(temp,sources);
+		  }
+
 		  st_set_path_pos(v,path_len);
-		  setst_var_list_scan(st_get_lbs(v),&scan);
-		  while (setst_var_list_next(&scan,&lb))
+		  
+		  bounds_scan(st_get_lbs(v),&b_scan);
+		  while (bounds_next(&b_scan,&lb))
 		    {
 		      setst_var_list_cons(v,path);
-		      jcoll_list_cons(tlb_aux((gen_e)lb,++path_len,path),
+		      jcoll_list_cons(tlb_aux(lb,++path_len,path),
 				      jvars);
 		      setst_var_list_tail(path); 
 		    }
@@ -724,7 +731,8 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
   
   static void match_sinks()
     {
-      gen_e_list_scanner tlb_scanner, sink_scanner;
+      gen_e_list_scanner tlb_scanner;
+      bounds_scanner sink_scanner;
       setst_var_list_scanner var_scanner;
       setst_var v;
       gen_e lb, sink;
@@ -734,10 +742,9 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
       while (setst_var_list_next(&var_scanner,&v))
 	{
 	  gen_e_list tlbs = tlb((gen_e)v);
-	  gen_e_list snks = st_get_sinks(v);
+	  bounds snks = st_get_sinks(v);
 	  
-
-	  if(gen_e_list_empty(st_get_sinks(v)))
+	  if(bounds_empty(snks))
 	    {
 	      setst_stats.no_sinks++;
 	      continue;
@@ -748,7 +755,7 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	      continue;
 	    }
 	  else if (gen_e_list_length(tlbs) == st_get_src_sz(v) 
-		   && gen_e_list_length(snks) == st_get_snk_sz(v) )
+		   && bounds_size(snks) == st_get_snk_sz(v) )
 	    {
 	      setst_stats.unchanged_vars++;
 	      continue;
@@ -757,15 +764,15 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	  st_set_seen(v,TRUE);
 	  
 	  st_set_src_sz(v,gen_e_list_length(tlbs));
-	  st_set_snk_sz(v,gen_e_list_length(snks));
+	  st_set_snk_sz(v,bounds_size(snks));
 	  
 	  gen_e_list_scan(tlbs,&tlb_scanner);
 	  
 	  while (gen_e_list_next(&tlb_scanner,&lb))
 	    {
-	      gen_e_list_scan(snks,&sink_scanner);
+	      bounds_scan(snks,&sink_scanner);
 
-	      while (gen_e_list_next(&sink_scanner,&sink))
+	      while (bounds_next(&sink_scanner,&sink))
 		setst_incl(lb,sink);
 	    }
 	}

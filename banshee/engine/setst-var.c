@@ -139,19 +139,19 @@ void st_unify(setst_var v,setst_var_list vars)
     }
 }
 
-setst_var_list st_get_lbs(setst_var v)
+bounds st_get_lbs(setst_var v)
 {
-  return (setst_var_list)bounds_exprs(get_info(v)->lbs);
+  return get_info(v)->lbs;
 }
 
-gen_e_list st_get_sources(setst_var v)
+bounds st_get_sources(setst_var v)
 {
-  return bounds_exprs(get_info(v)->sources);
+  return get_info(v)->sources;
 }
 
-gen_e_list st_get_sinks(setst_var v)
+bounds st_get_sinks(setst_var v)
 {
-  return bounds_exprs(get_info(v)->sinks);
+  return get_info(v)->sinks;
 }
 
 bool st_add_lb(setst_var v, setst_var lb)
@@ -186,7 +186,7 @@ void st_clear_tlb_cache(setst_var v)
 
 gen_e st_get_ub_proj(setst_var v, get_proj_fn_ptr get_proj)
 {
-  return get_proj(st_get_sinks(v));
+  return get_proj(bounds_exprs(st_get_sinks(v)));
 }
 
 void st_repair_bounds(setst_var v1)
@@ -196,8 +196,8 @@ void st_repair_bounds(setst_var v1)
       return (! (st_get_stamp(v1) == st_get_stamp(v2)));
     }
   
-  setst_var_list lbs = setst_var_list_filter2(st_get_lbs(v1),neq);  
-
+  setst_var_list lbs = 
+    setst_var_list_filter2((setst_var_list)bounds_exprs(st_get_lbs(v1)),neq);
   bounds_set(get_info(v1)->lbs,(gen_e_list)lbs);
 }
 

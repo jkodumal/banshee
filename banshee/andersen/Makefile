@@ -43,11 +43,11 @@ TAGFILES = *.c *.h
 CC = gcc
 
 ifdef DEBUG
-CFLAGS = -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
-         -Dsameregion= -Dparentptr=
+CFLAGS = -Wall -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes=	\
+         -Dtraditional= -Dsameregion= -Dparentptr= -Werror
 else
 CFLAGS = -DNDEBUG -O3 -I$(engine_dir) -I$(region_dir) -Ddeletes= \
-         -Dtraditional= -Dsameregion= -Dparentptr=
+         -Dtraditional= -Dsameregion= -Dparentptr= -Wall -Werror
 endif
 
 all: $(TARGETS)

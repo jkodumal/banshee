@@ -366,6 +366,9 @@ known_cst foldaddress_field_ref(known_cst object, field_declaration fdecl)
 		  make_unsigned_cst(fdecl->offset / BITSPERBYTE, size_t_type));
 }
 
+
+long double strtold (char *, char **);
+
 lexical_cst fold_lexical_real(type realtype, location loc, cstring tok)
 {
   lexical_cst c = new_lexical_cst(parse_region, loc, tok);

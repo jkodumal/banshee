@@ -33,6 +33,7 @@
 
 #include "linkage.h"
 #include "banshee.h"
+#include "bounds.h"
 
 EXTERN_C_BEGIN
 
@@ -46,7 +47,7 @@ term_var tv_fresh_large(region r, const char *name);
 
 char *tv_get_name(term_var v);
 
-gen_e_list tv_get_pending(term_var v);
+bounds tv_get_pending(term_var v);
 void tv_add_pending(term_var v,gen_e e, stamp st);
 
 void tv_unify(term_var v, gen_e e);

@@ -76,7 +76,7 @@ class setsort_gen =
 	 EXPRID EXPRID_zero(void);\n\
 	 EXPRID EXPRID_one(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
-         static EXPRID EXPRID_fresh_large(const char *name);\n\
+         EXPRID EXPRID_fresh_large(const char *name);\n\
 	 EXPRID EXPRID_union(EXPRID_list exprs);\n\
 	 EXPRID EXPRID_inter(EXPRID_list exprs);\n\
 	 EXPRID EXPRID_constant(const char *name);\n\
@@ -99,11 +99,11 @@ class setsort_gen =
 	 {\n \
 	     return setif_fresh(name);\n\
 	 }\n\n\
-	 static EXPRID EXPRID_fresh_small(const char *name)\n\
+	 EXPRID EXPRID_fresh_small(const char *name)\n\
 	 {\n \
 	    return setif_fresh_small(name);\n\
 	 }\n\n\
-	 static EXPRID EXPRID_fresh_large(const char *name)\n\
+	 EXPRID EXPRID_fresh_large(const char *name)\n\
 	 {\n \
 	     return setif_fresh_large(name);\n\
 	 }\n\n\
@@ -141,7 +141,7 @@ class setsort_gen =
 	 {\n \
 	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
 	 }\n\n\
-	 static void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
+	 void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
 	 {\n \
 	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e2,e1);\n\
 	 }\n\n\
@@ -255,7 +255,7 @@ class setsort_gen =
       file#add_gdecl (var ~init:("{" ^ (String.uppercase c) ^ "_," 
 				 ^ (String.uppercase c) ^ "_}")
 			(no_qual (Struct "setif_term"))
-		      ( c ^ "_" ) (Some Static));
+		      ( c ^ "_" ) (None));
       for i = 0 to 1 do
 	let p,f =  gen_proto_and_fun (Array.get rets i,
 				      Array.get names i,
@@ -292,7 +292,7 @@ class setsort_gen =
       let default = Return "FALSE" in
       let body = 
 	[Switch ("((setif_term)arg2)->type",cases,default); Return "FALSE"] in
-      let p,f = gen_proto_and_fun ~dec:DStatic ~quals:[] (bool,name,args,body) in
+      let p,f = gen_proto_and_fun ~quals:[] (bool,name,args,body) in
       file#add_gdecl p;
       file#add_fdef f
 
@@ -369,7 +369,7 @@ class setsort_gen =
 			 | None -> (c,0)::acc) [] sigs) in
       let conids = List.map (function x -> (x,conids')) sigs in 
       let p,f = gen_proto_and_fun 
-	  ~dec:DStatic ~quals:[] (void,name,args,[body conids; Expr "return;"]) in
+	   ~quals:[] (void,name,args,[body conids; Expr "return;"]) in
       file#add_gdecl p;
       file#add_fdef f      
 
@@ -378,7 +378,7 @@ class setsort_gen =
       let header_decl =
 	"EPRIME CONSTRUCTOR_projNUMBER(EXPRID arg1) ;" in
       let file_decl1 = 
-	"static gen_e get_CONSTRUCTOR_projNUMBER_arg(gen_e_list arg1)\n\
+	"gen_e get_CONSTRUCTOR_projNUMBER_arg(gen_e_list arg1)\n\
 	  {\n\
 	     gen_e temp;\n\
 	     gen_e_list_scanner scan;\n\
@@ -407,12 +407,12 @@ class setsort_gen =
 	          {\n\
 		   EXPRID e;\n\
 		   gen_e lb; \n\
-		   gen_e_list_scanner scan; \n\
+		   bounds_scanner scan; \n\
 		   c = EPRIME_fresh(NULL);\n\
 		   e = CONSTRUCTOR_patNUMBER(c);\n\
 		   sv_add_ub_proj(v,e);\n\
-		   gen_e_list_scan(sv_get_lbs(v),&scan);\n\
-		   while (gen_e_list_next(&scan,&lb))\n\
+		   bounds_scan(sv_get_lbs(v),&scan);\n\
+		   while (bounds_next(&scan,&lb))\n\
 		   {\n\
 		    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,lb,e);\n\
 		   }\n\
@@ -469,7 +469,7 @@ class setsort_gen =
       let ret1 = gen_e_type in
       let body1 = [Return ("(gen_e)" ^ c ^ "_pat" ^ n ^ 
 			   "(" ^ (parens e') ^ "arg1)") ] in 
-      let p1,f1 = gen_proto_and_fun ~dec:DStatic ~quals:[] (ret1,name1,args1,body1) in
+      let p1,f1 = gen_proto_and_fun ~quals:[] (ret1,name1,args1,body1) in
       let name2 = c ^ "_pat" ^ n in
       let args2 = args [etype e'] in
       let ret2 = etype e in

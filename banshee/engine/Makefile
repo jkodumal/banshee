@@ -25,16 +25,24 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+ifdef HASHBOUNDS
+FILTERBOUNDS = bounds.o
+else
+FILTERBOUNDS = hash_bounds.o
+endif
+
 region_dir = ../libcompat
 
 CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -Wall
+	 -Dparentptr= -Wall -Werror
 
 HDRS = $(wildcard *.h)
 
-OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+NFOBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+
+OBJS = $(filter-out $(FILTERBOUNDS), $(NFOBJS))
 
 NSOBJS = $(patsubst %.o,%.ns.o,$(OBJS))
 
@@ -70,7 +78,7 @@ nonspec.o: nonspec.c nonspec.h
 TAGS: $(TAGFILES)
 	etags ${TAGFILES}
 clean:
-	-rm -f $(OBJS) $(NSOBJS) $(TARGETS) *~ 
+	-rm -f $(NFOBJS) $(NSOBJS) $(TARGETS) *~ 
 
 
 
