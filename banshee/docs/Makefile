@@ -40,4 +40,4 @@ all: $(ALL)
 	$(banshee_bindir)/slatex $(@:.dvi=.tex)
 
 clean:
-	-rm -f *.aux *.dvi *.log *.bbl *.blg *.ps *.pdf *.toc *.lof *.lot *.xyc .cache .cache.new *~ *.idx
+	-rm -f *.aux *.dvi *.log *.bbl *.blg *.ps *.pdf *.toc *.lof *.lot *.xyc .cache* .cache.new *~ *.idx
