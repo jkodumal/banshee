@@ -287,7 +287,7 @@ decl:      TOK_VAR TOK_COLON esort
 	     }
 	     else {
 	       hash_table_insert(named_env,$1,(hash_data)$3);
-	       printf("%s: ");
+	       printf("%s: ",$1);
 	       expr_print(stdout,$3);
 	       printf("\n");
 	     }
