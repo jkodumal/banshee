@@ -225,10 +225,14 @@ bool uf_eq(struct uf_element *e1,struct uf_element *e2)
   return (find(e1) == find(e2));
 }
 
-/* TODO: fix this method in the presence of rollback */
 void uf_update(struct uf_element *e,uf_info i)
 {
-  find(e)->info = i;
+  e = find(e);
+  ustack_elt ue = make_ustack_elt(e,e->info);
+  union_stack_cons(ue,ustack);
+  assert(e->elt_stack == NULL);
+
+  e->info = i;
 }
 
 static void repair_elt_stack(struct uf_element *nonroot)
@@ -258,18 +262,26 @@ void uf_backtrack()
   ue = union_stack_head(ustack);
   union_stack_tail(ustack);
 
-  /* Make sure it's a link */
-  assert(ue->nonroot->kind == uf_link);
-
-  /* Roll back the old ecr's info */
-  find(ue->nonroot)->info = ue->old_info;
-
-  /* Deunion */
-  ue->nonroot->kind = uf_ecr;
-  ue->nonroot->link = NULL;
-
-  /* Repair the element stack */
-  repair_elt_stack(ue->nonroot);
+  
+  /* This happens when the last operation was an update */
+  if (ue->nonroot->kind == uf_ecr) {
+    /* Just roll back the old ecr's info */
+    ue->nonroot->info = ue->old_info;
+  }
+  else {
+    /* Make sure it's a link */
+    assert(ue->nonroot->kind == uf_link);
+    
+    /* Roll back the old ecr's info */
+    find(ue->nonroot)->info = ue->old_info;
+    
+    /* Deunion */
+    ue->nonroot->kind = uf_ecr;
+    ue->nonroot->link = NULL;
+    
+    /* Repair the element stack */
+    repair_elt_stack(ue->nonroot);
+  }
 }
 
 void uf_init()

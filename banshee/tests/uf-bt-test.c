@@ -76,5 +76,11 @@ int main()
   assert(elt_get_info(e3) == 3);
   assert(elt_get_info(e4) == 4);
 
+  elt_update(e4,5);
+  
+  assert(elt_get_info(e4) == 5);
+  uf_backtrack();
+  assert(elt_get_info(e4) == 4);
+
   return 0;
 }
