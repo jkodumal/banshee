@@ -1,4 +1,4 @@
+*.out
 tmpfile
 .gdb_history
 *.gmon
-gmon.out

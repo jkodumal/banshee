@@ -396,7 +396,7 @@ void andersen_terms_serialize(FILE *f, hash_table *entry_points,
   all_entry_points[0] = constructors;
   for(i = 1; i <= sz; i++)
     {
-      all_entry_points[i] = entry_points[i];
+      all_entry_points[i] = entry_points[i-1];
     }
 
   serialize_cs(f,all_entry_points, sz+1);
