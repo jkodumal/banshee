@@ -1,0 +1,5 @@
+#u:setIF
+#v:setIF
+#'x:setIF
+#c(+setIF,+setIF) : setIF
+c(u,v) <= 'x
