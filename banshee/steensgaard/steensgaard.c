@@ -224,13 +224,43 @@ contents_type pta_get_contents(T t) {
   return contents;
 }
 
-/* TODO */
-void pta_pr_ptset(contents_type c) {
-
+static void pr_tag_elem(alabel_t t) {
+  printf(",");
+  alabel_t_print(stdout,t);
 }
 
-/* TODO */
+/* TODO : doesn't print or count fun ptrs */
+void pta_pr_ptset(contents_type c) {
+  int size = 0;  
+  region scratch_rgn = newregion();
+
+  T ptr_rep = T_ecr(c->ptr);
+  // L fun_rep = L_ecr(c->fun);
+
+  printf("{");
+  if (T_is_ref(ptr_rep)) {
+    alabel_t_list tags = 
+      alabel_t_list_copy(scratch_rgn, alabel_t_tlb(ref_decon(ptr_rep).f0));
+    
+    if (!alabel_t_list_empty(tags)) {
+      alabel_t_print(stdout,alabel_t_list_head(tags));
+      
+      tags = alabel_t_list_tail(tags);
+      alabel_t_list_app(tags, pr_tag_elem);
+    }
+  }
+  printf("}(%d)", size);
+  deleteregion(scratch_rgn);
+}
+
+/* TODO : doesn't count fun ptrs */
 int pta_get_ptsize(contents_type c) {
+  T ptr_rep = T_ecr(c->ptr);
+  if (T_is_ref(ptr_rep)) {
+    alabel_t_list tags = alabel_t_tlb(ref_decon(ptr_rep).f0);
+    return alabel_t_list_length(tags);
+  }
+
   return 0;
 }
 
