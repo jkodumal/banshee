@@ -124,10 +124,15 @@ make
 2002-05-29 14:41 -0700
 
 
-"2002-10-27 13:47" this works with
+"2002-10-27 14:40" this works with
 
 aclocal
 autoconf
 automake
 ./configure CC="/usr/local/gcc-2.95.3/bin/gcc"
 make CC="/usr/local/gcc-2.95.3/bin/gcc"
+
+running the analysis:
+
+export GCC_SUBST
+./run-bt-experiment.py -c ./default_compile.sh -d /home/cs/jfoster/cvsroot/ -p cqual -l logs/cqual.log -o cqual_run.out -e --start-with 0 --end-with 10 

@@ -59,6 +59,7 @@ struct counts {
 };
 
 struct persistence_state {
+  hash_table_list global_var_envs;
   hash_table_list collection_envs;
   int_list scopes;
   int_list collection_counts;
@@ -241,7 +242,8 @@ static void var_info_clear(void) deletes
 
 static void collect_state(void)
 { 
-  hash_table_list_append_tail(hash_table_copy(NULL, collection_hash), state.collection_envs);
+  hash_table_list_append_tail(hash_table_copy(NULL, collection_hash), state.collection_envs);  
+  hash_table_list_append_tail(hash_table_copy(NULL, global_var_hash), state.global_var_envs);
   int_list_append_tail(acnt.scope, state.scopes);
   int_list_append_tail(acnt.collection_count, state.collection_counts);
   int_list_append_tail(acnt.string_count, state.string_counts); 
@@ -1526,9 +1528,11 @@ void analysis_backtrack(int backtrack_time)
     length++;
   }
 
-  /* Truncate each of the lists */
+  /* Truncate each of the lists (TODO: truncate also the global_var_hash!) */
   state.collection_envs = 
     hash_table_list_copy_upto(NULL, state.collection_envs, length);
+  state.global_var_envs = 
+    hash_table_list_copy_upto(NULL, state.global_var_envs, length);
   state.scopes = 
     int_list_copy_upto(NULL, state.scopes, length);
   state.collection_counts  = 
@@ -1542,6 +1546,7 @@ void analysis_backtrack(int backtrack_time)
 
   /* Set the collection environment and acnt struct */
   collection_hash = hash_table_list_last(state.collection_envs);
+  global_var_hash = hash_table_list_last(state.global_var_envs);
   acnt.scope = int_list_last(state.scopes);
   acnt.collection_count = int_list_last(state.collection_counts);
   acnt.string_count = int_list_last(state.string_counts);
@@ -1646,6 +1651,7 @@ void analysis_region_deserialize(translation t, const char *filename)
   update_pointer(t, (void **)&state.next_allocs);
   update_pointer(t, (void **)&state.banshee_times);
   update_pointer(t, (void **)&state.collection_envs);
+  update_pointer(t, (void **)&state.global_var_envs);
   //assert(hash_table_list_last(state.collection_envs) == collection_hash);
   collection_hash = hash_table_list_last(state.collection_envs);
   update_pointer(t, (void **)&global_var_hash);
@@ -1777,6 +1783,7 @@ void analysis_init() deletes
   register_persistent_region(var_info_region,update_var_info);
 
   state.collection_envs = new_persistent_hash_table_list();
+  state.global_var_envs = new_persistent_hash_table_list();
   state.scopes = new_persistent_int_list();
   state.collection_counts = new_persistent_int_list();
   state.string_counts = new_persistent_int_list();
