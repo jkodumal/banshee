@@ -148,6 +148,7 @@ gen_e term_hash_find(term_hash tab, stamp stamps[], int len)
 
   term_bucket b;
   hash_val = hash(tab->ub, stamps, len);
+  assert(hash_val < tab->capacity);
   b = tab->term_buckets[hash_val];
   return walk(b, stamps, len);
 }
@@ -190,7 +191,7 @@ static void insert(term_hash tab, gen_e e, stamp stamps[], int len)
   
   entry = ralloc(tab->rgn ? tab->rgn : hash_entry_region, struct hash_entry);
 
-  stamp_cpy = rarrayalloc(tab->rgn ? tab->rgn : term_bucketptr_region, len, stamp);
+  stamp_cpy = rarrayalloc(tab->rgn ? tab->rgn : banshee_nonptr_region, len, stamp);
   for (i = 0; i < len; i++)
     {
       stamp_cpy[i] = stamps[i];
@@ -208,12 +209,14 @@ static void insert_entry(term_hash tab, hash_entry entry)
 
   term_bucket b, new_term_bucket;
   hash_val = hash(tab->ub, entry->stamps, entry->length);
+  assert(hash_val < tab->capacity);
   b = tab->term_buckets[hash_val];
   new_term_bucket = ralloc(tab->rgn ? tab->rgn : term_bucket_region, 
 			   struct term_bucket);
 
   new_term_bucket->entry = entry;
   new_term_bucket->next = b;
+  assert(hash_val < tab->capacity);
   tab->term_buckets[hash_val] = new_term_bucket;
 }
 

@@ -219,7 +219,7 @@ static bool var_info_lookup(const char *name,var_info *v)
   if ( ( (*v)  = env_lookup(file_env,name, FALSE)) )
     return TRUE;
 /*   else if (( (*v) = env_lookup(global_var_env,name,FALSE)) ) */
-  else if (hash_table_lookup(global_var_hash, name, v))
+  else if (hash_table_lookup(global_var_hash, (hash_key)name, (hash_data *)v))
     return TRUE;
   return FALSE;
 }

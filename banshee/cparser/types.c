@@ -351,7 +351,10 @@ int update_type(translation tr, void *m)
   case tk_pointer:
     update_pointer(tr, (void **)&t->u.pointsto);
   case tk_function:
-    update_pointer(tr, (void **)& t->u.fn.returns);
+    /* TODO -- fix this: somehow return types aren't being allocated
+       in the proper region */
+    t->u.fn.returns = primitive_types[0];
+    /*     update_pointer(tr, (void **)&t->u.fn.returns); */
     t->u.fn.argtypes = new_typelist(permanent); /* TODO -- serialize the typelist */
     break;
   case tk_array:

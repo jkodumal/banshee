@@ -176,7 +176,7 @@ requires that pages be aligned at addresses where the last SHIFT bits are 0's.
 inline void *translate_pointer(translation map, void *old_address) {
 #ifndef NMEMDEBUG 
   if (old_address && (*(map->map + (((unsigned int) old_address) >> SHIFT)) == 0)) 
-    fprintf(stderr,"Warning: The pointer %x has no translation.\n", (unsigned int) (map->map + (((unsigned int) old_address) >> SHIFT)));
+    fprintf(stderr,"Warning: The pointer %x has no translation (old address is %x).\n", (unsigned int) (map->map + (((unsigned int) old_address) >> SHIFT)),(unsigned int)old_address);
 #endif
   return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + (((unsigned int) old_address) & 0x00001FFF);
 }

@@ -311,7 +311,9 @@ void *typed_rarrayalloc(region r, size_t n, size_t size, adjust_fn *cleanup)
 {
   /* return typed_rarrayextend(r, NULL, n, size, cleanup); */
   /* replace fancy array allocation by simple allocation of a C-style array */ 
-  return rstralloc(r, n * size);
+  char *mem = rstralloc(r, n * size);
+
+  return mem;
 }
 
 char *rstralloc(region r, size_t size)

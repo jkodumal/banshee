@@ -154,7 +154,7 @@ region *get_persistent_regions(const char *filename)
   result[3] = banshee_nonptr_region;
   result[2] = banshee_ptr_region;
   result[1] = bucket_region;
-  result[0] = table_region;	
+  result[35] = table_region;	
   result[4] = strbucket_region;
 
   result[5] = list_header_region; 
@@ -192,7 +192,7 @@ region *get_persistent_regions(const char *filename)
   result[32] = bucketptr_region;
   result[33] = keystrbucket_region;
   result[34] = gen_e_ptr_region;
-  result[35] = term_bucketptr_region;
+  result[0] = term_bucketptr_region;
 
   {
     int count = 0;
@@ -231,7 +231,7 @@ Updater *get_updater_functions(const char *filename)
   result[3] = update_nonptr_data;
   result[2] = update_ptr_data;
   result[1] = update_bucket;
-  result[0] = update_hash_table;
+  result[35] = update_hash_table;
   result[4] = update_strbucket;
  
   result[5] = update_list_header;
@@ -269,7 +269,7 @@ Updater *get_updater_functions(const char *filename)
   result[32] = update_bucketptr;
   result[33] = update_keystrbucket;
   result[34] = update_gen_e_ptr;
-  result[35] = update_term_bucketptr;
+  result[0] = update_term_bucketptr;
 
   return result;
 #endif  /* NONSPEC  */
