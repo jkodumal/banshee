@@ -315,7 +315,7 @@ static setif_var_list cycle_detect_rev(region r, setif_var v1, setif_var v2)
 }
 
 void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj, 
-		     gen_e e1, gen_e e2) deletes
+		     gen_e_pr_fn_ptr pr, gen_e e1, gen_e e2) deletes
 {
   
   void collapse_cycle_lower(region r, setif_var witness, 
@@ -346,7 +346,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       
       gen_e_list_scan(bounds_exprs(b),&scan_bounds);
       while (gen_e_list_next(&scan_bounds,&lb))
-	setif_inclusion(con_match,res_proj,lb, (gen_e) witness);
+	setif_inclusion(con_match,res_proj,pr,lb, (gen_e) witness);
       
       bounds_delete(b);
       invalidate_tlb_cache();
@@ -388,7 +388,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 
       gen_e_list_scan(bounds_exprs(b),&scan_bounds);
       while (gen_e_list_next(&scan_bounds,&ub))
-	setif_inclusion(con_match,res_proj,(gen_e) witness, ub);
+	setif_inclusion(con_match,res_proj,pr,(gen_e) witness, ub);
 	
       bounds_delete(b);
       invalidate_tlb_cache();
@@ -422,11 +422,11 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 
 	  gen_e_list_scan(sv_get_ubs(v),&scan);
 	  while(gen_e_list_next(&scan,&ub))
-	    setif_inclusion(con_match,res_proj,e,ub);
+	    setif_inclusion(con_match,res_proj,pr,e,ub);
 	  
 	  gen_e_list_scan(sv_get_ub_projs(v),&scan);
 	  while (gen_e_list_next(&scan,&ub))
-	    setif_inclusion(con_match,res_proj,e,ub);
+	    setif_inclusion(con_match,res_proj,pr,e,ub);
 
 	}
       
@@ -457,12 +457,16 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	  
 	  gen_e_list_scan(sv_get_lbs(v),&scan);
 	  while (gen_e_list_next(&scan,&lb))
-	    setif_inclusion(con_match,res_proj,lb,e);
+	    setif_inclusion(con_match,res_proj,pr,lb,e);
 
 	}
       
     }
 
+  // pr(stdout,e1);
+//   fprintf(stdout,"<=");
+//   pr(stdout,e2);
+//   fprintf(stdout,"\n");
 
   if (eq(e1,e2))
     return;
@@ -489,7 +493,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       gen_e_list_scan(exprs,&scan);
       while (gen_e_list_next(&scan,&temp))
 	{
-	  setif_inclusion(con_match,res_proj,temp,e2);
+	  setif_inclusion(con_match,res_proj,pr,temp,e2);
 	}
 
       return;
@@ -505,7 +509,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       gen_e_list_scan(exprs,&scan);
       while (gen_e_list_next(&scan,&temp))
 	{
-	  setif_inclusion(con_match,res_proj,e1,temp);
+	  setif_inclusion(con_match,res_proj,pr,e1,temp);
 	}
 
       return;

@@ -374,12 +374,12 @@ static gen_e get_proj_var(sort_kind s, bool large)
 
 static void setif_inclusion_ind(gen_e e1,gen_e e2)
 {
-  setif_inclusion(setif_con_match,setif_res_proj,e1,e2);
+  setif_inclusion(setif_con_match,setif_res_proj,expr_print,e1,e2);
 }
 
 static void setst_inclusion_ind(gen_e e1, gen_e e2)
 {
-  setst_inclusion(setst_con_match,e1,e2);
+  setst_inclusion(setst_con_match,expr_print,e1,e2);
 }
 
 static bool pat_match(int t1, int t2)
@@ -862,7 +862,7 @@ int call_setif_inclusion(gen_e e1,gen_e e2)
       fail("Sort check failed during setif inclusion\n");
     }
 
-  setif_inclusion(setif_con_match,setif_res_proj,e1,e2);
+  setif_inclusion(setif_con_match,setif_res_proj,expr_print,e1,e2);
   return 0;
 }
 
@@ -875,8 +875,8 @@ int call_setif_unify(gen_e e1, gen_e e2)
       fail("Sort check failed during setif_unify\n");
     }
 
-  setif_inclusion(setif_con_match,setif_res_proj,e1,e2);
-  setif_inclusion(setif_con_match,setif_res_proj,e2,e1);
+  setif_inclusion(setif_con_match,setif_res_proj,expr_print,e1,e2);
+  setif_inclusion(setif_con_match,setif_res_proj,expr_print,e2,e1);
   return 0;
 }
 
@@ -889,7 +889,7 @@ int call_setst_inclusion(gen_e e1, gen_e e2)
       fail("Sort check failed: setif_inclusion\n");
     }
   
-  setst_inclusion(setst_con_match,e1,e2);
+  setst_inclusion(setst_con_match,expr_print,e1,e2);
   return 0;
 }
 
@@ -902,8 +902,8 @@ int call_setst_unify(gen_e e1, gen_e e2)
       fail("Sort check failed: setst_unify\n");
     }
 
-  setst_inclusion(setst_con_match,e1,e2);
-  setst_inclusion(setst_con_match,e2,e1);
+  setst_inclusion(setst_con_match,expr_print,e1,e2);
+  setst_inclusion(setst_con_match,expr_print,e2,e1);
   return 0;
 }
 
@@ -1067,12 +1067,12 @@ static void call_inclusion_ind(gen_e e1, gen_e e2)
     {
     case setif_sort:
       {
-	setif_inclusion(setif_con_match,setif_res_proj,e1,e2);
+	setif_inclusion(setif_con_match,setif_res_proj,expr_print,e1,e2);
       }
       break;
     case setst_sort:
       {
-	setst_inclusion(setst_con_match,e1,e2);
+	setst_inclusion(setst_con_match,expr_print,e1,e2);
       }
       break;
     case term_sort:
@@ -1099,14 +1099,14 @@ static void call_unify_ind(gen_e e1, gen_e e2)
     {
     case setif_sort:
       {
-	setif_inclusion(setif_con_match,setif_res_proj,e1,e2);
-	setif_inclusion(setif_con_match,setif_res_proj,e2,e1);
+	setif_inclusion(setif_con_match,setif_res_proj,expr_print,e1,e2);
+	setif_inclusion(setif_con_match,setif_res_proj,expr_print,e2,e1);
       }
       break;
     case setst_sort:
       {
-	setst_inclusion(setst_con_match,e1,e2);
-	setst_inclusion(setst_con_match,e2,e1);
+	setst_inclusion(setst_con_match,expr_print,e1,e2);
+	setst_inclusion(setst_con_match,expr_print,e2,e1);
       }
       break;
     case term_sort:

@@ -34,6 +34,8 @@
 #include "bounds.h"
 #include "setst-sort.h"
 
+bool flag_eliminate_cycles_st = TRUE;
+
 
 struct setst_union_
 {
@@ -161,8 +163,14 @@ static void update_upper_bound(setst_var v, gen_e e)
 }
 
 
-void setst_inclusion(con_match_fn_ptr con_match,gen_e e1, gen_e e2)
+void setst_inclusion(con_match_fn_ptr con_match, gen_e_pr_fn_ptr pr,
+		     gen_e e1, gen_e e2)
 {
+//   pr(stdout, e1);
+//   fprintf(stdout, "<= ");
+//   pr(stdout, e2);
+//   fprintf(stdout, "\n");
+
   if (eq(e1,e2))
     return;
 
@@ -179,7 +187,7 @@ void setst_inclusion(con_match_fn_ptr con_match,gen_e e1, gen_e e2)
       gen_e_list_scan(exprs,&scan);
       while (gen_e_list_next(&scan,&temp))
 	{
-	  setst_inclusion(con_match,temp,e2);
+	  setst_inclusion(con_match,pr,temp,e2);
 	}
 
       return;
@@ -195,7 +203,7 @@ void setst_inclusion(con_match_fn_ptr con_match,gen_e e1, gen_e e2)
       gen_e_list_scan(exprs,&scan);
       while (gen_e_list_next(&scan,&temp))
 	{
-	  setst_inclusion(con_match,e1,temp);
+	  setst_inclusion(con_match,pr,e1,temp);
 	}
 
       return;
@@ -639,7 +647,7 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	{
 	  setst_var_list cycle;
 	  setst_var v = (setst_var)e;
-	  if ( cycle_detect(v,path,&cycle) )
+	  if ( flag_eliminate_cycles_st && cycle_detect(v,path,&cycle) )
 	    {
 	      setst_stats.cycles_length += setst_var_list_length(cycle);
 	      collapse_cycle(v,cycle);
@@ -739,7 +747,7 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	      continue;
 	    }
 	  
-    st_set_seen(v,TRUE);
+	  st_set_seen(v,TRUE);
 	  
 	  st_set_src_sz(v,gen_e_list_length(tlbs));
 	  st_set_snk_sz(v,gen_e_list_length(snks));

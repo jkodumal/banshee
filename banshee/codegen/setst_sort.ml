@@ -141,16 +141,16 @@ class setstsort_gen =
 	 }\n \
 	 void EXPRID_inclusion(EXPRID e1, EXPRID e2) \n \
 	 {\n\
-	    setst_inclusion(EXPRID_con_match,e1,e2);\n \
+	    setst_inclusion(EXPRID_con_match,EXPRID_print,e1,e2);\n \
 	 }\n \
 	 static void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n \
 	 {\n\
-	    setst_inclusion(EXPRID_con_match,e2,e1);\n \
+	    setst_inclusion(EXPRID_con_match,EXPRID_print,e2,e1);\n \
 	 }\n \
 	 void EXPRID_unify(EXPRID e1, EXPRID e2) \n \
 	 {\n \
-	    setst_inclusion(EXPRID_con_match,e1,e2);\n \
-	    setst_inclusion(EXPRID_con_match,e2,e1);\n \
+	    setst_inclusion(EXPRID_con_match,EXPRID_print,e1,e2);\n \
+	    setst_inclusion(EXPRID_con_match,EXPRID_print,e2,e1);\n \
 	 }\n "
       in
       let file_tdecls = 
@@ -368,18 +368,11 @@ class setstsort_gen =
 	    if (setst_is_var(arg1))\n\
 	       {\n\
 		  setst_var v = (setst_var)arg1;\n\
-		  c = (EPRIME)st_get_ub_proj(v,get_CONSTRUCTOR_proj\
-					       NUMBER_arg);\n\
-		  if (c != NULL)\n\
-		    return c;\n\
-	          else\n\
-	          {\n\
 		   EXPRID e;\n\
 		   c = EPRIME_fresh(NULL);\n\
 		   e = CONSTRUCTOR_patNUMBER(c);\n\
 		   st_add_sink(v,e,setst_get_stamp(e));\n\
 		   return c;\n\
-	          }\n\
 	      }\n\
 	   else if ( ((setst_term)arg1)->type == CAPCONS_)\n\
 	       return ((struct CONSTRUCTOR_ * )arg1)->fNUMBER;\n\
@@ -387,19 +380,12 @@ class setstsort_gen =
 	       return EPRIME_zero();\n\
            else if ( setst_is_union(arg1))\n\
 	       {\n\
-		  c = get_CONSTRUCTOR_projNUMBER_arg(setst_get_proj_cache\
-						       (arg1));\n\
-		if (c != NULL)\n\
-		    return c;\n\
-   	        else\n\
-	        {\n\
 		   EXPRID e;\n\
 		   c = EPRIME_fresh(NULL);\n\
 		   e = CONSTRUCTOR_patNUMBER(c);\n\
 		   setst_set_proj_cache(arg1,e);\n\
 		   EXPRID_inclusion(arg1,e);\n\
 		   return c;\n\
-	       }\n\
            }\n\
 	   else\n\
 	       {\n\

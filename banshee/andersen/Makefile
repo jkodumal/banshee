@@ -42,7 +42,7 @@ TAGFILES = *.c *.h
 
 CC = gcc
 
-CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+CFLAGS = -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr=
 
 all: $(TARGETS)

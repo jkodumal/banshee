@@ -139,16 +139,16 @@ class setsort_gen =
 	 }\n\n\
 	 void EXPRID_inclusion(EXPRID e1, EXPRID e2) \n\
 	 {\n \
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,e1,e2);\n\
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
 	 }\n\n\
 	 static void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
 	 {\n \
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,e2,e1);\n\
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e2,e1);\n\
 	 }\n\n\
 	 void EXPRID_unify(EXPRID e1, EXPRID e2) \n\
 	 {\n \
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,e1,e2);\n\
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,e2,e1);\n\
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e2,e1);\n\
 	 }\n"
       in
       let file_tdecls = 
@@ -414,7 +414,7 @@ class setsort_gen =
 		   gen_e_list_scan(sv_get_lbs(v),&scan);\n\
 		   while (gen_e_list_next(&scan,&lb))\n\
 		   {\n\
-		    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,lb,e);\n\
+		    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,lb,e);\n\
 		   }\n\
 		   return c;\n\
 	          }\n\

@@ -42,11 +42,11 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 TARGETS = libengine.a libnsengine.a TAGS
 
-ifndef DEBUG
-CFLAGS := -DNDEBUG -O3 ${CFLAGS}
-else
+#ifndef DEBUG
+#CFLAGS := -DNDEBUG -O3 ${CFLAGS}
+#else
 CFLAGS := -pg -g ${CFLAGS}
-endif
+#endif
 
 all: $(TARGETS) TAGS
 

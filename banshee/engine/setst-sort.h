@@ -37,7 +37,7 @@
 
 EXTERN_C_BEGIN
 
-
+extern bool flag_eliminate_cycles_st;
 extern region setst_region;
 extern term_hash setst_hash;
 
@@ -54,7 +54,7 @@ struct setst_term /* extends gen_e */
 typedef struct setst_term *setst_term;
 
 stamp setst_get_stamp(gen_e e);
-void setst_inclusion(con_match_fn_ptr,gen_e, gen_e);
+void setst_inclusion(con_match_fn_ptr,gen_e_pr_fn_ptr, gen_e, gen_e);
 
 gen_e setst_zero(void);
 gen_e setst_one(void);

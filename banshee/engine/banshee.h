@@ -113,6 +113,9 @@ typedef void (*incl_fn_ptr) (gen_e, gen_e) deletes;
 /* match constructed terms */  
 typedef void (*con_match_fn_ptr) (gen_e, gen_e) deletes;
 
+/* print a term */
+typedef void (*gen_e_pr_fn_ptr) (FILE *, gen_e);
+
 /* make fresh variables */
 typedef gen_e (*fresh_fn_ptr) (const char *);
 typedef gen_e (*fresh_small_fn_ptr) (const char *);
