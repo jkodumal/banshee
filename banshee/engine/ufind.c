@@ -252,16 +252,17 @@ static void repair_elt_stack(struct uf_element *nonroot)
 }
 
 /* Undo the last union operation */
-void uf_backtrack()
+static bool uf_backtrack_one()
 {
   ustack_elt ue = NULL;
 
-  if (union_stack_length(ustack) == 0) return;
+  if (union_stack_length(ustack) == 0) return FALSE;
 
   /* Pop the last unioned elt off the stack */
   ue = union_stack_head(ustack);
   union_stack_tail(ustack);
 
+  if (ue == NULL) return FALSE;
   
   /* This happens when the last operation was an update */
   if (ue->nonroot->kind == uf_ecr) {
@@ -282,7 +283,26 @@ void uf_backtrack()
     /* Repair the element stack */
     repair_elt_stack(ue->nonroot);
   }
+  
+  return TRUE;
 }
+
+void uf_rollback()
+{
+  while (uf_backtrack_one());
+}
+
+void uf_backtrack()
+{
+  uf_backtrack_one();
+}
+
+void uf_tick()
+{
+  union_stack_cons(NULL,ustack);
+}
+
+
 
 void uf_init()
 {

@@ -51,7 +51,9 @@ bool uf_unify(combine_fn_ptr, struct uf_element *, struct uf_element *);
 bool uf_union(struct uf_element *,struct uf_element *);
 bool uf_eq(struct uf_element *, struct uf_element *);
 void uf_update(struct uf_element *,uf_info i);
-void uf_backtrack();
+void uf_tick();			/* Put a mark on the history for rollback */
+void uf_backtrack();		/* Undo the last union/unify/update/tick */
+void uf_rollback(); 		/* Backtrack to the last tick */
 
 #define DECLARE_UFIND(name,type) \
 typedef struct name *name; \

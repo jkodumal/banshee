@@ -123,6 +123,11 @@ so, here are the tasks:
             rollback code for each sort
 
    --- Rollback support for each sort
+ 
+       PROBLEM: How do we handle union-find rollbacks? Is it always OK
+       to unroll all unifications first? This is probably the solution we 
+       have to adopt.
+
 
        General list of things to keep track of:
         
