@@ -57,7 +57,7 @@ static persist_state current_state = persist_raw;
 static FILE *current_file;
 static persist_entry_queue serialize_queue;
 static serialize_fn_ptr *serialize_fns;
-static region persist_rgn;
+region persist_rgn;
 static int num_kinds;
 static hash_table object_map;
 static hash_table serialized_objects;

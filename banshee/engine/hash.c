@@ -458,6 +458,8 @@ bool hash_table_serialize(FILE *f, void *obj)
   return TRUE;
 }
 
+extern region persist_rgn;
+
 void *hash_table_deserialize(FILE *f)
 {
   hash_table ht = NULL;
@@ -467,7 +469,7 @@ void *hash_table_deserialize(FILE *f)
   assert(f);
 
   ht = ralloc(permanent, struct Hash_table);
-  ht->r = newregion();
+  ht->r = persist_rgn;
   ht->hash = NULL;
   ht->cmp = NULL;
 
@@ -523,7 +525,6 @@ bool hash_table_set_fields(void *obj)
       hash_table_insert(ht, cur->key, cur->data);
     }
   }
-  deleteregion(oldregion);
 
   return TRUE;
 }
