@@ -64,10 +64,10 @@ void bounds_scan(bounds, bounds_scanner *);
 bool bounds_next(bounds_scanner *, gen_e *e);
 
 /* Returns true if the bound was already present */
-bool bounds_add(bounds,gen_e,stamp);
+bool bounds_add(bounds, gen_e, stamp);
 
 /* Returns true if the bound was removed */
-bool bounds_remove(bounds,gen_e,stamp);
+bool bounds_remove(bounds, stamp);
 
 /* Returns true if the bound was present */
 bool bounds_query(bounds,stamp); 

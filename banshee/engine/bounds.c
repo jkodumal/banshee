@@ -81,7 +81,7 @@ bool bounds_add(bounds b, gen_e e, stamp s)
 }
 
 /* TODO */
-bool bounds_remove(bounds b, gen_e e, stamp s)
+bool bounds_remove(bounds b, stamp s)
 {
   fprintf(stderr,"Bounds remove not implemented!\n");
   assert(0);

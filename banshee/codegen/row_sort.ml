@@ -124,20 +124,30 @@ class row_sort_gen (e' : exprid) =
 	 {\n\
 	   return flowrow_extract_fields(row);\n\
          }\n\n\
-         void EXPRID_inclusion(EXPRID row1, EXPRID row2) \n\
+         void EXPRID_inclusion_ind(EXPRID row1, EXPRID row2) \n\
          {\n\
-         flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion,\
+         flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion_ind,\
 			       EPRIME_zero(), row1,row2);\n\
          }\n\n\
-         void EXPRID_inclusion_contra(EXPRID row1, EXPRID row2) \n\
+         void EXPRID_inclusion_ind_contra(EXPRID row1, EXPRID row2) \n\
          {\n\
-         flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion,\
+         flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion_ind,\
 			       EPRIME_zero(), row2,row1);\n\
+         }\n\n\
+         void EXPRID_unify_ind(EXPRID row1, EXPRID row2) \n\
+         {\n\
+           EXPRID_inclusion_ind(row1,row2);\n\
+           EXPRID_inclusion_ind(row2,row1);\n\
          }\n\n\
          void EXPRID_unify(EXPRID row1, EXPRID row2) \n\
          {\n\
-           EXPRID_inclusion(row1,row2);\n\
-           EXPRID_inclusion(row2,row1);\n\
+           banshee_clock_tick();\n\
+           EXPRID_unify_ind(row1,row2);\n\
+         }\n\n\
+         void EXPRID_inclusion(EXPRID row1, EXPRID row2) \n\
+         {\n\
+           banshee_clock_tick();\n\
+           EXPRID_inclusion_ind(row1,row2);\n\
          }\n\n\
          void EXPRID_print(FILE *f,EXPRID row) \n\
          {\n\

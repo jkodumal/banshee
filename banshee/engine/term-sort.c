@@ -31,6 +31,7 @@
 #include <assert.h>
 #include "regions.h"
 #include "term-sort.h"
+#include "hash.h"
 
 struct term_constant_ /* extends gen_e */
 {
@@ -45,6 +46,7 @@ struct term_constant_ /* extends gen_e */
 typedef struct term_rollback_info_ { /* extends banshee_rollback_info */
   banshee_time time;
   sort_kind kind;
+  hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
 } * term_rollback_info; 
 
 typedef struct term_constant_ *term_constant_;
@@ -201,11 +203,36 @@ bool term_eq(gen_e e1, gen_e e2)
 
 
 static void term_register_rollback(void) {
-  current_rollback_info = ralloc(banshee_rollback_region, struct term_rollback_info_); 
+  current_rollback_info = 
+    ralloc(banshee_rollback_region, struct term_rollback_info_); 
   banshee_set_time((banshee_rollback_info)current_rollback_info);
+  current_rollback_info->added_edges = 
+    make_hash_table(banshee_rollback_region,
+		    4, ptr_hash, ptr_eq);
   current_rollback_info->kind = term_sort;
   
   banshee_register_rollback((banshee_rollback_info)current_rollback_info);
+}
+
+static void term_register_edge(const bounds b, stamp st) {
+  stamp_list sl = NULL;
+  assert(current_rollback_info);
+  
+  /* The current rollback info already has an edge list associated
+   * with this bounds */
+  if (hash_table_lookup(current_rollback_info->added_edges,
+			(hash_key)b,
+			(hash_data *)&sl)) {
+    assert(sl);
+    stamp_list_cons(st,sl);
+  }
+  else {
+    sl = new_stamp_list(banshee_rollback_region);
+    stamp_list_cons(st,sl);
+    hash_table_insert(current_rollback_info->added_edges,
+		      (hash_key)b,
+		      (hash_data)sl);
+  }
 }
 
 void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
@@ -237,20 +264,24 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
       if (term_is_var(e2)) {
 	bounds_scanner scan;
 	gen_e temp;
-	bounds pending1 = tv_get_pending((term_var)e2),
+	const bounds pending1 = tv_get_pending((term_var)e2),
 	  pending2 = tv_get_pending(v);
 	tv_unify_vars(v,(term_var)e2);
 	
 	bounds_scan(pending1,&scan);
 
 	while(bounds_next(&scan,&temp)) {
-	  tv_add_pending(v,temp,term_get_stamp(temp));
+	  if (! tv_add_pending(v,temp,term_get_stamp(temp))) {
+	    term_register_edge(tv_get_pending(v),term_get_stamp(temp));
+	  }
 	}
 	
 	bounds_scan(pending2, &scan);
 	
 	while(bounds_next(&scan,&temp)) {
-	  tv_add_pending(v,temp,term_get_stamp(temp));
+	  if (! tv_add_pending(v,temp,term_get_stamp(temp))) {
+	    term_register_edge(tv_get_pending(v),term_get_stamp(temp));
+	  }
 	}
 
       }
@@ -280,10 +311,18 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 void term_cunify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 		 gen_e e1, gen_e e2)
 {
+
+  if (!banshee_check_rollback(term_sort)) {
+    term_register_rollback();
+  }
+
   if (term_is_bottom(e1) && term_is_var(e1))
     {
       term_var v1 = (term_var)e1;
-      tv_add_pending(v1,e2, term_get_stamp(e2));
+      
+      if (!tv_add_pending(v1,e2, term_get_stamp(e2))) {
+	term_register_edge(tv_get_pending(v1),term_get_stamp(e2));
+      }
     }
   else 
     {

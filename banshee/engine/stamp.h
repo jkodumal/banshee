@@ -33,10 +33,13 @@
 
 #include "regions.h"
 #include "linkage.h"
+#include "list.h"
 
 EXTERN_C_BEGIN
 
 typedef int stamp;
+
+DECLARE_LIST(stamp_list,stamp);
 
 stamp stamp_fresh(void);
 stamp stamp_fresh_small(void);

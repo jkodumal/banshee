@@ -93,7 +93,7 @@ bool bounds_add(bounds b, gen_e e, stamp st)
 }
 
 /* Returns TRUE if e was in the bounds */
-bool bounds_remove(bounds b, gen_e e, stamp st)
+bool bounds_remove(bounds b, stamp st)
 {
   return hash_table_remove(b->table,(hash_key)st);
 }

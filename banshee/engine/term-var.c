@@ -97,14 +97,14 @@ char *tv_get_name(term_var v)
   return tv_get_v_ecr(v)->name;
 }
 
-bounds tv_get_pending(term_var v)
+const bounds tv_get_pending(term_var v)
 {
   return tv_get_v_ecr(v)->pending;
 }
 
-void tv_add_pending(term_var v,gen_e e, stamp st)
+bool tv_add_pending(term_var v,gen_e e, stamp st)
 {
-  bounds_add(tv_get_v_ecr(v)->pending,e,st);
+  return bounds_add(tv_get_v_ecr(v)->pending,e,st);
 }
 
 void tv_unify(term_var v, gen_e e)

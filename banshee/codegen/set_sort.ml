@@ -82,8 +82,8 @@ class setsort_gen =
 	 EXPRID EXPRID_constant(const char *name);\n\
          bool EXPRID_is_constant(EXPRID e,const char *name);\n\
 	 EXPRID_list EXPRID_tlb(EXPRID e);\n\
-	 void EXPRID_inclusion(EXPRID e1,EXPRID e2);\n\
-	 void EXPRID_unify(EXPRID e1,EXPRID e2);\n"
+	 void EXPRID_inclusion_ind(EXPRID e1,EXPRID e2);\n\
+	 void EXPRID_unify_ind(EXPRID e1,EXPRID e2);\n"
       in
       let file_defn = 
 	"DEFINE_LIST(EXPRID_list,gen_e);\n\
@@ -137,19 +137,29 @@ class setsort_gen =
 	 {\n \
 	    return setif_tlb(e);\n\
 	 }\n\n\
+	 void EXPRID_inclusion_ind(EXPRID e1, EXPRID e2) \n\
+	 {\n \
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
+	 }\n\n\
 	 void EXPRID_inclusion(EXPRID e1, EXPRID e2) \n\
 	 {\n \
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
+            banshee_clock_tick();\n\
+            EXPRID_inclusion_ind(e1,e2);\n\
 	 }\n\n\
-	 void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
+	 void EXPRID_inclusion_ind_contra(EXPRID e1, EXPRID e2) \n\
 	 {\n \
 	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e2,e1);\n\
 	 }\n\n\
+	 void EXPRID_unify_ind(EXPRID e1, EXPRID e2) \n\
+	 {\n \
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
+	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e2,e1);\n\
+	 }\n\
 	 void EXPRID_unify(EXPRID e1, EXPRID e2) \n\
 	 {\n \
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e1,e2);\n\
-	    setif_inclusion(EXPRID_con_match,EXPRID_res_proj,EXPRID_print,e2,e1);\n\
-	 }\n"
+            banshee_clock_tick();\n\
+            EXPRID_unify_ind(e1,e2);\n\
+	 }\n "
       in
       let file_tdecls = 
 	"typedef gen_e EXPRID;\n\
@@ -269,14 +279,14 @@ class setsort_gen =
       let args = args [no_qual (Ident "setif_var");gen_e_type] in
       let gen_case c n (e',v) =
 	let incl = match v with
-	| NEGvariance -> e' ^ "_inclusion_contra"
-	| NOvariance -> e' ^ "_unify"
-	| POSvariance -> e' ^ "_inclusion" in
+	| NEGvariance -> e' ^ "_inclusion_ind_contra"
+	| NOvariance -> e' ^ "_unify_ind"
+	| POSvariance -> e' ^ "_inclusion_ind" in
 	let ret = 
 	  "setif_proj_merge(arg1," ^ "(gen_e)((struct " ^
 	  c ^ "Proj" ^ n ^ "_ *)arg2)->f0,get_" ^ c ^ "_proj" ^ n ^ 
 	  "_arg," ^ c ^ "_pat" ^ n ^ "_con,(fresh_large_fn_ptr)" ^ e' ^
-	  "_fresh_large,(incl_fn_ptr)" ^ incl ^ "," ^ e ^ "_inclusion)"
+	  "_fresh_large,(incl_fn_ptr)" ^ incl ^ "," ^ e ^ "_inclusion_ind)"
 	in
 	(String.uppercase c ^ "PROJ" ^ n ^ "_",Return ret) 
       in
@@ -302,9 +312,9 @@ class setsort_gen =
       let args = args [gen_e_type; gen_e_type] in
       let gen_proj_case c n (e',v) = 
 	let incl = match v with
-	| NEGvariance -> e' ^ "_inclusion_contra"
-	| NOvariance -> e' ^ "_unify"
-	| POSvariance -> e' ^ "_inclusion" in
+	| NEGvariance -> e' ^ "_inclusion_ind_contra"
+	| NOvariance -> e' ^ "_unify_ind"
+	| POSvariance -> e' ^ "_inclusion_ind" in
 	let ret = 
 	  incl ^ "(((struct " ^ c ^ "_ *)arg1)->f" ^ n ^ "," ^
 	  "((struct " ^ c ^ "Proj" ^ n ^ "_ *)arg2)->f0);"
@@ -314,9 +324,9 @@ class setsort_gen =
       let gen_con_case c consig = 
 	let gen_field (e',v) n = 
 	  let incl = match v with
-	  | NEGvariance -> e' ^ "_inclusion_contra"
-	  | NOvariance -> e' ^ "_unify"
-	  | POSvariance -> e' ^ "_inclusion" in
+	  | NEGvariance -> e' ^ "_inclusion_ind_contra"
+	  | NOvariance -> e' ^ "_unify_ind"
+	  | POSvariance -> e' ^ "_inclusion_ind" in
 	  (incl ^ "(((struct " ^ c ^ "_ *)arg1)->f" ^ n ^
 	   ",((struct " ^ c ^ "_ *)arg2)->f" ^ n ^ ")")
 	in
@@ -435,7 +445,7 @@ class setsort_gen =
 		   c = EPRIME_fresh(NULL);\n\
 		   e = CONSTRUCTOR_patNUMBER(c);\n\
 		   setif_set_proj_cache(arg1,e);\n\
-		   EXPRID_inclusion(arg1,e);\n\
+		   EXPRID_inclusion_ind(arg1,e);\n\
 		   return c;\n\
 	       }\n\
            }\n\
@@ -444,7 +454,7 @@ class setsort_gen =
 		  EXPRID e;\n\
 		  c = EPRIME_fresh(NULL);\n\
 		  e = CONSTRUCTOR_patNUMBER(c);\n\
-		  EXPRID_inclusion(arg1,e);\n\
+		  EXPRID_inclusion_ind(arg1,e);\n\
 		  return c;\n\
 	      }\n\
         }\n"

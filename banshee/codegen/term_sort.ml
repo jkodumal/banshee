@@ -68,7 +68,7 @@ class termsort_gen =
 	 EXPRID EXPRID_fresh(const char *name);\n\
 	 EXPRID EXPRID_constant(const char *name) ;\n\
 	 bool EXPRID_is_constant(EXPRID e,const char *name);\n\
-	 void EXPRID_unify(EXPRID e1,EXPRID e2) ;\n\
+         void EXPRID_unify(EXPRID e1, EXPRID e2) ;\n\
          void EXPRID_cunify(EXPRID e1,EXPRID e2) ;\n\
 	 EXPRID EXPRID_ecr(EXPRID e) ;\n
          EXPRID EXPRID_cmp(const EXPRID e1,const EXPRID e2);\n
@@ -82,9 +82,9 @@ class termsort_gen =
 	 EXPRID EXPRID_constant(const char *name) ;\n\
          bool EXPRID_is_constant(EXPRID e,const char *name);\n\
 	 EXPRID EXPRID_ecr(EXPRID e) ;\n\
-	 void EXPRID_inclusion(EXPRID e1,EXPRID e2) ;\n\
-	 void EXPRID_cunify(EXPRID e1, EXPRID e2) ;\n\
-	 void EXPRID_unify(EXPRID e1,EXPRID e2) ;\n"
+	 void EXPRID_inclusion_ind(EXPRID e1,EXPRID e2) ;\n\
+	 void EXPRID_cunify_ind(EXPRID e1, EXPRID e2) ;\n\
+	 void EXPRID_unify_ind(EXPRID e1,EXPRID e2) ;\n"
       in
       let file_defn = 
 	"DEFINE_LIST(EXPRID_list,gen_e);\n\n\
@@ -122,7 +122,7 @@ class termsort_gen =
 	 {\n \
 	    return term_get_ecr(e);\n\
 	 }\n\n\
-	 void EXPRID_inclusion(EXPRID e1, EXPRID e2) \n\
+	 void EXPRID_inclusion_ind(EXPRID e1, EXPRID e2) \n\
 	 {\n \
 	    term_unify(EXPRID_con_match,EXPRID_occurs,e1,e2);\n\
 	 }\n\n\
@@ -134,15 +134,25 @@ class termsort_gen =
          {\n \
 	    return term_get_stamp(e1) - term_get_stamp(e2);\n\
 	 }\n\n\
-	 void EXPRID_inclusion_contra(EXPRID e1, EXPRID e2) \n\
+	 void EXPRID_inclusion_ind_contra(EXPRID e1, EXPRID e2) \n\
 	 {\n \
 	    term_unify(EXPRID_con_match,EXPRID_occurs,e2,e1);\n\
 	 }\n\n\
+	 void EXPRID_unify(EXPRID e1, EXPRID e2) \n\
+	 {\n \
+           banshee_clock_tick();\n\
+           EXPRID_unify_ind(e1,e2);\n\
+         }\n\n\
 	 void EXPRID_cunify(EXPRID e1, EXPRID e2) \n\
+	 {\n \
+           banshee_clock_tick();\n\
+           EXPRID_cunify_ind(e1,e2);\n\
+         }\n\n\
+	 void EXPRID_cunify_ind(EXPRID e1, EXPRID e2) \n\
 	 {\n \
            term_cunify(EXPRID_con_match,EXPRID_occurs,e1,e2);\n\
          }\n\n\
-	 void EXPRID_unify(EXPRID e1, EXPRID e2) \n\
+	 void EXPRID_unify_ind(EXPRID e1, EXPRID e2) \n\
 	 {\n \
 	    term_unify(EXPRID_con_match,EXPRID_occurs,e1,e2);\n\
 	 }\n"
@@ -270,7 +280,7 @@ class termsort_gen =
 	  | NEGvariance -> 
 	      (raise (Variance ("Term constructors do not allow variance"));"")
 	  | NOvariance -> 
-	      e' ^ "_unify"
+	      e' ^ "_unify_ind"
 	  | POSvariance -> 
 	      (raise (Variance ("Term constructors do not allow variance"));"")
 	  in

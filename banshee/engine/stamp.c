@@ -47,6 +47,8 @@ static region str_hash_rgn;
 static int count1 = INITIAL1, count2 = INITIAL2, count3 = INITIAL3;
 static int bounds1 = INT_MIN, bounds2 = 536870911, bounds3 = INT_MAX;
 
+DEFINE_LIST(stamp_list,stamp);
+
 static inline stamp check1(int i)
 {
   if (i <= bounds1)

@@ -47,8 +47,10 @@ term_var tv_fresh_large(region r, const char *name);
 
 char *tv_get_name(term_var v);
 
-bounds tv_get_pending(term_var v);
-void tv_add_pending(term_var v,gen_e e, stamp st);
+const bounds tv_get_pending(term_var v);
+
+/* Returns true if e was already in pending */
+bool tv_add_pending(term_var v,gen_e e, stamp st);
 
 void tv_unify(term_var v, gen_e e);
 void tv_unify_vars(term_var v1, term_var v2);
