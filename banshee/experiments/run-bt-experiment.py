@@ -130,10 +130,12 @@ def list_to_string_nolf(list):
 
 # Take a string list (the output of running the analysis) and process
 # it into two output lists
-def process_andersen_output(current, output):
+def process_andersen_output(current, output, prefix):
     found = False
     statefile = open(statefilename + str(current),"w")
     outfile = open(outfilename + str(current),"w")
+    for entry in prefix:
+	statefile.write("file: %s clock: %d\n" % entry)
     for line in output:
 	if (line == '##################\n'):
 	    found = True
@@ -156,27 +158,24 @@ def compute_time(file, state):
 
 # Compute the new list of files to analyze, given that we are rolling
 # back to file
-def compute_stack(modified, file, filelist):
+def compute_stack(modified, file, state, time):
     # First, take the prefix of the list up to file
-    prefix = filelist[:filelist.index(file)]
+    prefix = state[:state.index((file,time))]
     # Next, take the suffix of filelist starting with file, but filtering out
     # any modifieds
-    suffix = [elem for elem in filelist[filelist.index(file):] if (not elem in modified)]
-    return prefix + suffix + modified    
+    suffix = [elem for elem,_ in state[state.index((file,time)):] if (not elem in modified)]
+    return (suffix + modified),prefix
 
 # Given the list of modified files, the new file list, and the old
 # analysis state, compute a new filelist (stack) and the rollback time
-# TODO
-def get_new_stack_and_time(modified, filelistlf, state):
-    filelist = []
-    for filelf in filelistlf:
-	filelist.append(filelf[:-1])
-    for file in filelist:
+def get_new_stack_and_time(modified, state):
+    for file,nexttime in state:
 	if file in modified:
 	    time = compute_time(file, state)
-	    stack = compute_stack(modified, file, filelist)
-	    return (time,stack)
-    print "Failed to compute rollback time and new stack!"
+	    stack,prefix = compute_stack(modified, file, state, nexttime)
+	    return (time,stack, prefix)
+    # TODO-- what if we just added a file, so it's not in state?
+    print "Failed to compute rollback time and new stack (possibly files were only added?)!"
     sys.exit(1)
 
 # Entry point 
@@ -201,7 +200,7 @@ def main():
     files = list_to_string(get_filelist(project,".i"))
     cmd = "%s -fserialize-constraints %s 2>/dev/null" % (parser_ns,files)
     output = os.popen(cmd).readlines()
-    process_andersen_output(start_with_entry,output)
+    process_andersen_output(start_with_entry,output,[])
     # move the analysis to the _prev directory
     os.system("rm -rf %s" % project_prev) 
     os.system("mv %s %s" % (project, project_prev))
@@ -227,19 +226,18 @@ def main():
 	    print "Build error"
 	    sys.exit(1)
 	modified = get_modified_files(project_prev,project,".i")
-	filelist = get_filelist(project,".i")
-	time,files = get_new_stack_and_time(modified,filelist,banshee_state)
+	time,files,prefix = get_new_stack_and_time(modified,banshee_state)
 	print "Backtracking to : %s" % time
-	cmd = "%s -fserialize-constraints -fback%s %s 2>/dev/null" % (parser_ns, time, list_to_string_nolf(files))
+	cmd = "%s -fserialize-constraints -fdeserialize-constraints -fback%s %s 2>/dev/null" % (parser_ns, time, list_to_string_nolf(files))
 	print cmd
 	output = os.popen(cmd).readlines()
-	process_andersen_output(current,output)
+	process_andersen_output(current,output,prefix)
   	os.system("rm -rf %s" % project_prev)
 	os.system("mv %s %s" % (project, project_prev))
 
-    os.system("rm -rf %s" % project)
-    os.system("rm -rf %s" % project_prev)
-    os.system("rm -f andersen.out")
+#    os.system("rm -rf %s" % project)
+#    os.system("rm -rf %s" % project_prev)
+#    os.system("rm -f andersen.out")
 
 if __name__ == "__main__":
     main()
