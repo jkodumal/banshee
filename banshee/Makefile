@@ -49,7 +49,7 @@ andersen: banshee
 
 points-to: andersen
 	$(MAKE) -C cparser
-	
+
 ibanshee: banshee
 	$(MAKE) -C ibanshee
 
@@ -68,6 +68,7 @@ docs:
 check: 
 	$(MAKE) -C tests check
 	$(MAKE) -C tests -f pta_test.mk
+	$(MAKE) -C tests -f ibanshee_test.mk
 
 perf:
 	$(MAKE) -C tests -f pta_perf.mk
@@ -87,6 +88,7 @@ clean:
 	$(MAKE) -C tests clean
 	$(MAKE) -C docs clean
 	$(MAKE) -C tests -f pta_test.mk clean
+	$(MAKE) -C tests -f ibanshee_test.mk clean
 	$(MAKE) -C ibanshee clean
 	rm -rf *~
 

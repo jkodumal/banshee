@@ -208,10 +208,12 @@ void flush_lexer(void);
  
 %%
 
-program: line 
+program: 
+         line 
          { }
         | program line
          { }
+;
 
 line:      TOK_LINE
            { if (interactive) YYACCEPT; }
