@@ -36,6 +36,9 @@ COR_DIR := ./test.ibc.cor
 IBC_BT_DIR := ./test.ibc/bt
 COR_BT_DIR := ./test.ibc.cor/bt
 
+IBC_PERSIST_DIR := ./test.ibc/persist
+COR_PERSIST_DIR := ./test.ibc.cor/persist
+
 IBANSHEE_TESTS := 
 IBANSHEE_TESTS += cons_def.ibc
 IBANSHEE_TESTS += cons_def2.ibc
@@ -48,6 +51,8 @@ IBANSHEE_TESTS += row_flow.ibc
 IBANSHEE_BT_TESTS := 
 IBANSHEE_BT_TESTS += simple.ibc
 
+IBANSHEE_PERSIST_TESTS :=
+IBANSHEE_PERSIST_TESTS += cons_def_persist.ibc
 
 IBANSHEE_EXEC := $(IBANSHEE_DIR)/ibanshee.exe
 
@@ -58,17 +63,26 @@ ibanshee-regr:  $(IBANSHEE_EXEC) ibanshee-regr/clean \
 ibanshee-bt: $(IBANSHEE_EXEC) ibanshee-bt/clean \
 	$(patsubst %,ibanshee-bt-tests/%,$(IBANSHEE_BT_TESTS)) ibanshee-bt-done
 
+ibanshee-persist: $(IBANSHEE_EXEC) ibanshee-persist/clean \
+	$(patsubst %,ibanshee-persist-tests/%,$(IBANSHEE_PERSIST_TESTS)) ibanshee-persist-done
+
 ibanshee-regr/clean:
 	rm -f $(IBC_DIR)/*.out
 
 ibanshee-bt/clean:
 	rm -f $(IBC_BT_DIR)/*.out
 
-.PHONY: ibanshee-done ibanshee-bt-done
+ibanshee-persist/clean:
+	rm -f $(IBC_PERSIST_DIR)/*.out
+	rm -f tmpfile
+
+.PHONY: ibanshee-done ibanshee-bt-done ibanshee-persist-done
 
 ibanshee-done:; @echo "iBanshee tests pass"
 
 ibanshee-bt-done:; @echo "iBanshee backtracking tests pass"
+
+ibanshee-persist-done:; @echo "iBanshee persistence tests pass"
 
 ibanshee-tests/%:
 	$(IBANSHEE_EXEC) -f $(IBC_DIR)/$* > $(IBC_DIR)/$*.out
@@ -78,7 +92,11 @@ ibanshee-bt-tests/%:
 	$(IBANSHEE_EXEC) -f $(IBC_BT_DIR)/$* > $(IBC_BT_DIR)/$*.out
 	diff $(COR_BT_DIR)/$*.cor $(IBC_BT_DIR)/$*.out
 
+ibanshee-persist-tests/%:
+	$(IBANSHEE_EXEC) -f $(IBC_PERSIST_DIR)/$* > $(IBC_PERSIST_DIR)/$*.out
+	diff $(COR_PERSIST_DIR)/$*.cor $(IBC_PERSIST_DIR)/$*.out
+
 $(IBANSHEE_DIR)/ibanshee.exe: 
 	$(MAKE) -C ../ ibanshee
 
-clean: ibanshee-regr/clean ibanshee-bt/clean
+clean: ibanshee-regr/clean ibanshee-bt/clean ibanshee-persist/clean
