@@ -9,6 +9,14 @@ TARGETS = libregions.a regions-norc.o
 
 all: $(TARGETS)
 
+test: all
+	make clean
+	cd test; ./dotest 0 1 2 3 4 5 6 7
+
+time: all
+	cd test/2; make timer
+	cd test/2; time timer d; time timer b
+
 libregions.a: regions-norc.o
 	$(AR) rcs $@ $^
 

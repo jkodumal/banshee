@@ -38,7 +38,7 @@ int region_main(int argc, char *argv[]) {
   u[0] = update_pair;
   t = deserialize("data", "offsets", u, temp);
   if (strcmp(argv[1],"b") == 0) {
-    p = (struct pair *) translate_pointer(t, (void *) 1125675848);
+    p = (struct pair *) translate_pointer(t, (void *) 1125667648);
     r[0] = regionof((void *) p);
     r[1] = NULL;
     serialize(r, "data2", "offsets2"); 

@@ -23,6 +23,7 @@ struct pair *new_pair(region r, int i, struct pair *prev) {
 }
 
 #define NUM 6000000
+
 int region_main(int argc, char *argv[]) {
   region r[2];
   Updater u[1];
@@ -39,7 +40,8 @@ int region_main(int argc, char *argv[]) {
     p = new_pair(r[0], i, p);
 
   serialize(r,"data","offsets");
-  printf("Use the following pointer for old p in the timer: %d\n", (unsigned int) p);
+  if (argc > 1)
+    printf("Use the following pointer for old p in the timer: %d\n", (unsigned int) p);
   t = deserialize("data", "offsets", u, temp); 
   p2 = (struct pair *) translate_pointer(t, (void *) p);
   

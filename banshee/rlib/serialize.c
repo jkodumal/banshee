@@ -159,14 +159,10 @@ int serialize(region *r, char *datafile, char *statefile) {
   Translating a serialized pointer to its new location after
 deserialization consists of an array lookup using the high order bits
 of the old address as the index.  Note that this implementation
-requires that pages be aligned on boundaries that are powers of 2.
+requires that pages be aligned at addresses where the last SHIFT bits are 0's.
 */
-void *translate_pointer(translation map, void *old_address) {
-  void *elem = *(map->map + (((unsigned int) old_address) >> SHIFT));
-  if (elem == NULL)
-    return old_address;
-  else
-    return elem + (((unsigned int) old_address) & 0x00001FFF);
+inline void *translate_pointer(translation map, void *old_address) {
+  return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + (((unsigned int) old_address) & 0x00001FFF);
 }
 
 void update_pointer(translation map, void **location) {
@@ -320,7 +316,7 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
   numbytes = read(state, &ps, sizeof(struct page_state));
   while (numbytes != 0) {
     if (numbytes != sizeof(struct page_state)) {
-      fprintf(stderr,"Error: Could not read page state. Bytes read = %d; bytest desired = %lu.\n",numbytes,sizeof(struct page_state));
+      fprintf(stderr,"Error: Could not read page state. Bytes read = %d; bytest desired = %d.\n",numbytes,sizeof(struct page_state));
       exit(1);
     }
     newp = (struct page *) translate_pointer(map, ps.old_address); 

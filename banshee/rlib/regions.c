@@ -400,10 +400,11 @@ char *rstrextend0(region r, const char *old, size_t newsize)
 
 void typed_rarraycopy(void *to, void *from, size_t n, size_t size, type_t type)
 {
+  /*
   char *cto;
   int i;
 
-  /*
+
   if (type)
     for (cto = to, i = 0; i < n; i++, cto += size)
       type(cto, -1);
