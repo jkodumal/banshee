@@ -1584,7 +1584,7 @@ void update_module_flowrow(translation t)
   update_pointer(t, (void **)&setst_one_row);
   update_pointer(t, (void **)&setst_abs_row);
   update_pointer(t, (void **)&setst_wild_row);
-#endif NONSPEC
+#endif /* NONSPEC */
 }
 
 int update_flowrow_rollback_info(translation t, void *m)
