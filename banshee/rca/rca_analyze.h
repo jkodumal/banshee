@@ -124,7 +124,7 @@ struct rca_app_result rca_dispatch(const char *fnName, rca cls,
 rca rca_contents(rca lval);
 
 /* Compute the points-to set from a pointer's contents */
-label_t_list rca_points_to(rca);
+rlabel_t_list rca_points_to(rca);
 
 /* Alias query : given two contents, return true if they are aliases */
 bool rca_alias_query(rca, rca);

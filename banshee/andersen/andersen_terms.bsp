@@ -27,8 +27,8 @@
 
 specification andersen_terms : ANDERSEN_TERMS =
   spec
-    data label_t : set
-    data T : set = ref of +label_t * -T * +T
-                 | lam of +label_t * -argT * +T
+    data alabel_t : set
+    data T : set = ref of +alabel_t * -T * +T
+                 | lam of +alabel_t * -argT * +T
      and argT : row(T)
   end

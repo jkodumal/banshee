@@ -101,14 +101,14 @@ rca rca_rvalue(rca t1)
 /* Add a ref constructor */
 rca rca_address(rca t1)
 {
-  return ref(label_t_one(),rca_one(),t1);
+  return ref(rlabel_t_one(),rca_one(),t1);
 }
 
 /* Make a new lvalue */
 rca rca_make_lval(const char *name)
 {
   rca var = rca_fresh(name);
-  label_t absloc = label_t_constant(name);
+  rlabel_t absloc = rlabel_t_constant(name);
 
   return ref(absloc,var,var);
 }
@@ -174,13 +174,13 @@ static rcaArgs make_mbr_args(rca thisptr, rca_list args)
 /* Make a new function args --exn--> ret */
 rca rca_make_lam(const char *name, rca ret, rca_list args, rca exn)
 {
-  return lam (label_t_constant(name), make_lam_args(args), ret, exn);
+  return lam (rlabel_t_constant(name), make_lam_args(args), ret, exn);
 }
 
 rca rca_make_mbr(const char *name, rca thisptr,
 		 rca ret, rca_list args, rca exn)
 {
-  return mbr (label_t_constant(name), make_mbr_args(thisptr,args), ret, exn);
+  return mbr (rlabel_t_constant(name), make_mbr_args(thisptr,args), ret, exn);
 }
 
 
@@ -266,7 +266,7 @@ rca rca_contents(rca lval)
 }
 
 /* Compute the points-to set from a pointer's contents */
-label_t_list rca_points_to(rca contents)
+rlabel_t_list rca_points_to(rca contents)
 {
   rca_list_scanner scan;
   rca temp;
@@ -274,7 +274,7 @@ label_t_list rca_points_to(rca contents)
   region results_rgn = newregion();
   
   rca_list ptset = rca_list_copy(scratch_rgn,rca_tlb(contents));
-  label_t_list abslocs = new_label_t_list(results_rgn);
+  rlabel_t_list abslocs = new_rlabel_t_list(results_rgn);
 
   rca_list_scan(ptset,&scan);
   
@@ -284,9 +284,9 @@ label_t_list rca_points_to(rca contents)
       struct lam_decon lam = lam_decon(temp);
 
       if (ref.f0)
-	label_t_list_cons(ref.f0,abslocs);
+	rlabel_t_list_cons(ref.f0,abslocs);
       else if (lam.f0)
-	label_t_list_cons(lam.f0,abslocs);
+	rlabel_t_list_cons(lam.f0,abslocs);
     }
   deleteregion(scratch_rgn);
   
@@ -296,9 +296,9 @@ label_t_list rca_points_to(rca contents)
 /* Alias query : given two contents, return true if they are aliases */
 bool rca_alias_query(rca r1, rca r2)
 {
-  label_t_list_scanner scan1,scan2;
-  label_t_list ptset1,ptset2;
-  label_t temp1,temp2;
+  rlabel_t_list_scanner scan1,scan2;
+  rlabel_t_list ptset1,ptset2;
+  rlabel_t temp1,temp2;
   
   /* Return true if the contents are the same */
   if (rca_eq(r1,r2))
@@ -307,16 +307,16 @@ bool rca_alias_query(rca r1, rca r2)
   ptset1 = rca_points_to(r1);
   ptset2 = rca_points_to(r2);
   
-  label_t_list_scan(ptset1,&scan1);
+  rlabel_t_list_scan(ptset1,&scan1);
 
   /* Check the emptiness of the intersection */
-  while(label_t_list_next(&scan1,&temp1))
+  while(rlabel_t_list_next(&scan1,&temp1))
     {
-      label_t_list_scan(ptset2,&scan2);
+      rlabel_t_list_scan(ptset2,&scan2);
       
-      while (label_t_list_next(&scan2,&temp2))
+      while (rlabel_t_list_next(&scan2,&temp2))
 	{
-	  if (label_t_eq(temp1,temp2))
+	  if (rlabel_t_eq(temp1,temp2))
 	    return TRUE;
 	}
     }
@@ -335,7 +335,7 @@ static void pr_lamset_rca_elem(rca t)
     {
       printf(",");
       set_size += 1;
-      label_t_print(stdout,lam.f0);
+      rlabel_t_print(stdout,lam.f0);
     }
 }
 
@@ -347,7 +347,7 @@ static void pr_objset_rca_elem(rca t)
     {
       printf(",");
       set_size += 1;
-      label_t_print(stdout,obj.f0);
+      rlabel_t_print(stdout,obj.f0);
     }
 }
 
@@ -359,7 +359,7 @@ static void pr_ptset_rca_elem(rca t)
     {
       printf(",");
       set_size += 1;
-      label_t_print(stdout,ref.f0);
+      rlabel_t_print(stdout,ref.f0);
     }
 }
 
@@ -378,7 +378,7 @@ int rca_pr_ptset(rca contents)
     if (ref.f0)
       {
 	set_size +=1;
-	label_t_print(stdout,ref.f0);
+	rlabel_t_print(stdout,ref.f0);
 	printed = TRUE;
       }
     ptset = rca_list_tail(ptset);
@@ -408,7 +408,7 @@ int rca_pr_objset(rca contents)
     if (obj.f0)
       {
 	set_size +=1;
-	label_t_print(stdout,obj.f0);
+	rlabel_t_print(stdout,obj.f0);
 	printed = TRUE;
       }
     objset = rca_list_tail(objset);
@@ -439,7 +439,7 @@ int rca_pr_lamset(rca contents)
       if (lam.f0)
 	{
 	  set_size +=1;
-	  label_t_print(stdout,lam.f0);
+	  rlabel_t_print(stdout,lam.f0);
 	  printed = TRUE;
 	}
 
@@ -467,10 +467,10 @@ rca rca_make_obj(const char *name, dispatchT_map member_fns)
   dispatchT vtable;
   getFields get = getFields_wild();
   setFields set = setFields_wild();
-  label_t classtag;
+  rlabel_t classtag;
 
   vtable = dispatchT_row(member_fns,dispatchT_wild());
-  classtag = label_t_constant(name); 
+  classtag = rlabel_t_constant(name); 
 
   return obj(classtag,vtable,set,get);
 }

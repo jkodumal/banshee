@@ -34,8 +34,6 @@ Boston, MA 02111-1307, USA. */
 // #include <alloca.h>
 #define alloca(size)   __builtin_alloca (size)
 
-
-
 /* Return TRUE if TTL and TTR are pointers to types that are equivalent,
    ignoring their qualifiers.  */
 static bool compatible_pointer_targets(type ttl, type ttr, bool pedantic)

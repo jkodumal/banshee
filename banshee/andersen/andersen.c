@@ -98,7 +98,7 @@ static argT fun_rec_T(T_list args)
  
 static T pta_make_lam(const char *id, T ret, T_list args)
 {
-  return lam (label_t_constant(id), fun_rec_T(args), ret);
+  return lam (alabel_t_constant(id), fun_rec_T(args), ret);
 }
 
 T pta_make_ref(const char *id)
@@ -106,7 +106,7 @@ T pta_make_ref(const char *id)
 
   T var = T_fresh(id);
 
-  label_t tag = label_t_constant(id);
+  alabel_t tag = alabel_t_constant(id);
   
   return ref(tag, var,var);
 }
@@ -144,7 +144,7 @@ T pta_rvalue(T t1)
 
 T pta_address(T t1)
 {
-  return ref(label_t_one(), T_one(), t1);
+  return ref(alabel_t_one(), T_one(), t1);
 }
 
 void pta_assignment(T t1,T t2)
@@ -191,9 +191,9 @@ static void pr_ptset_T_elem(T t)
   
   printf(",");
   if (ref.f0)
-      label_t_print(stdout,ref.f0);
+      alabel_t_print(stdout,ref.f0);
   else if (lam.f0)
-      label_t_print(stdout,lam.f0);
+      alabel_t_print(stdout,lam.f0);
   /*
   printf(",");
   T_pr(stdout,(T)t);
@@ -216,9 +216,9 @@ void pta_pr_ptset(contents_type t)
       struct lam_decon lam = lam_decon(T_list_head(ptset));
 
       if (ref.f0)
-	  label_t_print(stdout,ref.f0);
+	  alabel_t_print(stdout,ref.f0);
       else if (lam.f0)
-	  label_t_print(stdout,lam.f0);
+	  alabel_t_print(stdout,lam.f0);
 
       /*
             T_pr(stdout,T_hd(ptset));

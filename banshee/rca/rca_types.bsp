@@ -28,11 +28,11 @@
 
 specification rca_types : RCA_TYPES = 
    spec
-    data label_t : set
-    data rca : set = ref of +label_t * -rca * +rca
-               |   lam of +label_t * -rcaArgs * +rca * +rca 
-	       |   obj of +label_t * +dispatchT  * -setFields * +getFields
-	       |   mbr of +label_t * -rcaArgs * +rca * +rca
+    data rlabel_t : set
+    data rca : set = ref of +rlabel_t * -rca * +rca
+               |   lam of +rlabel_t * -rcaArgs * +rca * +rca 
+	       |   obj of +rlabel_t * +dispatchT  * -setFields * +getFields
+	       |   mbr of +rlabel_t * -rcaArgs * +rca * +rca
      and rcaArgs : row(rca)
      and getFields : row(rca) % read a field from an object
      and setFields : row(rca) % write a field of an object
