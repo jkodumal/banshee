@@ -96,6 +96,9 @@ static char *alloc_names[] = {"malloc","calloc","realloc","valloc",
 			      "__rc_ralloc_small0",
 			      "__rc_rstralloc",
 			      "rc_rstralloc0",
+			      "rstralloc",
+			      "typed_rarrayalloc",
+			      "typed_ralloc",
 			      NULL};
 
 int flag_field_based = 0;
