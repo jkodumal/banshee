@@ -26,8 +26,8 @@ double gettime(void)
 
 DEFINE_ARRAY(wchar_array, wchar_t)
 
-#ifndef HAVE_STRTOLD
-long double strtold(const char *str, char **endptr)
+     //#ifndef HAVE_STRTOLD
+long double mystrtold(const char *str, char **endptr)
 {
   long double ld;
   int count;
@@ -39,4 +39,4 @@ long double strtold(const char *str, char **endptr)
   return ld;
 }
 
-#endif
+//#endif

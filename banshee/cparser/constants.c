@@ -367,12 +367,12 @@ known_cst foldaddress_field_ref(known_cst object, field_declaration fdecl)
 }
 
 
-long double strtold (const char *, char **);
+long double mystrtold (const char *, char **);
 
 lexical_cst fold_lexical_real(type realtype, location loc, cstring tok)
 {
   lexical_cst c = new_lexical_cst(parse_region, loc, tok);
-  cval realvalue = make_cval_float(strtold(tok.data, NULL));
+  cval realvalue = make_cval_float(mystrtold(tok.data, NULL));
 
   if (type_complex(realtype))
     realvalue = make_cval_complex(cval_cast(cval_zero, realtype), realvalue);
