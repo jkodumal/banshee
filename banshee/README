@@ -11,13 +11,14 @@ To build banshee, the following must be installed:
  --- gcc (should be standard)
  --- indent (should be standard)
 
-You can then build banshee by typing 'make' at the command line in
-this directory. If everything succeeds, the following files will be
-built:
+You can then build banshee by typing 'make' or 'gmake' at the command
+line in this directory. If everything succeeds, the following targets
+will be built:
 
 engine/libnsengine.a
 engine/libengine.a
 bin/banshee.exe
+bin/ibanshee.exe
 
 The first library is the nonspecialized constraint resolution
 library. Link with this library if your application does not use the
@@ -29,6 +30,9 @@ banshee code generator (bin/banshee.exe). Interfaces for this library
 are created by the code generator. See the user manual for more
 information.
 
+iBanshee (bin/ibanshee.exe) is an interpreter that allows you to
+interactively define constraints and inspect solutions.
+
 'make' will also build the user manual (docs/banshee.ps) a suite of
 small test applications (see tests/README) and the points-to analysis
 application (see cparser/README). Currently, the manual is extremely
@@ -39,8 +43,9 @@ Other useful make targets:
 'make check' will verify your build. 
 'make banshee' will build banshee without building any test applications
 'make docs' will just build the documentation
-'make test' will just build the test applications
-'make points-to' will just build the points-to analysis application
+'make test' will build the test applications and dependencies
+'make points-to' will build the points-to analysis application and dependencies
+'make ibanshee' will build the iBanshee interpreter and dependencies
 
 banshee should build and run on Linux, FreeBSD and Windows (with
 cygwin). On FreeBSD, use 'gmake' instead of 'make'
@@ -54,6 +59,12 @@ cparser (GPL, see cparser/COPYRIGHT)
 
 Note that the cparser is a separate application, no code from cparser
 is linked into banshee itself.
+
+Known bugs:
+
+- The ibanshee interpreter acts strangely on Windows under cygwin's
+bash shell (backspace won't delete characters, for instance). Calling
+ibanshee.exe from cmd.exe seems to fix the problem.
 
 See the COPYRIGHT file for more details.
 

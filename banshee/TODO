@@ -196,13 +196,18 @@ DONE.
 *** Add a !load command
 
 !load should act somewhat differently, it shouldn't YYACCEPT at line ends,
-nor should there be any > output
+nor should there be any prompt output
 
 ** Test cases for iBanshee
 
 *** Update build process to check iBanshee build
 
+DONE.
+
 *** Add tests for iBanshee
 
+DONE.
+
+*** Add tests for iBanshee with backtracking
 
 
