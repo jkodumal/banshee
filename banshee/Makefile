@@ -28,9 +28,9 @@
 .PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
         docs points-to
 
-all: banshee tests points-to docs
+banshee: libcompat codegen engine docs
 
-banshee: libcompat codegen engine
+all: banshee tests points-to docs
 
 libcompat: 
 	$(MAKE) -C libcompat
@@ -62,8 +62,8 @@ tests: banshee rca andersen lambda dyckcfl
 docs: 
 	$(MAKE) -C docs
 
-check: 
-	echo "No checks currently defined" 
+check: points-to
+	$(MAKE) -C tests -f pta_test.mk
 
 clean:
 	$(MAKE) -C libcompat clean
@@ -76,5 +76,6 @@ clean:
 	$(MAKE) -C dyckcfl clean
 	$(MAKE) -C tests clean
 	$(MAKE) -C docs clean
+	$(MAKE) -C tests -f pta_test.mk clean
 
 

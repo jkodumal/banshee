@@ -29,7 +29,7 @@ other tasks (a wishlist)
   -x- check builds on both unix and windows/cygwin
   -x- get dyckcfl ready for release (copyrights, etc)
   --- fix dyckcfl-random
-  --- set up test suite
+  -x- set up test suite
   --- update manual
   -x- update copyrights (year)
   -x- fix all <>-style includes to "", and remove engine/ in codegen
