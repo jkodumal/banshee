@@ -972,7 +972,8 @@ static expr_type analyze_expression(expression e) deletes
       break;
     case kind_cast_list:
       {
-	assert(0);
+	return BOTTOM_INT;
+	//assert(0);
       }
       break;
       
