@@ -96,6 +96,14 @@ static void L_unify_hook(L t1, L t2)
   L_unify(t1,t2);
 }
 
+static T get_ref(T t) {
+  struct ref_decon r_decon = ref_decon(t);
+
+  assert(r_decon.f1);
+
+  return r_decon.f1;  
+}
+
 /* If t is ref(...), return its contents, otherwise, build a ref
    constructor and unify it with t, returning its contents */
 static struct contents_type_ decompose_ref_or_fresh(T t) {
@@ -232,9 +240,19 @@ void pta_assignment(T t1, T t2) {
 
 T pta_make_fun(const char *name, T ret, T_list args) {
   T body = pta_make_ref(name);
+  region scratch = newregion();
+  T_list_scanner scan;
+  T temp;
+  T_list arg_list = new_T_list(scratch);
+
+  T_list_scan(args, &scan);
+
+  while (T_list_next(&scan, &temp)) {
+    T_list_cons(get_ref(temp),arg_list);
+  }
   
   T_unify_hook(body, ref(alabel_t_fresh("mkFun"), T_fresh("'fv"),
-		    lam(alabel_t_fresh(name), fun_rec_T(args), ret)));
+		    lam(alabel_t_fresh(name), fun_rec_T(arg_list), get_ref(ret))));
   return body;
 }
 
@@ -294,6 +312,7 @@ void pta_pr_ptset(contents_type c) {
       alabel_t_list_copy(scratch_rgn, alabel_t_tlb(ref_decon(ptr_rep).f0));
     
     if (!alabel_t_list_empty(tags)) {
+      size += alabel_t_list_length(tags);
       alabel_t_print(stdout,alabel_t_list_head(tags));
       
       tags = alabel_t_list_tail(tags);
