@@ -82,7 +82,7 @@ struct field_split
 };
 
 typedef struct flowrow_rollback_info_ { /* extends banshee_rollback_info */
-  banshee_time time;
+  int time;
   sort_kind kind;
   hash_table added_edges;	/* a mapping from bounds to the gen_e's added */
   flow_var_list set_aliases;    /* a list of flow_var's that have become aliases. Call fv_unset_alias on them */

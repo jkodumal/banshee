@@ -87,14 +87,14 @@ void print_constraint_graphs(FILE *f)
   setif_print_constraint_graph(f);
 }
 
-banshee_time banshee_get_time(void)
+int banshee_get_time(void)
 {
-  return (banshee_time) {banshee_clock};
+  return banshee_clock;
 }
 
 void banshee_set_time(banshee_rollback_info info)
 {
-  info->time = (banshee_time) {banshee_clock};
+  info->time = banshee_clock;
 }
 
 void banshee_clock_tick()
@@ -113,7 +113,7 @@ bool banshee_check_rollback(sort_kind k)
   banshee_rollback_stack_scan(rb_stack,&scan);
 
   while(banshee_rollback_stack_next(&scan,&info)) {
-    if (info->time.time != banshee_clock) return FALSE;
+    if (info->time != banshee_clock) return FALSE;
     else if (info->kind == k) return TRUE;
   }
   return FALSE;
@@ -156,7 +156,7 @@ void banshee_rollback()
     
     while(1) {
       info = banshee_rollback_stack_head(rb_stack);
-      if (info->time.time < banshee_clock) break;
+      if (info->time < banshee_clock) break;
       banshee_rollback_dispatch(info);
       rb_stack = banshee_rollback_stack_tail(rb_stack);
     }
@@ -164,9 +164,9 @@ void banshee_rollback()
   }
 }
 
-void banshee_backtrack(banshee_time t)
+void banshee_backtrack(int t)
 {
-  if (t.time < 0) return;
-  while(banshee_clock > t.time)
+  if (t < 0) return;
+  while(banshee_clock > t)
     banshee_rollback();  
 }

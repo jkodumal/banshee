@@ -86,27 +86,22 @@ typedef void (*banshee_error_handler_fn)
 
 extern banshee_error_handler_fn handle_error;
 
-/* Time structure. */
-typedef struct banshee_time_ {
-  int time;
-} banshee_time;
-
 /* Generic rollback info structure */
 typedef struct banshee_rollback_info_ {
-  banshee_time time;
+  int time;
   sort_kind kind;
 } * banshee_rollback_info;
 
 extern region banshee_rollback_region;
 
 /* Read the global banshee clock */
-banshee_time banshee_get_time(void);
+int banshee_get_time(void);
 
 /* Backtrack 1 constraint */
 void banshee_rollback(void);
 
 /* Backtrack to time t. If t is >= the current time, this has no effect */
-void banshee_backtrack(banshee_time t);
+void banshee_backtrack(int t);
 
 /* Set a rollback info structure's time */
 void banshee_set_time(banshee_rollback_info);

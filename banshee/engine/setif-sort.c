@@ -71,7 +71,7 @@ struct setif_constant_ /* extends gen_e */
 };
 
 typedef struct setif_rollback_info_ { /* extends banshee_rollback_info */
-  banshee_time time;
+  int time;
   sort_kind kind;
   hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
   hash_table added_ub_projs;    
