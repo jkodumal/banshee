@@ -1,0 +1,53 @@
+-*- outline -*-	
+
+* Introduction
+
+This directory contains data and scripts used to run backtracking and
+persistence experiments with banshee.
+
+
+* Working with CVS Repositories
+
+** Possible Projects
+
+For our purposes, projects should be:
+
+-- Written entirely in C
+-- Large ( 10k+ CVS commits)
+-- Hosted from SourceForge
+
+Here are some possible projects that meet these criteria:
+
+-- Cqual
+-- Gaim: instant messenger client 13k+ commits
+-- Gift: file sharing protocol, 8k+ cvs commits
+
+** Getting local copies of CVS repositories from SourceForge
+
+Use the following URL to get a nightly CVS snapshot. Note, these are
+complete copies of the CVS repositories. Replace projectname with the
+appropriate string:
+
+http://cvs.sourceforge.net/cvstarballs/projectname-cvsroot.tar.bz2
+
+* Preprocessing Source
+
+The cparser frontend requires source code to be
+preprocessed. Acquiring preprocessed source can be somewhat tricky,
+because some files may be generated (e.g. by flex, bison, or other
+tools). Here we outline some approaches.
+
+** gcc -save-temps
+
+Compile the project as follows:
+
+make CC="gcc -save-temps"
+
+This will leave the preprocessed files as .i files in the source
+directories. Unfortunately, it will also compile the files, which will
+be too slow.
+
+** gcc -E
+
+This doesn't really drop into the build process as desired, as it
+dumps preprocessed files to stdout.
