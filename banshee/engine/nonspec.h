@@ -34,6 +34,7 @@
 #include "linkage.h"
 #include "bool.h"
 #include "list.h"
+#include "hash.h"
 
 EXTERN_C_BEGIN
 
@@ -277,6 +278,12 @@ void cons_group_add(cons_group g, constructor c);
 
 /* Create a group projection pattern */
 gen_e setif_group_proj_pat(cons_group g, int i, gen_e e);
+
+void serialize_cs(const char *filename, hash_table *entry_points, 
+		  keywrite_fn *write_keys, unsigned long sz);
+
+void deserialize_cs(const char *filename, hash_table *entry_points,
+		    keyread_fn *read_keys, unsigned long sz);
 
 EXTERN_C_END
 

@@ -42,9 +42,9 @@ static hash_table var_env;
 static int interactive = 1;
 static sort_kind current_row_base_sort;
 
-extern FILE * yyin;
+extern FILE *yyin;
 
-static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek) 
+static void ibanshee_error_handler(gen_e e1, gen_e e2, banshee_error_kind bek) 
 {
   fprintf(stderr,"Warning: ");
   switch(bek) {
@@ -62,6 +62,22 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek)
   fprintf(stderr," and ");
   expr_print(stderr,e2);
   fprintf(stderr,"\n");
+}
+
+static void save_cs(const char *filename)
+{
+  hash_table entry_points[3] = {constructor_env,named_env,var_env};
+  keywrite_fn write_keys[3] = 
+  {string_keywrite_fn,string_keywrite_fn, string_keywrite_fn};
+
+  serialize_cs(filename, entry_points, 
+	       write_keys, 3);
+}
+
+				/* TODO */
+static void load_cs(const char *filename)
+{
+
 }
 
 static void show_help()
@@ -97,6 +113,8 @@ Commands         : !help\n\
                    !time\n\
                    !trace [i]\n\
                    !quit\n\
+                   !save \"filename\"\n\
+                   !load \"filename\"\n\
                    !exit\n");
 }
 
@@ -161,6 +179,7 @@ void flush_lexer(void);
 %token TOK_WILD "_"
 %token TOK_COLON ":"
 %token TOK_CMD "!"
+%token TOK_QUOTE "\""
 %left TOK_INTER "&&"
 %left TOK_UNION "||"
 %token TOK_LEQ "<="
@@ -570,6 +589,9 @@ cmd:       TOK_CMD TOK_IDENT
 	     else if (!strcmp($2,"help")) {
 	       show_help();
 	     }
+             if (!strcmp($2,"save") || !strcmp($2,"load")) {
+	       fprintf(stderr,"Missing filename\n");
+	     }
 	     /* TODO */
 	     else if (!strcmp($2,"trace")) {
 	       fprintf(stderr,"Trace not yet implemented\n");
@@ -589,6 +611,16 @@ cmd:       TOK_CMD TOK_IDENT
 	       fprintf(stderr,"Trace not yet implemented\n");
 	     }
 	   }  
+	   /* TODO -- really handle strings surrounded by quotes in the lexer*/
+        |  TOK_CMD TOK_IDENT TOK_QUOTE TOK_IDENT TOK_QUOTE 
+           {
+             if (!strcmp($2,"save")) {
+	       save_cs($4);
+	     }
+	     else if (!strcmp($2,"load")) {
+	       load_cs($4);
+	     }
+           }
         |  TOK_CMD TOK_IDENT expr
            { 
 	         if (!strcmp($2,"tlb")) {

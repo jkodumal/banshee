@@ -107,14 +107,10 @@ void stamp_reset(void) deletes
   deleteregion_ptr(&str_hash_rgn);
 }
 
-
-
 void stamp_init(void)
 {
   str_hash_rgn = newregion();
-  /* TODO : internal_rgn !!! */
   str_hash = make_string_hash_table(str_hash_rgn,INITIAL_SIZE);
-
 }
 
 const char *stamp_to_str(region r,stamp st)
@@ -122,3 +118,26 @@ const char *stamp_to_str(region r,stamp st)
   return inttostr(r,st);
 }
 
+void stamp_serialize(FILE *f)
+{
+  int counts[3] = {count1,count2,count3};
+  int success = 0;
+
+  success = fwrite((void *)counts,sizeof(int),3,f);
+
+  if (success != 3) fail("Failed to serialize stamp module\n");
+}
+
+void stamp_deserialize(FILE *f)
+{
+  int counts[3];
+  int success = 0;
+
+  success = fread((void *)counts,sizeof(int),3,f);
+  
+  if (success != 3) fail("Failed to deserialize stamp module\n");
+
+  count1 = counts[0];
+  count2 = counts[1];
+  count3 = counts[2];  
+}

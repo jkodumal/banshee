@@ -72,6 +72,7 @@ TICK [\']
 "_"         return TOK_WILD;
 ":"         return TOK_COLON;
 "!"         return TOK_CMD;
+"\""        return TOK_QUOTE;
 "^"         return TOK_CARET;
 "&&"        return TOK_INTER;
 "||"        return TOK_UNION;

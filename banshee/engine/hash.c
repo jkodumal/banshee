@@ -27,6 +27,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <string.h>
 #include "hash.h"
 #include "regions.h"
 #include "utils.h"
@@ -85,6 +87,21 @@ hash_table make_string_hash_table(region rhash, unsigned long size)
 {
   return make_hash_table(rhash, size, (hash_fn) string_hash,
 			 (keyeq_fn) string_eq);
+}
+
+/* Writes a key k interpreted as a string to f */
+void string_keywrite_fn(FILE *f, hash_key k)
+{
+  fprintf(f,"%s",(char *)k);
+}
+
+/* Given that the next thing to read from f is a string, fetch it */
+hash_key string_keyread_fn(FILE *f)
+{
+  char buf[512];
+  fscanf(f,"%s",buf);
+  
+  return (hash_key)strdup(buf);
 }
 
 /* Zero out ht.  Doesn't reclaim bucket space. */

@@ -222,3 +222,7 @@ void sv_clear_tlb_cache(setif_var v)
 {
   get_info(v)->tlb_cache = NULL;
 }
+
+void sv_serialize(FILE *f, setif_var v)
+{
+}

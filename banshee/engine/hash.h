@@ -30,6 +30,7 @@
 #ifndef HASH_H
 #define HASH_H
 
+#include <stdio.h>
 #include "bool.h"
 #include "linkage.h"
 #include "utils.h"
@@ -50,7 +51,19 @@ typedef hash_data (*hash_map_fn)(hash_key k, hash_data d, void *arg);
                                           /* Function mapped to
 					     elts in the hash table */
 
+/* Function for serializing keys to a file */
+typedef void (*keywrite_fn)(FILE *f, hash_key k); 
+
+/* Function for deserializing keys from a file */
+typedef hash_key (*keyread_fn)(FILE *f);
+
 typedef struct Hash_table *hash_table;
+
+/* Writes a key k interpreted as a string to f */
+void string_keywrite_fn(FILE *f, hash_key k);
+
+/* Given that the next thing to read from f is a string, fetch it */
+hash_key string_keyread_fn(FILE *f);
 
 /* Make a new hash table, with size buckets initially.  Hash table
    elements are allocated in region rhash. */

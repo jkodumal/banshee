@@ -70,6 +70,8 @@ gen_e_list sv_get_ub_projs(setif_var v);
 
 bool sv_union_component(setif_var v1, setif_var v2);
 
+void sv_serialize(FILE *f, setif_var v);
+
 EXTERN_C_END
 
 

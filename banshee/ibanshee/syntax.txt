@@ -31,5 +31,8 @@ Commands : !help
            !time
            !trace [i]
            !quit
+           !save filename
+           !load filename
+           !run filename
 	   !exit
 

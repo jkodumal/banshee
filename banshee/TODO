@@ -186,7 +186,7 @@ Not really rollback support, but deletion support.
 ** Things to serialize:
 
 - The backtracking stack
-- The ufind stack
+- The ufind stack (ugg.... how is this going to happen)
 - Terms in the hashcons table (e.g. setif_hash)?
 - Extra state (e.g. stamp.c)
 
@@ -207,6 +207,8 @@ function will do the following:
 -- Save all utility state (stamps, etc.)
 -- Serialize all the backtracking state. This will encode the edges between
    terms
+-- Remember to save all the union/find relationships! These must be
+   undo-able after deserialization
 -- Keep track of all of the stamps that have already been written to disk,
    so that they are not written twice 
 -- Serialize all of the terms listed as entry points according to the list
@@ -226,6 +228,21 @@ Deserialization is symmetric, and its semantics will involve a
 reset. That is, loading a constraint system will wipe out the current
 constraints. This is in contrast to BANE, which allows a stack of
 constraint systems.
+
+** Serializing union-find elements
+
+-- Add a function serialize_uf_element, that takes a fun pointer 
+   called serialize_info_fn. Serialize kind, rank, info,
+   etc. 
+
+** Serialization format
+
+-- (3) int: count1, count2, and count3 from stamp module
+-- (1) unsigned long, n: Number of entry point hash tables
+-- (n) of the following:
+       -- (1) unsigned long, k: Number of elements in current table
+       -- (k) key,value pairs, where key is given by user specified
+          serialization function, and each value is a gen_e
 
 * Modify Andersen's to support backtracking
 

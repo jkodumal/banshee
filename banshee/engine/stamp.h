@@ -31,6 +31,7 @@
 #ifndef STAMP_H
 #define STAMP_H
 
+#include <stdio.h>
 #include "regions.h"
 #include "linkage.h"
 #include "list.h"
@@ -51,6 +52,9 @@ const char *stamp_to_str(region r,stamp st);
 
 void stamp_reset(void) deletes;
 void stamp_init(void);
+
+void stamp_serialize(FILE *f);
+void stamp_deserialize(FILE *f);
 
 EXTERN_C_END
 

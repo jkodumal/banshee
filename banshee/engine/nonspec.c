@@ -56,6 +56,7 @@
 #include "term-sort.h"
 #include "term-var.h"
 #include "utils.h"
+#include "hash.h"
 
 /* Types defined here MUST be larger than LARGEST_BUILTIN_TYPE (banshee.h). */
 #define GROUP_PROJ_PAT_TYPE 11
@@ -1387,6 +1388,81 @@ static void setst_inter_print(FILE *f, gen_e e)
     }
 }
 
+// TODO
+static gen_e expr_deserialize(FILE *f)
+{
+  return NULL;
+}
+
+static void sort_serialize(FILE *f, sort_kind s)
+{
+  int success = 0;
+  assert(f);
+  
+  success = fwrite((void *)&s,sizeof(sort_kind),1,f);
+
+  if (! success) fail ("Failed to write a sort in sort_serialize");
+}
+
+				/* TODO --make static */
+sort_kind sort_deserialize(FILE *f)
+{
+  int success = 0;
+  sort_kind result;
+
+  assert(f);
+
+  success = fread((void *)&result,sizeof(sort_kind),1,f);
+
+  if (! success) fail ("Failed to read sort in sort_deserialize");
+
+  assert(result == setif_sort ||
+	 result == term_sort ||
+	 result == flowrow_sort ||
+	 result == setst_sort);
+
+  return result;
+}
+
+static void serialize_type(FILE *f, int type)
+{
+  int success = 0;
+  assert(f);
+  
+  success = fwrite((void *)&type,sizeof(int),1,f);
+
+  if (!success) fail("Failed to serialize type\n");
+}
+
+static void expr_serialize(FILE *f, gen_e e)
+{
+  assert(f);
+  assert(e);
+  sort_serialize(f, e->sort);
+  switch(e->sort)
+    {
+    case setif_sort:
+      {
+	serialize_type(f, ((setif_term)e)->type);
+	if (setif_is_var(e)) {
+	  sv_serialize(f,(setif_var)e);
+	}
+      }
+      break;
+    case setst_sort:
+      {
+      }
+      break;
+    case term_sort:
+      {
+      }
+      break;
+    case flowrow_sort:
+      {
+      }
+      break;
+    }
+}
 
 void expr_print(FILE *f,gen_e e)
 {
@@ -1637,14 +1713,6 @@ gen_e setif_group_proj_pat(cons_group g, int i, gen_e e)
   return make_group_proj_pat(g,i,e);
 }
 
-// FIX : can we take advantage of projection merging here?
-// gen_e setif_group_proj(cons_group g, int i, gen_e e)
-// {
-// }
-
-
-
-
 int call_sort_inclusion(gen_e e1, gen_e e2) 
 {
   if (e1->sort != e2->sort)
@@ -1714,4 +1782,107 @@ if (e1->sort != e2->sort)
       fail("Unmatched sort in call unify\n");
     }
  return 0;
+}
+
+static void deserialize_entries(FILE *f, hash_table *entry_points,
+				keyread_fn *read_keys, unsigned long sz)
+{
+  int i;
+  unsigned long fsz;
+  assert(f);
+  // read the number of hash tables
+  fread((void *)&fsz,sizeof(unsigned long),1,f);
+  
+  assert(fsz == sz);
+
+  for (i = 0; i < sz; i++) {
+    int cur_sz, j;
+    keyread_fn key_deserialize = read_keys[i];
+    hash_table cur_table = entry_points[i];
+
+    // read the number of entries in each hash table
+    fread((void *)&cur_sz,sizeof(unsigned long), 1, f);
+    
+    for (j = 0; j < cur_sz; j++) {
+      hash_key key = key_deserialize(f);
+      hash_data data = (hash_data) expr_deserialize(f);
+      hash_table_insert(cur_table,key,data);
+    }    
+  }
+}
+
+
+static void serialize_entries(FILE *f, hash_table *entry_points,
+			      keywrite_fn *write_keys, unsigned long sz)
+{
+  hash_table_scanner scan;
+  hash_key next_key;
+  gen_e next_expr;
+  int i;
+
+  assert(f);
+
+  // write down the number of hash tables
+  fwrite((void *)&sz,sizeof(unsigned long),1,f);
+  
+  for (i = 0; i < sz; i++) {
+    hash_table cur_table = entry_points[i];
+    keywrite_fn key_serialize = write_keys[i];
+    int hsz = hash_table_size(cur_table);
+
+    // write down the number of entries in each hash table
+    fwrite((void *)&hsz, sizeof(unsigned long), 1, f);
+
+    hash_table_scan(cur_table,&scan);
+
+    // write down each key/value pair
+    while(hash_table_next(&scan,&next_key,(hash_data *) &next_expr)) {
+      key_serialize(f, next_key);
+      expr_serialize(f, next_expr);
+    }
+
+  } 
+
+}
+
+void serialize_cs(const char *filename, hash_table *entry_points, 
+		  keywrite_fn *write_keys, unsigned long sz)
+{
+  FILE *f = fopen(filename,"wb");
+
+  if (!f) {
+    fprintf(stderr, "Failed to open file %s for writing\n", filename);
+    return;
+  }    
+
+  stamp_serialize(f);
+  serialize_entries(f, entry_points, write_keys, sz);
+
+  // TODO
+  // ufind_serialize();
+  // setif_serialize();
+  // setst_serialize();
+  // flowrow_serialize();
+  // term_serialize();
+}
+
+void deserialize_cs(const char *filename, hash_table *entry_points,
+		    keyread_fn *read_keys, unsigned long sz)
+{
+  FILE *f = fopen(filename, "rb");
+  
+  if (!f) {
+    fprintf(stderr, "Failed to open file %s for reading\n", filename);
+    return;
+  }
+  stamp_deserialize(f);
+  deserialize_entries(f,entry_points,read_keys,sz);
+
+  // TODO
+  // ufind_deserialize();
+  // setif_deserialize();
+  // setst_deserialize();
+  // flowrow_deserialize();
+  // term_deserialize();
+
 }
