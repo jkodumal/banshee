@@ -52,6 +52,10 @@ const bounds tv_get_pending(term_var v);
 /* Returns true if e was already in pending */
 bool tv_add_pending(term_var v,gen_e e, stamp st);
 
+bool tv_is_valid_pending(term_var v);
+bool tv_invalidate_pending(term_var v);
+
+
 void tv_unify(term_var v, gen_e e);
 void tv_unify_vars(term_var v1, term_var v2);
 

@@ -53,6 +53,7 @@ struct term_var_
   bounds pending;
   char *name;
   tv_elt elt;
+  bool valid_pending;
 };
 
 static term_var make_var(region r, const char *name, stamp st)
@@ -68,6 +69,7 @@ static term_var make_var(region r, const char *name, stamp st)
 #ifdef NONSPEC
   result->sort = term_sort;
 #endif
+  result->valid_pending = TRUE;
 
   return result;
 }
@@ -105,9 +107,17 @@ const bounds tv_get_pending(term_var v)
   return tv_get_v_ecr(v)->pending;
 }
 
-bool tv_add_pending(term_var v,gen_e e, stamp st)
+bool tv_add_pending(term_var v, gen_e e, stamp st)
 {
   return bounds_add(tv_get_v_ecr(v)->pending,e,st);
+}
+
+bool tv_is_valid_pending(term_var v) {
+  return tv_get_v_ecr(v)->valid_pending;
+}
+
+bool tv_invalidate_pending(term_var v) {
+  return tv_get_v_ecr(v)->valid_pending = FALSE;
 }
 
 void tv_unify(term_var v, gen_e e)

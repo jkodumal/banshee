@@ -194,16 +194,22 @@ static void fire_pending(term_var v, gen_e e,
   bounds_scanner scan;
   gen_e temp;
 
-  bounds_scan(tv_get_pending(v),&scan);
-  while (bounds_next(&scan,&temp))
-    {
-      term_unify(con_match,occurs,temp,e);
-    }
+  if (tv_is_valid_pending(v)) {
+    
+    tv_invalidate_pending(v);
+    bounds_scan(tv_get_pending(v),&scan);
+    while (bounds_next(&scan,&temp))
+      {
+	term_unify(con_match,occurs,temp,e);
+      }
+  }
 }
 
 static bool eq(gen_e e1, gen_e e2)
 {
-  return term_get_ecr(e1) == term_get_ecr(e2);
+  /*
+    return ((gen_term)term_get_ecr(e1))->st == ((gen_term)term_get_ecr(e2))->st; */
+  return term_get_stamp(e1) == term_get_stamp(e2);
 }
 
 bool term_eq(gen_e e1, gen_e e2)
@@ -260,6 +266,10 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
   gen_e e1 = term_get_ecr(a),
     e2 = term_get_ecr(b);
 
+  /* DEBUG */
+  // printf("Term unify: %d == %d\n", ((gen_term)a)->st, ((gen_term)b)->st); 
+  
+
   if (!banshee_check_rollback(term_sort)) {
     term_register_rollback();
   }
@@ -276,7 +286,6 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
     {
       term_var v = (term_var)e1;
    
-
       if (! term_is_bottom(e2))
 	fire_pending(v,e2,con_match,occurs);
 
@@ -324,7 +333,15 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
       tv_unify(v,e1); 
       
     }
-  else con_match(e1,e2);
+  else { 
+    stamp new_stamp = ((gen_term)e1)->st < ((gen_term)e2)->st ?
+      ((gen_term)e1)-> st : ((gen_term)e2)-> st;
+
+    ((gen_term)e1)->st = new_stamp;
+    ((gen_term)e2)->st = new_stamp;
+
+    con_match(e1,e2);
+  }
 }
 
 void term_cunify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
@@ -343,6 +360,9 @@ void term_cunify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 	term_register_edge(tv_get_pending(v1),term_get_stamp(e2));
       }
     }
+  else if (term_is_bottom(e1)) {
+    return;
+  }
   else 
     {
       term_unify(con_match,occurs,e1,e2);
