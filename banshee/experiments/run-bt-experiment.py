@@ -5,7 +5,7 @@ import string
 import getopt
 
 options='c:d:p:l:o:s:he'
-long_options=['start-with=','end-with=','analysis=',"help"]
+long_options=['start-with=','end-with=','analysis=',"help","stop-on-build-error"]
 
 # Default values for command line options
 project = "cqual"
@@ -21,6 +21,7 @@ analysis = "../cparser/parser_ns.exe"
 simfilename = "simulations/" + project + ".sim"
 modfilename = "simulations/" + project + ".mod"
 enhanced_mod_check = False
+stop_on_build_error = False
 
 # Print a usage message and exit
 def usage():
@@ -43,7 +44,7 @@ def convert_extension(filename):
 def parse_options():
     global project, repository, logfilename, outfilename,statefilename
     global start_with_entry, end_with_entry, analysis 
-    global enhanced_mod_check, compilescript
+    global enhanced_mod_check, compilescript, stop_on_build_error
     try:
 	opts, args = getopt.getopt(sys.argv[1:],options,long_options)
     except getopt.GetoptError:
@@ -71,6 +72,8 @@ def parse_options():
 	if (o in ['-h','--help']):
 	    usage()
 	    sys.exit(0)
+        if (o == '--stop-on-build-error'):
+            stop_on_build_error = True
 	if (o == '--analysis'):
 	    analysis = a
 
@@ -230,6 +233,7 @@ def write_simulation_data(modified, files, prefix,simfile,modfile):
 
 # Entry point 
 def main():
+    entrynum = 0
     parse_options()
     simfile = open(simfilename, "w")
     modfile = open(modfilename, "w")
@@ -240,11 +244,13 @@ def main():
     # skip the specified entries
     for _ in range(0,start_with_entry):
 	next_log_entry(logfile)
+        entrynum = entrynum + 1
     # run one entry to prime the pump
     os.system("rm -rf %s" % project)
     date,_ = next_log_entry(logfile)
     os.system("cvs -d %s co -D \"%s\" %s >/dev/null" % (repository, date, project))
-    build_error = os.system("%s %s" % (compilescript, project))
+    build_error = os.system("%s %s %d" % (compilescript, project, entrynum))
+    entrynum = entrynum + 1
     if (build_error):
 	print "Build error"
 	sys.exit(1)
@@ -278,6 +284,8 @@ def main():
 	    print "Build error -- skipping this commit"
 	    os.system("cp %s %s" % (statefilename + str(current-1) , statefilename + str(current)) )
 	    os.system("echo Build error > %s" % (outfilename + str(current)))
+            if (stop_on_build_error):
+                sys.exit(1)
 	    os.system("rm -rf %s" % project)
 	    continue
 	modified = get_modified_files(project_prev,project,".i")
