@@ -16,6 +16,7 @@ statefilename = "state/" + project + ".state"
 start_with_entry = 0
 end_with_entry = 1000
 compilescript = "./default_compile.sh"
+parser_ns = "../cparser/parser_ns.exe"
 
 # Print a usage message and exit
 def usage():
@@ -26,7 +27,7 @@ options:\n\
   -p <project>:   name the repository (project) to analyze\n\
   -l <logfile>:   read the CVS log from logfile\n\
   -o <outfile>:   save output as outfile\n\
-  -s <statefile>: read the analysis state from statefile\n\
+  -s <statefile>: read/write the analysis state from/to statefile\n\
   -h              show this message\n"
 	  % sys.argv[0])
 
@@ -98,16 +99,45 @@ def get_banshee_state(statefile):
 	if (not line):
 	    break
 	temp = string.split(line)
-	result.append((temp[2],int(temp[4])))
+	result.append((temp[1],int(temp[3])))
     return result
 
 # Get the name of the directory to store the checkout in
 def get_dirname(current):
-    if (start_with_entry %2):
+    if (start_with_entry % 2):
 	dirname = project + "_odd"
     else:
 	dirname = project + "_even"
     return dirname
+
+def get_filelist(dirname,extension):
+    files = os.popen("find %s -name *%s" % (dirname, extension))
+    return files.readlines()
+
+# Take a string list and return it as a space separated list, also
+# chop off newlines
+def list_to_string(list):
+    if (len(list) == 0):
+	return ""
+    result = list[0][:-1]
+    for elt in list[1:]:
+	result = result + " " + elt[:-1]
+    return result
+
+# Take a string list (the output of running the analysis) and process
+# it into two output lists
+def process_andersen_output(output):
+    found = False
+    statefile = open(statefilename,"w")
+    outfile = open(outfilename,"w")
+    for line in output:
+	if (line == '##################\n'):
+	    print "Found delimiter"
+	    found = True
+	if found:
+	    outfile.write(line)
+	else:
+	    statefile.write(line)
 
 # Entry point 
 def main():
@@ -129,7 +159,12 @@ def main():
 	print "Build error"
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
-
+    files = list_to_string(get_filelist(dirname,".i"))
+    print files
+    cmd = "%s -fserialize-constraints %s 2>/dev/null" % (parser_ns,files)
+    print cmd
+    output = os.popen(cmd).readlines()
+    process_andersen_output(output)
 
     # for each entry, do the following:
     # 1. run cvs co -d -D date
@@ -146,8 +181,10 @@ def main():
 	banshee_state = get_banshee_state(statefile)
  	date,_ = next_log_entry(logfile)
 	dirname = get_dirname(current)
+	print dirname
+	print current
 	os.system("rm -rf %s" % dirname)
-	os.system("cvs -d %s co %s -D" % (repository, project))
+	os.system("cvs -d %s co -D \"%s\" %s" % (repository, date, project))
 	os.system("mv %s %s" % (project, dirname))
 	build_error = os.system("%s %s" % (compilescript, dirname))
 	if (build_error):

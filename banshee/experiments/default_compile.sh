@@ -1,3 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 
-echo "To do!"
+cd $1
+./setup
+make clean all CC="gcc -P -save-temps"
