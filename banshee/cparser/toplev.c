@@ -1079,9 +1079,10 @@ int main(int argc, char **argv) deletes
 	analysis_print_graph();
       }
     
-  /*   if (flag_print_memusage) */
+/*     if (flag_print_memusage) */
 /*       { */
-/* 	 printf("\nMemory usage (bytes): %li\n",get_memusage()); */
+/* 	print_memory_usage(); */
+/* 	// printf("\nMemory usage (bytes): %li\n",get_memusage()); */
 /*       } */
   
 
