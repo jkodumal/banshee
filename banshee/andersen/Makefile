@@ -46,10 +46,10 @@ CC = gcc
 
 ifdef DEBUG
 CFLAGS = -Wall -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes=	\
-         -Dtraditional= -Dsameregion= -Dparentptr= -Werror
+         -Dtraditional= -Dsameregion= -Dparentptr= -Werror -fno-strict-aliasing
 else
 CFLAGS = -DNDEBUG -O3 -I$(engine_dir) -I$(region_dir) -Ddeletes= \
-         -Dtraditional= -Dsameregion= -Dparentptr= -Wall -Werror
+         -Dtraditional= -Dsameregion= -Dparentptr= -Wall -Werror -fno-strict-aliasing
 endif
 
 all: $(TARGETS)

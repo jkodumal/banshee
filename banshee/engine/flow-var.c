@@ -70,7 +70,7 @@ static flow_var make_var(region r,const char *name, stamp st)
   result->elt = new_contour_elt(r,NULL);
   result->name = name ? rstrdup(r,name) : "fv";
   result->extra_info = NULL;
-  result->extra_persist_kind = NULL;
+  result->extra_persist_kind = 0;
 
 #ifdef NONSPEC
   result->sort = flowrow_sort;
