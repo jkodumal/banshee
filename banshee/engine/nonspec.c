@@ -858,7 +858,6 @@ gen_e flowrow_make_row(flowrow_map fields, gen_e rest)
 /* Does a sort check */
 int call_setif_inclusion(gen_e e1,gen_e e2)
 {
-  
   if (! ( (e1->sort == e2->sort) && (e1->sort == setif_sort) ) )
     {
       fail("Sort check failed during setif inclusion\n");
@@ -870,8 +869,7 @@ int call_setif_inclusion(gen_e e1,gen_e e2)
 
 /* Does a sort check */
 int call_setif_unify(gen_e e1, gen_e e2)
-{
-  
+{  
   if (! ( (e1->sort == e2->sort) && (e1->sort == setif_sort) ) )
     {
       fail("Sort check failed during setif_unify\n");
@@ -885,7 +883,6 @@ int call_setif_unify(gen_e e1, gen_e e2)
 /* Does a sort check */
 int call_setst_inclusion(gen_e e1, gen_e e2)
 {
-  
   if (! ( (e1->sort == e2->sort) && (e1->sort == setst_sort) ) )
     {
       fail("Sort check failed: setif_inclusion\n");

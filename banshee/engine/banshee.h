@@ -85,9 +85,9 @@ typedef void (*banshee_error_handler_fn)
 extern banshee_error_handler_fn handle_error;
 
 /* Time structure. Don't access the fields. Intended to be opaque. */
-typedef struct banshee_time_ {
-  int time;
-} banshee_time;
+/* typedef struct banshee_time_ { */
+/*   int time; */
+/* } banshee_time; */
 
 /* Generic rollback info structure */
 typedef struct banshee_rollback_info_ {
@@ -97,10 +97,9 @@ typedef struct banshee_rollback_info_ {
 
 /* The global banshee clock */
 void banshee_clock_tick();
-banshee_time banshee_clock_read();
 bool banshee_check_rollback(sort_kind k);
 void banshee_register_rollback(banshee_rollback_info);
-void banshee_backtrack(banshee_time t);
+void banshee_backtrack();
 
 
 /* 

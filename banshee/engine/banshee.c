@@ -89,11 +89,6 @@ void banshee_clock_tick()
   uf_tick();
 }
 
-banshee_time banshee_clock_read()
-{
-  return (banshee_time){banshee_clock};
-}
-
 /* Return TRUE if there is already a rollback entry for this sort at
    the current time */
 bool banshee_check_rollback(sort_kind k)
@@ -104,7 +99,7 @@ bool banshee_check_rollback(sort_kind k)
   banshee_rollback_stack_scan(rb_stack,&scan);
 
   while(banshee_rollback_stack_next(&scan,&info)) {
-    if (info->time.time < banshee_clock) return FALSE;
+    if (info->time.time != banshee_clock) return FALSE;
     else if (info->kind == k) return TRUE;
   }
   return FALSE;
@@ -140,20 +135,20 @@ static void banshee_rollback_dispatch(banshee_rollback_info info) {
   }
 }
 
-void banshee_backtrack(banshee_time t)
+void banshee_backtrack()
 {
   banshee_rollback_stack_scanner scan;
   banshee_rollback_info info;
-
+  
   uf_rollback();
   
   banshee_rollback_stack_scan(rb_stack,&scan);
   
   while(banshee_rollback_stack_next(&scan,&info)) {
-    if (info->time.time < t.time) break;
+    if (info->time.time < banshee_clock) break;
     banshee_rollback_dispatch(info);
   }
-  banshee_clock = t.time;
+  banshee_clock--;
 }
 
 banshee_error_handler_fn handle_error = default_error_handler;
