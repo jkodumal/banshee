@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -g -Wall -DNORC -Ddeletes="" -DNMEMDEBUG -DNDEBUG 
+CFLAGS = -g -Wall -DNORC -Ddeletes=""
 
 test: driver.c ../../regions.h ../../regions-norc.o 
 	$(CC) $(CFLAGS) driver.c ../../regions-norc.o -o test
