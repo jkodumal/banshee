@@ -41,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #include "analysis.h"
 
 // extern long get_memusage(void);
+extern int banshee_get_time();
+extern void banshee_backtrack(int);
 
 /* Name of program invoked, sans directories.  */
 char *progname;
@@ -284,6 +286,9 @@ int flag_print_vars = 0;
 int flag_print_graph = 0;
 int flag_model_strings = 1;
 int flag_print_memusage = 0;
+int flag_debug_backtrack = 0;
+int debug_backtrack_prefix = 0;
+static int backtrack_time = 0;
 
 /* Table of language-independent -f options.
    STRING is the option name.  VARIABLE is the address of the variable.
@@ -540,6 +545,7 @@ static void compile_file(char *name) deletes
 	  files_processed++;
 	  if ( flag_points_to)
 	    {
+	      int last_clock;
 	      inhibit_warnings = 1; // FIX
 	      fprintf(stderr, "Analyzing...");
 	      
@@ -549,8 +555,16 @@ static void compile_file(char *name) deletes
 	      fprintf(stderr,"analysis time so far: ");
 	      print_time(stderr,&analyze_time);
 	      fprintf(stderr,"\n");
+	      last_clock = banshee_get_time();
+	      fprintf(stderr,"banshee clock: %d\n",last_clock);
 	      inhibit_warnings = 0;
 	      errorcount = 0;
+
+	      if (files_processed == debug_backtrack_prefix) {
+		backtrack_time = last_clock;
+		fprintf(stderr, "%d files analyzed: will backtrack to %d\n",
+			files_processed, backtrack_time);
+	      }
 	    }
 	  deleteregion(parse_region);
 	  parse_region = newregion();
@@ -863,6 +877,14 @@ int main(int argc, char **argv) deletes
 
 	  if (!strcmp (str, "dumpbase"))
 	    copy_argv[copy_argc++] = argv[i++];
+	  else if (str[0] == 'f' && str[1] == 'b' && str[2] == 't')
+	    {
+	      register char *p = &str[3];
+	      flag_debug_backtrack = 1;
+	      debug_backtrack_prefix = atoi(p);
+	      fprintf(stderr,"Debugging backtrack code with %d files\n",
+		      debug_backtrack_prefix);
+	    }
 	  else if (str[0] == 'f')
 	    {
 	      register char *p = &str[1];
@@ -1033,10 +1055,15 @@ int main(int argc, char **argv) deletes
       fprintf(stderr, "Parsing %s...", file);
       compile_file(file);
     }
+
+  if (flag_debug_backtrack) {
+    fprintf(stderr, "Backtracking...\n");
+    banshee_backtrack(backtrack_time);
+  }
     
-    printf("Andersen's Points to Analysis\n");
-    printf("Files analyzed: %d\n",files_processed);
-    printf("Files skipped: %d\n",files_skipped);
+  printf("Andersen's Points to Analysis\n");
+  printf("Files analyzed: %d\n",files_processed);
+  printf("Files skipped: %d\n",files_skipped);
     
 
      

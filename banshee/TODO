@@ -185,6 +185,29 @@ Not really rollback support, but deletion support.
 
 * Modify Andersen's to support backtracking
 
+** Write a backtracking test harness for Andersen's
+
+DONE.
+
+This will include some minimal changes to cparser, plus a small test
+harness written in python. Here's how this will work:
+
+- The test harness will take as argument a list of files and an
+integer indicating what size prefix of the list to analyze. The
+harness will then call cparser twice:
+  
+   -- The first time, only the prefix will be analyzed, and the
+      points-to count written to disk.
+   -- The second time, all files will be analyzed, but then the cparser
+      will backtrack up to the specified prefix. Then the points-to 
+      count will be written to disk. 
+   -- The script will compare these points-to counts and report an error
+      if they differ at all.
+   -- A delta test harness can then be written on top of this to find
+      the minimal prefix under which the backtracking analysis fails.
+
+** Incorporate backtracking tests into build process
+
 * iBanshee interpreter
 
 ** Allow programs to be read from files
