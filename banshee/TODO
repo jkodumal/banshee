@@ -183,12 +183,49 @@ Not really rollback support, but deletion support.
 
 * Add serialization support
 
-Things to serialize:
+** Things to serialize:
 
 - The backtracking stack
 - The ufind stack
 - Terms in the hashcons table (e.g. setif_hash)?
 - Extra state (e.g. stamp.c)
+
+** Serialization API notes
+
+Basically, we want to serialize the constraint graph, while providing
+some mechanism to save a client-specified mapping to particular nodes
+(gen_e's) in the graph. The mapping will be a list of hash tables. For
+example:
+
+"Local vars"  --> hash table mapping strings of var names to gen_e's
+"Global vars" --> ...
+
+Each entry in the list needs to provide a key
+serialization/deserialization function. Then the serialization
+function will do the following:
+
+-- Save all utility state (stamps, etc.)
+-- Serialize all the backtracking state. This will encode the edges between
+   terms
+-- Keep track of all of the stamps that have already been written to disk,
+   so that they are not written twice 
+-- Serialize all of the terms listed as entry points according to the list
+   of hash tables
+-- Could also save the hashcons tables (e.g. setif_hash)
+
+bool banshee_save(FILE *f, hash_table_list entry_points)
+{
+  stamp_save(f);
+  setif_save(f);
+  flowrow_save(f);
+  ...
+  entry_point_save(f, entry_points);
+}
+
+Deserialization is symmetric, and its semantics will involve a
+reset. That is, loading a constraint system will wipe out the current
+constraints. This is in contrast to BANE, which allows a stack of
+constraint systems.
 
 * Modify Andersen's to support backtracking
 
