@@ -293,6 +293,8 @@ int flag_debug_region_deserialization = 0;
 int flag_backtrack_constraints = 0;
 int flag_serialize_constraints = 0;
 int flag_deserialize_constraints = 0;
+int flag_rserialize_constraints = 0;
+int flag_rdeserialize_constraints = 0;
 int debug_backtrack_prefix = 0;
 static int debug_backtrack_time = 0;
 static int backtrack_time = 0;
@@ -317,6 +319,8 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"print-stats",&flag_print_stats,1},
   {"points-to",&flag_points_to,1},
   {"serialize-constraints",&flag_serialize_constraints,1},
+  {"rserialize-constraints",&flag_rserialize_constraints,1},
+  {"rdeserialize-constraints",&flag_rdeserialize_constraints,1},
   {"debug-region-serialization", &flag_debug_region_serialization,1},
   {"debug-region-deserialization", &flag_debug_region_deserialization,1},
   {"deserialize-constraints",&flag_deserialize_constraints,1},
@@ -1095,7 +1099,21 @@ int main(int argc, char **argv) deletes
 /*   if (dd_is_empty(files)) */
 /*     compile_file(0); */
 /*   else */
-
+  if (flag_points_to && flag_rdeserialize_constraints) 
+    {
+      translation t;
+      region temp = newregion();
+      begin_time();
+      t = deserialize("data","offsets", get_updater_functions("extras"), temp);
+      analysis_region_deserialize(t, "statics" );
+      end_time(&region_deserialization_time);
+      if (flag_backtrack_constraints) {
+	fprintf(stderr, "Backtracking...\n");
+	begin_time();
+	analysis_backtrack(backtrack_time);
+	end_time(&rollback_time);
+      }
+    }
   if (flag_points_to && flag_debug_region_deserialization)
     {
       translation t;
@@ -1133,7 +1151,14 @@ int main(int argc, char **argv) deletes
       end_time(&serialize_time);
     }
 
-  if (flag_points_to && flag_debug_region_serialization)
+  if(flag_rserialize_constraints)
+    {
+      begin_time();
+      serialize(get_persistent_regions("extras"), "data", "offsets");
+      analysis_region_serialize("statics");
+      end_time(&region_serialization_time);
+    }
+  else if (flag_points_to && flag_debug_region_serialization)
     {
       begin_time();
       serialize(get_persistent_regions("extras"), "data", "offsets");
@@ -1168,12 +1193,12 @@ int main(int argc, char **argv) deletes
     print_time(stdout,&serialize_time);
     }
     
-    if (flag_debug_region_serialization) {
+    if (flag_rserialize_constraints || flag_debug_region_serialization) {
     printf("\nRegion serialization time: ");
     print_time(stdout,&region_serialization_time);
     }
 
-    if (flag_deserialize_constraints && flag_backtrack_constraints) {
+    if ((flag_rdeserialize_constraints || flag_deserialize_constraints) && flag_backtrack_constraints) {
     printf("\nRollback time: ");
     print_time(stdout,&rollback_time);
     }
@@ -1181,6 +1206,10 @@ int main(int argc, char **argv) deletes
     if (flag_deserialize_constraints) {
       printf("\nDeserialize time: ");
       print_time(stdout,&deserialize_time);
+    }
+    if (flag_rdeserialize_constraints) {
+      printf("\nRegion deserialization time: ");
+      print_time(stdout,&region_deserialization_time);
     }
 
     getrusage(RUSAGE_SELF,&usage);
