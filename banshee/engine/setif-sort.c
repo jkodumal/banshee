@@ -1538,10 +1538,6 @@ int update_setif_term(translation t, void *m)
   setif_term e = (setif_term)m;
 
   switch(e->type) {
-  case ZERO_TYPE:
-    /* This is actually a degenerate case, where we've reached the end
-       of the region and are just hitting zero'd out data */
-    return sizeof(void *);
   case UNION_TYPE:
     {
       update_pointer(t, (void **)& ((setif_union_)e)->exprs);
@@ -1559,8 +1555,9 @@ int update_setif_term(translation t, void *m)
       return sizeof(struct setif_constant_);
     }
   default:
-    fail("Unknown type in update_setif_term!\n");
-    return 0;
+    /* This is a degenerate case, where (hopefully) we've reached the
+       end of the region and are just hitting garbage data */
+    return sizeof(void *);
   }
 }
 

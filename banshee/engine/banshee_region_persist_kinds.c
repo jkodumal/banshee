@@ -87,7 +87,7 @@ void write_extra_info(const char *filename, unsigned long num_regions)
 			(hash_data *)&next_updater)) {
     int id = 0;
     bool success = hash_table_lookup(fn_ptr_table, (hash_key)next_updater, (hash_data *)&id);
-    assert(success);
+    if (!success) fail("Error: couldn't figure out what function %d corresponds to\n", id);
     fwrite((void *)&id, sizeof(int), 1 , f);
     count++;
   }
@@ -245,12 +245,14 @@ void register_persistent_region(region r, Updater u)
 {
   bool success = hash_table_insert(extra_regions, r, u);
 
-  assert(success);
+  if (!success)
+    fail("Error: attempted to register a region twice in register_persistent_region\n");
 }
 
 void unregister_persistent_region(region r)
 {
   bool success = hash_table_remove(extra_regions, r);
 
-  assert(success);
+  if (! success) 
+    fail("Error: attempted to unregister a nonexistent region in unregister_persistent_region\n");
 }

@@ -46,6 +46,7 @@ struct bucket_
 
 #define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region)
 
+extern const int num_fn_ptrs;
 
 struct Hash_table
 {
@@ -553,16 +554,18 @@ bool hash_table_set_fields(void *obj)
 int update_hash_table(translation t, void *m)
 {
   hash_table tab = (hash_table)m;
-
-  tab->hash = update_funptr_data(tab->hash_fn_id);
-  tab->cmp = update_funptr_data(tab->keyeq_fn_id);
   
   assert(fn_ptr_table);
-  hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
-		    (hash_data*)&tab->hash_fn_id);
-  hash_table_lookup(fn_ptr_table, (hash_key)tab->hash,
-		    (hash_data*)&tab->keyeq_fn_id);
-  
+  if (tab->hash_fn_id < num_fn_ptrs) {
+    tab->hash = update_funptr_data(tab->hash_fn_id);
+    hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
+		      (hash_data*)&tab->hash_fn_id);
+  }
+  if (tab->keyeq_fn_id < num_fn_ptrs) {
+    tab->cmp = update_funptr_data(tab->keyeq_fn_id);
+    hash_table_lookup(fn_ptr_table, (hash_key)tab->hash,
+		      (hash_data*)&tab->keyeq_fn_id);
+  }
   update_pointer(t, (void **) &tab->table);
 
   return (sizeof(struct Hash_table));

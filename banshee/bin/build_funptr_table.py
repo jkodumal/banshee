@@ -55,7 +55,8 @@ def print_hash(table):
     for entry in table:
 	print "hash_table_insert(fn_ptr_table,%s,(void *)%d);" % (entry, count)
 	count = count + 1
-    print "}"
+    print "}\n"
+    print "const int num_fn_ptrs= %d;" % count
 
 def print_usage_and_exit():
     print "Usage: %s [file...]" % sys.argv[0]
