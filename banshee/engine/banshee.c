@@ -86,6 +86,7 @@ static void default_error_handler(gen_e e1, gen_e e2,banshee_error_kind k)
 void banshee_clock_tick()
 {
   banshee_clock++;
+  uf_tick();
 }
 
 banshee_time banshee_clock_read()
@@ -143,6 +144,8 @@ void banshee_backtrack(banshee_time t)
 {
   banshee_rollback_stack_scanner scan;
   banshee_rollback_info info;
+
+  uf_rollback();
   
   banshee_rollback_stack_scan(rb_stack,&scan);
   

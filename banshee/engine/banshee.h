@@ -84,7 +84,7 @@ typedef void (*banshee_error_handler_fn)
 
 extern banshee_error_handler_fn handle_error;
 
-/* Time structure. Don't use. Intended to be opaque. */
+/* Time structure. Don't access the fields. Intended to be opaque. */
 typedef struct banshee_time_ {
   int time;
 } banshee_time;

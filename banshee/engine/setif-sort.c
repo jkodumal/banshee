@@ -28,9 +28,9 @@
  *
  */
 
-#include <regions.h>
 #include <assert.h>
 #include <setjmp.h>
+#include "regions.h"
 #include "bounds.h"
 #include "jcollection.h"
 #include "setif-sort.h"

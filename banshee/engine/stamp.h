@@ -31,7 +31,7 @@
 #ifndef STAMP_H
 #define STAMP_H
 
-#include <regions.h>
+#include "regions.h"
 #include "linkage.h"
 
 EXTERN_C_BEGIN

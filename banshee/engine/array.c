@@ -28,9 +28,9 @@
  *
  */
 
-#include <regions.h>
 #include <assert.h>
 #include <limits.h>
+#include "regions.h"
 #include "array.h"
 
 struct array {

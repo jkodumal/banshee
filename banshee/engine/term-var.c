@@ -28,11 +28,14 @@
  *
  */
 
+/* TODO: change pending representation from gen_e_list to bounds  */
+
 #include <stdio.h>
-#include <regions.h>
 #include <assert.h>
+#include "regions.h"
 #include "ufind.h"
 #include "term-var.h"
+#include "bounds.h"
 
 DECLARE_UFIND(tv_elt,gen_e);
  
@@ -47,7 +50,7 @@ struct term_var
 #endif
   int type;
   stamp st;
-  gen_e_list pending;
+  bounds pending;
   char *name;
   tv_elt elt;
 };
@@ -59,7 +62,7 @@ static term_var make_var(region r, const char *name, stamp st)
 
   result->type = VAR_TYPE;
   result->st = st;
-  result->pending = new_gen_e_list(r);
+  result->pending = bounds_create(r);
   result->name = name ? rstrdup(r,name) : "fv";
   result->elt = new_tv_elt(r,info);
 
@@ -96,12 +99,12 @@ char *tv_get_name(term_var v)
 
 gen_e_list tv_get_pending(term_var v)
 {
-  return tv_get_v_ecr(v)->pending;
+  return bounds_exprs(tv_get_v_ecr(v)->pending);
 }
 
-void tv_add_pending(term_var v,gen_e e)
+void tv_add_pending(term_var v,gen_e e, stamp st)
 {
-  gen_e_list_cons(e,tv_get_v_ecr(v)->pending);
+  bounds_add(tv_get_v_ecr(v)->pending,e,st);
 }
 
 void tv_unify(term_var v, gen_e e)
@@ -113,11 +116,11 @@ void tv_unify(term_var v, gen_e e)
 
 static gen_e tv_combine(gen_e e1, gen_e e2)
 {
-  term_var v1 = (term_var)e1,
-    v2 = (term_var)e2;
+/*   term_var v1 = (term_var)e1, */
+/*     v2 = (term_var)e2; */
   
-  if (! (v1 == v2) )
-    gen_e_list_append(tv_get_pending(v1), tv_get_pending(v2));
+/*   if (! (v1 == v2) ) */
+/*     gen_e_list_append(tv_get_pending(v1), tv_get_pending(v2)); */
   
   return e1;
 }

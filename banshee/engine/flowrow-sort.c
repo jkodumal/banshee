@@ -28,10 +28,10 @@
  *
  */
 
-#include <regions.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "regions.h"
 #include "flowrow-sort.h"
 #include "termhash.h"
 

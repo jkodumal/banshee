@@ -31,8 +31,8 @@
 #ifndef UFIND_H
 #define UFIND_H
 
-#include <regions.h>
 #include "linkage.h"
+#include "regions.h"
 #include "bool.h"
 
 EXTERN_C_BEGIN

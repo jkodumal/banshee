@@ -28,9 +28,9 @@
  *
  */
 
-#include <regions.h>
 #include <assert.h>
 #include <stdio.h>
+#include "regions.h"
 #include "bounds.h"
 #include "setst-sort.h"
 

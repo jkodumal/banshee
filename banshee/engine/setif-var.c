@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 #include <assert.h>
-#include <regions.h>
+#include "regions.h"
 #include "setif-var.h"
 #include "ufind.h"
 #include "bounds.h"

@@ -28,8 +28,8 @@
  *
  */
 
-#include <regions.h>
 #include <assert.h>
+#include "regions.h"
 #include "term-sort.h"
 
 struct term_constant_ /* extends gen_e */
@@ -214,11 +214,29 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
       if (! term_is_bottom(e2))
 	fire_pending(v,e2,con_match,occurs);
 
-      if (term_is_var(e2)) 
+      if (term_is_var(e2)) {
+	gen_e_list_scanner scan;
+	gen_e temp;
+	gen_e_list pending1 = tv_get_pending((term_var)e2),
+	  pending2 = tv_get_pending(v);
 	tv_unify_vars(v,(term_var)e2);
+	
+	gen_e_list_scan(pending1,&scan);
+
+	while(gen_e_list_next(&scan,&temp)) {
+	  tv_add_pending(v,temp,term_get_stamp(temp));
+	}
+	
+	gen_e_list_scan(pending2, &scan);
+	
+	while(gen_e_list_next(&scan,&temp)) {
+	  tv_add_pending(v,temp,term_get_stamp(temp));
+	}
+
+      }
       else /* v = e2, e2 is not a var */
 	{ 
-	  if (occurs(v,e2))
+	  if (flag_occurs_check && occurs(v,e2))
 	    handle_error(e1,e2,bek_occurs_check);
 	  tv_unify(v,e2); 
 	}
@@ -245,7 +263,7 @@ void term_cunify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
   if (term_is_bottom(e1) && term_is_var(e1))
     {
       term_var v1 = (term_var)e1;
-      tv_add_pending(v1,e2);
+      tv_add_pending(v1,e2, term_get_stamp(e2));
     }
   else 
     {
@@ -291,9 +309,10 @@ void term_reset(void)
   term_sort_hash = make_term_hash(term_sort_region);
 }
 
+/* For term rollbacks, we just remove conditional unifications. The uf
+   rollback will undo any actual unifications */
 void term_rollback(banshee_rollback_info info)
 {
-  assert(0);
 }
 
 

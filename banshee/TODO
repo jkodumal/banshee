@@ -138,8 +138,12 @@ so, here are the tasks:
         --- Row additions
         --- Lists of conditional unifiers
  
-   --- Add rollback support to bounds
+   --- Add rollback support to terms
 
+       -- change pending representation to bounds       
+
+
+   --- Add rollback support to bounds
   
    --- Make cycle elimination support rollback
 
