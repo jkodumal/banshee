@@ -262,6 +262,9 @@ def write_simulation_data(version, modified, files, prefix, simfile, modfile):
     modfile.write("version: %s all files : %s\n#####" % (version, list_to_pretty_string_nolf(prefiles + files )))
     modfile.write("modified files: %s\n#####\n" % list_to_pretty_string_nolf(modified) )
     modfile.write("analyzed files: %s\n##########\n" % list_to_pretty_string_nolf(files) )
+    if (reanalysis_size + preanalyzed_size = 0):
+	simfile.write("analyzed: 0 total: 0")
+    else:
     simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + preanalyzed_size, float(reanalysis_size) / float(reanalysis_size + preanalyzed_size)))
 
 # Entry point 
