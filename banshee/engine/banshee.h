@@ -58,7 +58,6 @@ typedef enum sort_kind
   flowrow_sort, 
   setif_sort,
   setst_sort,
-  flowterm_sort,
   term_sort
 } sort_kind;
 

@@ -286,7 +286,7 @@ static region get_sort_region(sort_kind s)
       return term_sort_region;
     default:
       {
-	fail("Unmatched sort in get_sort_region\n");
+	fail("Unmatched sort in get_sort_region: %d\n",s);
 	return NULL;
       }
     }
@@ -457,6 +457,7 @@ constructor make_constructor_from_list(const char*name, sort_kind sort,
   while(sig_elt_list_next(&scan,&temp)) {
     sig[i].variance = temp->variance;
     sig[i].sort = temp->sort;
+    i++;
   }
   c->sort = sort;
   c->arity = arity;

@@ -47,6 +47,12 @@ static int banshee_clock = 0;
 static banshee_rollback_stack rb_stack;
 static region engineregion;
 region banshee_rollback_region;
+banshee_error_handler_fn handle_error = NULL;
+
+static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
+{
+  fail("Unhandled banshee error: code %d\n",k);
+}
 
 void engine_init(void)
 {
@@ -57,6 +63,7 @@ void engine_init(void)
   engineregion = newregion();
   banshee_rollback_region = newregion();
   rb_stack = new_banshee_rollback_stack(engineregion);
+  handle_error = default_error_handler;
 }
 
 void engine_reset(void) deletes
@@ -78,11 +85,6 @@ void engine_stats(FILE *f)
 void print_constraint_graphs(FILE *f)
 {
   setif_print_constraint_graph(f);
-}
-
-static void default_error_handler(gen_e e1, gen_e e2,banshee_error_kind k)
-{
-  fail("Unhandled banshee error: code %d\n",k);
 }
 
 banshee_time banshee_get_time(void)
@@ -136,9 +138,6 @@ static void banshee_rollback_dispatch(banshee_rollback_info info) {
   case setst_sort:
     setst_rollback(info);
     break;
-  case flowterm_sort:
-    assert(0);
-    break;
   case term_sort:
     term_rollback(info);
     break;
@@ -168,6 +167,3 @@ void banshee_backtrack(banshee_time t)
   while(banshee_clock > t.time)
     banshee_rollback();  
 }
-
-banshee_error_handler_fn handle_error = default_error_handler;
-
