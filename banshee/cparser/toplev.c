@@ -287,8 +287,11 @@ int flag_print_graph = 0;
 int flag_model_strings = 1;
 int flag_print_memusage = 0;
 int flag_debug_backtrack = 0;
+int flag_backtrack_constraints = 0;
 int flag_serialize_constraints = 0;
+int flag_deserialize_constraints = 0;
 int debug_backtrack_prefix = 0;
+static int debug_backtrack_time = 0;
 static int backtrack_time = 0;
 
 /* Table of language-independent -f options.
@@ -311,6 +314,7 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"print-stats",&flag_print_stats,1},
   {"points-to",&flag_points_to,1},
   {"serialize-constraints",&flag_serialize_constraints,1},
+  {"deserialize-constraints",&flag_deserialize_constraints,1},
 #ifndef ANDERSEN_ST
   {"cycle_elim",(int*)&flag_eliminate_cycles,1},
   {"proj-merge",(int*)&flag_merge_projections,1},
@@ -545,7 +549,18 @@ static void compile_file(char *name) deletes
       if (the_program)
 	{
 	  files_processed++;
-	  if ( flag_points_to)
+
+	  /* TODO -- add backtracking support here */
+	  if (flag_points_to && flag_deserialize_constraints) 
+	    {
+	      analysis_deserialize("andersen.out");
+
+	      if (flag_backtrack_constraints) {
+		fprintf(stderr, "Backtracking...\n");
+		banshee_backtrack(backtrack_time);
+	      }
+	    } 
+	  if (flag_points_to)
 	    {
 	      int last_clock;
 	      inhibit_warnings = 1; // FIX
@@ -558,14 +573,15 @@ static void compile_file(char *name) deletes
 	      print_time(stderr,&analyze_time);
 	      fprintf(stderr,"\n");
 	      last_clock = banshee_get_time();
-	      fprintf(stderr,"banshee clock: %d\n",last_clock);
+	      fprintf(stderr,"file: %d; banshee clock: %d\n",
+		      files_processed, last_clock);
 	      inhibit_warnings = 0;
 	      errorcount = 0;
 
 	      if (files_processed == debug_backtrack_prefix) {
-		backtrack_time = last_clock;
+		debug_backtrack_time = last_clock;
 		fprintf(stderr, "%d files analyzed: will backtrack to %d\n",
-			files_processed, backtrack_time);
+			files_processed, debug_backtrack_time);
 	      }
 	    }
 	  deleteregion(parse_region);
@@ -887,6 +903,15 @@ int main(int argc, char **argv) deletes
 	      fprintf(stderr,"Debugging backtrack code with %d files\n",
 		      debug_backtrack_prefix);
 	    }
+	  else if (str[0] == 'f' && str[1] == 'b' && str[2] =='a' && str[3] == 'c' && str[4] == 'k' ) 
+	    {
+	      register char *p = &str[5];
+	      flag_backtrack_constraints = 1;
+	      backtrack_time = atoi(p);
+	      fprintf(stderr,
+		      "Deserialized constraints will be rolled back to time %d\n",
+		      backtrack_time);
+	    }
 	  else if (str[0] == 'f')
 	    {
 	      register char *p = &str[1];
@@ -1060,7 +1085,7 @@ int main(int argc, char **argv) deletes
 
   if (flag_debug_backtrack) {
     fprintf(stderr, "Backtracking...\n");
-    banshee_backtrack(backtrack_time);
+    banshee_backtrack(debug_backtrack_time);
   }
     
   printf("Andersen's Points to Analysis\n");

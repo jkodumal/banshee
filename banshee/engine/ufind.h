@@ -57,6 +57,10 @@ typedef uf_info (*combine_fn_ptr)(const uf_info, const uf_info);
  * call to uf_ */
 void uf_init();
 
+/* Reset the union find module. Invalidates any terms created before
+   the reset, and calls uf_init() */
+void uf_reset();
+
 /* Create a new union find element with info i in region r  */
 struct uf_element *new_uf_element(region r,uf_info i, int persist_kind);  
 

@@ -236,6 +236,16 @@ int pta_get_ptsize(contents_type t)
   return T_list_length(ptset);
 }
 
+void pta_serialize(FILE *f, hash_table *entry_points, unsigned long sz)
+{
+  assert(f);
+  andersen_terms_serialize(f,entry_points,sz);
+}
 
+hash_table *pta_deserialize(FILE *f)
+{
+  assert(f);
+  return andersen_terms_deserialize(f);
+}
 
 

@@ -133,7 +133,7 @@ let gen_preamble env sigid header source  =
   let inc7 = include_header true  "ufind.h" in
   let inc8 = include_header false "string.h" in
   let inc9 = include_header true  "linkage.h" in
-
+  let inc10 = include_header true "hash.h" in
 (* 
    Move these flags to individual sorts
    let flags = [ 
@@ -142,22 +142,27 @@ let gen_preamble env sigid header source  =
    ] in 
  *)
 
-  header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9];
-  source#add_includes [start_cmnt;inc1;inc2;inc3;inc4;inc5;inc6;inc7;inc8];
+  header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9;inc10];
+  source#add_includes [start_cmnt;inc1;inc2;inc3;inc4;inc5;inc6;inc7;inc8;inc10];
   header#add_macro (macro "EXTERN_C_BEGIN")
 
 let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) = 
   let return = void in
+  let return2 = (no_qual (Ident "hash_table *")) in
   let init = strid ^ "_init" in
   let reset = strid ^ "_reset" in
   let stats = strid ^ "_stats" in
   let graph = strid ^ "_print_graph" in
+  let serialize = strid ^ "_serialize" in
+  let deserialize = strid ^ "_deserialize" in
   let formals = [] in
-  let cmnt = block_comment "Init/reset engine, print constraint graphs" in
+  let cmnt = block_comment "Init/reset engine, print constraint graphs, serialize/deserialize constraint graphs" in
   let init_engine = Expr "engine_init();" in
   let reset_engine = Expr "engine_reset();" in
   let stats_engine = Expr "engine_stats(arg1);" in
   let print_graph = Expr "print_constraint_graphs(arg1);" in
+  let serialize_engine = Expr "return;" in
+  let deserialize_engine = Expr "return NULL;" in
   let sort_inits = 
     foldr (function ((e,s),acc) -> (s#init e) @ acc) [] sorts in 
   let sort_resets = foldr 
@@ -166,18 +171,27 @@ let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) =
   let reset_body = sort_resets @ [reset_engine] in
   let stats_body = [stats_engine] in
   let graph_body = [print_graph] in
+  let serialize_body = [serialize_engine] in
+  let deserialize_body = [deserialize_engine] in
   let init_fun = (return,init,formals,init_body,[]) in
   let reset_fun = (return,reset,formals,reset_body,[Deletes]) in
   let stats_fun = (return,stats,[(no_qual (Ident "FILE *"),"arg1")],
 				 stats_body,[]) in
-let graph_fun = (return,graph,[(no_qual (Ident "FILE *"),"arg1")] ,
-			       graph_body,[])
+  let graph_fun = (return,graph,[(no_qual (Ident "FILE *"),"arg1")] ,
+		   graph_body,[]) in
+  let serialize_fun = (return,serialize,[(no_qual (Ident "FILE *"),"arg1");
+				       (no_qual (Ident "hash_table *"), "arg2");
+				       (no_qual (Ident "unsigned long"), "arg3")],serialize_body,[]) in			
+  let deserialize_fun = (return2,deserialize,
+			[(no_qual (Ident "FILE *"),"arg1")],
+			deserialize_body,[])
   in
   (header#add_gdecls [cmnt;prototype init_fun;prototype reset_fun; 
-                      prototype stats_fun;prototype graph_fun;
+                      prototype stats_fun;prototype graph_fun; 
+		      prototype serialize_fun; prototype deserialize_fun;
 		      (macro "EXTERN_C_END");endif];
    source#add_fdefs [func init_fun;func reset_fun; func stats_fun;
-		    func graph_fun])
+		    func graph_fun;func serialize_fun;func deserialize_fun])
     
 let to_c (strid,sigid,dataspecs) = 
   let env,header,source = Env.empty_env,empty_header,empty_file in

@@ -100,17 +100,18 @@ stamp stamp_string(const char *str) deletes
   return st;
 }
 
-void stamp_reset(void) deletes
+void stamp_reset(void) 
 {
-  count1 = INITIAL1;
-  count2 = INITIAL2;
-  count3 = INITIAL3;
-  hash_table_reset(str_hash);
-  deleteregion_ptr(&str_hash_rgn);
+  deleteregion(str_hash_rgn);
+
+  stamp_init();
 }
 
 void stamp_init(void)
 {
+  count1 = INITIAL1;
+  count2 = INITIAL2;
+  count3 = INITIAL3;
   str_hash_rgn = newregion();
   str_hash = make_persistent_string_hash_table(str_hash_rgn,INITIAL_SIZE,
 					       NONPTR_PERSIST_KIND);

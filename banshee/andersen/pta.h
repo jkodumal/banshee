@@ -31,6 +31,7 @@
 #define PTA_H
 
 #include "andersen_terms.h"
+#include "banshee_persist_kinds.h"
 
 typedef T contents_type;
 
@@ -65,5 +66,9 @@ contents_type pta_get_contents(T);
 void pta_pr_ptset(contents_type);
 
 int pta_get_ptsize(contents_type);
+
+void pta_serialize(FILE *f, hash_table *entry_points, unsigned long sz);
+
+hash_table *pta_deserialize(FILE *f);
 
 #endif

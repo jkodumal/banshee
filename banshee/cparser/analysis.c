@@ -38,21 +38,30 @@ Boston, MA 02111-1307, USA.  */
 
 #define BOTTOM_INT (expr_type){pta_bottom(),unsigned_int_type}
 
-#define PUSH_ENV ({++scope; local_env = new_env(env_rgn,local_env);}) 
+#define PUSH_ENV ({++acnt.scope; local_env = new_env(env_rgn,local_env);}) 
 #define POP_ENV ({local_env = env_parent(local_env);})
+
+struct counts {
+  int scope;
+  int collection_count;
+  int string_count;
+  int next_alloc;
+};
+
+static struct counts acnt = {0,0,0,0};
 
 static char *alloc_name = "alloc_";
 
 static function_decl current_fun_decl = NULL;
 
 // For alpha renaming
-static int scope = 0;
+/* static int scope = 0; */
 
 static env global_var_env;
 static env file_env;
 static env local_env;
-static env collection_env;
 static env struct_env;
+static hash_table collection_hash;
 
 static char *alloc_names[] = {"malloc","calloc","realloc","valloc",
                               "xmalloc","__builtin_alloca","alloca",
@@ -102,7 +111,17 @@ static var_kind get_kind(data_declaration ddecl);
 
 static bool var_info_insert(var_info v_info)
 {
-  env_add(collection_env,v_info->name,v_info);
+  char buf[MAX_STR];
+
+  /* This extra renaming step is here because of a slight difference
+      in hash table semantics-- in dhash (which env uses), a scan will
+      see hidden bindings, but not so w/ Jeff's hash implementation
+  */
+  snprintf(buf, MAX_STR, "%s::%d", v_info->name, acnt.collection_count++);
+
+  if(v_info->visible)
+    hash_table_insert(collection_hash,(hash_key)strdup(buf),
+		      (hash_data)v_info->t_type);
   switch (v_info->kind)
     {
     case vk_local :
@@ -183,7 +202,7 @@ void analyze(declaration program) deletes
   AST_set_parents(CAST(node, program));
 
   var_info_init();
-  scope++;
+  acnt.scope++;
 
   scan_declaration(d, program) 
     analyze_declaration(d);
@@ -216,7 +235,7 @@ static var_info new_var(const char *name,type c_type,
 
   if ( (kind == vk_global) )
     v_info->scope = 0;
-  else v_info->scope = scope;
+  else v_info->scope = acnt.scope;
 
   snprintf(str,MAX_STR,"%s@%d",name,v_info->scope);
   
@@ -363,7 +382,7 @@ static void fun_type(function_decl fdecl,char *ret_name)
 
   param_terms = compute_param_terms(fdecl->fdeclarator->parms); 
 
-  snprintf(str,MAX_STR,"%s@%d",ddecl->name,scope);
+  snprintf(str,MAX_STR,"%s@%d",ddecl->name,acnt.scope);
 
   ret = get_var_ref(ret_name,return_type(ddecl->type),vk_local,FALSE); 
   f_type = pta_make_fun(str,ret,param_terms);
@@ -428,7 +447,6 @@ static var_kind get_kind(data_declaration ddecl)
 // make a term type for an allocation function
 static T get_next_alloc_fun() deletes
 {
-  static int next_alloc;
   char str[MAX_STR];
   char *v_name,*ret_name;
   T alloc_var, alloc_ret, alloc_fun;
@@ -436,7 +454,7 @@ static T get_next_alloc_fun() deletes
   region scratch_rgn = newregion();
 
   // snprintf(str,MAX_STR,"%s%d",alloc_name,next_alloc++);
-  snprintf(str,MAX_STR,"%s%d",alloc_name,next_alloc++);
+  snprintf(str,MAX_STR,"%s%d",alloc_name,acnt.next_alloc++);
   v_name = rstrdup(scratch_rgn,str);
   snprintf(str,MAX_STR,"%s%s",v_name,"_ret");
   ret_name = rstrdup(scratch_rgn,str);
@@ -777,7 +795,6 @@ static expr_type analyze_expression(expression e) deletes
       }
     case kind_string:
       {
-	static int string_count = 0;
 	string se = CAST(string, e);
 	//constant s;
 	string_cst s;
@@ -799,7 +816,7 @@ static expr_type analyze_expression(expression e) deletes
 	// Model strings as points-to, each string constant 
         // is a distinct source
 	snprintf(str,sizeof(str),"%s_%d",
-		 CAST(lexical_cst,s)->cstring.data,string_count++);
+		 CAST(lexical_cst,s)->cstring.data,acnt.string_count++);
 	
 	if(flag_model_strings)
 	  t_type = pta_address(get_var_ref(str,char_type,vk_global,TRUE));
@@ -1430,40 +1447,48 @@ T get_contents(var_info v_info)
   return t_decon.f1;
 }
 
-void serialize_cs(const char *filename, hash_table *entry_points, 
-	     unsigned long sz);
+/* TODO -- to serialize the collection env */
+/* static hash_table *hash_table_from_env(env e) */
+/* { */
+  
+/* } */
+
+void serialize_cs(FILE *f, hash_table *entry_points, unsigned long sz);
 
 void analysis_serialize(const char *filename)
 {
-  hash_table hash;
-  var_info v_info;
-  env_scanner es;
-  const char *name;
- 
-   /* TODO -- remove the hard coded gen_e kind, only works with nonspec! */
-  hash = make_persistent_string_hash_table(permanent, 128 ,18);
-
-  env_scan(collection_env,&es);
-  while(env_next(&es, &name, (void **)&v_info)) {
-    if(v_info->visible) {
-      hash_table_insert(hash,(hash_key)name, (hash_data) v_info->t_type);
-    }
-  }
+  FILE *f = fopen(filename, "wb");
   
-  serialize_cs(filename, &hash, 1);
+  assert(f);
+  
+  fwrite((void *)&acnt, sizeof(struct counts), 1, f);
+
+  pta_serialize(f, &collection_hash, 1);
+}
+
+void analysis_deserialize(const char *filename)
+{
+  hash_table *result;
+  FILE *f = fopen(filename, "rb");
+  assert(f);
+
+  fread((void *)&acnt, sizeof(struct counts), 1, f);
+
+  result = pta_deserialize(f);
+
+  collection_hash = result[0];
 }
 
 
 void print_analysis_results() deletes
 {
-  env_scanner es;
-  var_info v_info;
   T_list ptset_list;
   region temp_region;
   struct list *visibles;
-  T ptset;
+  T ptset, ttype;
   const char *name;
   T_list_scanner scan;
+  hash_table_scanner hs;
 
   int things_pointed_to = 0,
     non_empty_sets = 0,
@@ -1472,32 +1497,19 @@ void print_analysis_results() deletes
   ptset_list = new_T_list(temp_region);
   visibles = new_list(temp_region,0);
  
-  
-  env_scan(collection_env,&es);
-  while (env_next(&es,&name,(void **)&v_info))
-    {
-      T_list_cons(pta_get_contents(v_info->t_type),ptset_list);
-      list_cons( (list_data) v_info->visible,visibles);
-      if (v_info->visible)
-	{
-	  /*  printf("%s\n",v_info->name); */
-	  num_vars++;
-	}
-    }
-  
-  assert(list_length(visibles) == T_list_length(ptset_list));
+  hash_table_scan(collection_hash, &hs);
+  while(hash_table_next(&hs, (hash_key*)&name, (hash_data *)&ttype)) {
+    T_list_cons(pta_get_contents(ttype),ptset_list);
+    num_vars++;
+  }
 
   T_list_scan(ptset_list,&scan);
 
   while (T_list_next(&scan,&ptset))
     {
-      if ( list_head(visibles) )
-	{
-	  int size = pta_get_ptsize(ptset);
-	  non_empty_sets += size ? 1 : 0;
-	  things_pointed_to += size; 
-	}
-      list_tail(visibles);
+      int size = pta_get_ptsize(ptset);
+      non_empty_sets += size ? 1 : 0;
+      things_pointed_to += size; 
     }
   deleteregion(temp_region);
   printf("\nNumber of things pointed to: %d",things_pointed_to);
@@ -1508,27 +1520,25 @@ void print_analysis_results() deletes
 
 void print_points_to_sets()
 {
-  env_scanner es;
-  var_info v_info;
-  const char *name;
+  hash_table_scanner hs;
+  char *name;
   contents_type ptset;
-
+  T ttype;
+  
   printf("\n========Points-to sets========\n");
+  
+  hash_table_scan(collection_hash, &hs);
+  
+  while(hash_table_next(&hs, (hash_key)&name,(hash_data)&ttype)) {
+    ptset = pta_get_contents(ttype);
+    if (pta_get_ptsize(ptset) || flag_print_empty)
+      {
+	printf("%s --> ",name);
+	pta_pr_ptset(ptset);
+	puts("");
+      }
+  }
 
-  env_scan(collection_env,&es);
-  while (env_next(&es,&name,(void **)&v_info))
-    {
-      if (v_info->visible)
-	{
-	  ptset = pta_get_contents(v_info->t_type);
-	  if (pta_get_ptsize(ptset) || flag_print_empty)
-	    {
-	      printf("%s --> ",v_info->name);
-	      pta_pr_ptset(ptset);
-	      puts("");
-	    }
-	}
-    }
 }
 
 void analysis_init() deletes
@@ -1536,7 +1546,9 @@ void analysis_init() deletes
   pta_init();
   analysis_rgn = newregion();
   global_var_env = new_env(analysis_rgn,NULL);
-  collection_env = new_env(analysis_rgn,NULL);
+  collection_hash = 
+    make_persistent_string_hash_table(permanent, 128, 
+				      BANSHEE_PERSIST_KIND_gen_e);
 }
 
 

@@ -67,14 +67,21 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2, banshee_error_kind bek)
 
 static void save_cs(const char *filename)
 {
+  FILE *f;
   hash_table entry_points[3] = {constructor_env,named_env,var_env};
+  
+  f = fopen(filename, "wb");
+  
+  assert(f);
 
-  serialize_cs(filename, entry_points, 3);
+  serialize_cs(f, entry_points, 3);
 }
 
 static void load_cs(const char *filename)
 {
-  hash_table *entry_points = deserialize_cs(filename);
+  FILE *f = fopen(filename, "rb");
+  assert(f);
+  hash_table *entry_points = deserialize_cs(f);
   constructor_env = entry_points[0];
   named_env = entry_points[1];
   var_env = entry_points[2];

@@ -155,7 +155,7 @@ struct nonspec_stats_
   int dispatches;
 } nonspec_stats_;
 
-static int smallest_special_type = LARGEST_BUILTIN_TYPE + NUM_EXTRA_TYPES;
+static const int smallest_special_type = LARGEST_BUILTIN_TYPE + NUM_EXTRA_TYPES;
 
 static int new_type()
 {
@@ -2225,18 +2225,14 @@ bool constructor_set_fields(void *obj)
   return TRUE;
 }
 
-void serialize_cs(const char *filename, hash_table *entry_points, 
+void serialize_cs(FILE *f, hash_table *entry_points, 
 		  unsigned long sz)
 {
   unsigned long i;
-  FILE *f = fopen(filename,"wb");
-  
-  if (!f) {
-    fprintf(stderr, "Failed to open file %s for writing\n", filename);
-    return;
-  }
 
-  /* Start the serialization manager */
+  assert(f);
+
+   /* Start the serialization manager */
   banshee_serialize_start(f);
 
   /* Write down the size of the array */
@@ -2264,16 +2260,16 @@ void serialize_cs(const char *filename, hash_table *entry_points,
   fclose(f);
 }
 
-hash_table *deserialize_cs(const char *filename)
+hash_table *deserialize_cs(FILE *f)
 {
   unsigned long sz;
   hash_table *entry_points;
   unsigned long i;
-  FILE *f = fopen(filename,"rb");
-  
-  if (!f) {
-    fail("Failed to open file %s for reading\n", filename);
-  }
+
+  assert(f);
+
+ /* Reset the constraint solver */
+  engine_reset();
 
   /* Read the size of the array */
   fread((void *)&sz, sizeof(unsigned long), 1, f);

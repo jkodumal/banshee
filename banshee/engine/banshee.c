@@ -69,6 +69,8 @@ void engine_init(void)
 void engine_reset(void) deletes
 {
   stamp_reset();
+  uf_reset();
+
   banshee_clock = 0;
   deleteregion(engine_region);
   engine_region = newregion();

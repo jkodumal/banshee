@@ -377,6 +377,48 @@ void andersen_terms_init(void)
 
 }
 
+void andersen_terms_serialize(FILE *f, hash_table *entry_points, 
+			      unsigned long sz)
+{
+  unsigned long i = 0;
+  hash_table constructors =
+    make_persistent_string_hash_table(permanent, 4,
+				      BANSHEE_PERSIST_KIND_constructor);
+  hash_table *all_entry_points =
+    rarrayalloc(permanent, sz+1, sizeof(hash_table));
+
+  assert(f);
+  assert(entry_points);
+  assert(sz);
+  hash_table_insert(constructors, (hash_key)"ref",(hash_data)ref_c);
+  hash_table_insert(constructors, (hash_key)"lam",(hash_data)lam_c);
+
+  all_entry_points[0] = constructors;
+  for(i = 1; i <= sz; i++)
+    {
+      all_entry_points[i] = entry_points[i];
+    }
+
+  serialize_cs(f,all_entry_points, sz+1);
+}
+
+hash_table *andersen_terms_deserialize(FILE *f)
+{
+  hash_table *result = deserialize_cs(f);
+  
+  assert(result);
+
+  ref_c = NULL;
+  lam_c = NULL;
+  hash_table_lookup(result[0], (hash_key)"ref",(hash_data *)&ref_c);
+  hash_table_lookup(result[0], (hash_key)"lam",(hash_data *)&lam_c);
+
+  assert(ref_c);
+  assert(lam_c);  
+
+  return &result[1];
+}
+
 void andersen_terms_reset(void) deletes
 {
   nonspec_reset();

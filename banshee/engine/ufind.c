@@ -314,6 +314,13 @@ void uf_init()
   ustack = new_union_stack(uf_region);
 }
 
+void uf_reset()
+{
+  deleteregion(uf_region);
+
+  uf_init();
+}
+
 /* Persistence */
 bool uf_element_serialize(FILE *f, void *obj)
 {

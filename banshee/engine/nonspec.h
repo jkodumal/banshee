@@ -277,10 +277,10 @@ void cons_group_add(cons_group g, constructor c);
 gen_e setif_group_proj_pat(cons_group g, int i, gen_e e);
 
 /* Persistence */
-void serialize_cs(const char *filename, hash_table *entry_points, 
+void serialize_cs(FILE *f, hash_table *entry_points, 
 		  unsigned long sz);
 
-hash_table *deserialize_cs(const char *filename);
+hash_table *deserialize_cs(FILE *f);
 
 EXTERN_C_END
 
