@@ -398,6 +398,7 @@ int update_hash_entry(translation t, void *m)
 {
   /* TODO -- check! */
   update_pointer(t, (void **)&((hash_entry)m)->stamps);
+  update_pointer(t, (void **)&((hash_entry)m)->e);
   return sizeof(struct hash_entry);
 }
 
