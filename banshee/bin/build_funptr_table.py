@@ -50,13 +50,19 @@ def print_hash(table):
 	count = count + 1
     print "}"
 
+def print_usage_and_exit():
+    print "Usage: %s <archive-name>" % sys.argv[0]
+    sys.exit(0)
+
 # get all the header files in the current directory
 #def get_headers():
 #    output = os.popen("ls -1 *.h")
 #    return map((lambda x: x[:-1]), output.readlines())
 
 def print_c_file():
-    table = get_table("libengine.a")
+    if (not (len(sys.argv) == 2)):
+	print_usage_and_exit()
+    table = get_table(sys.argv[1])
     print_decls()
     print_protos(table)
     print_array(table)
