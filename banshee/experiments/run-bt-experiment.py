@@ -119,6 +119,15 @@ def list_to_string(list):
 	result = result + " " + elt[:-1]
     return result
 
+def list_to_string_nolf(list):
+    if (len(list) == 0):
+	return ""
+    result = list[0]
+    for elt in list[1:]:
+	result = result + " " + elt
+    return result
+
+
 # Take a string list (the output of running the analysis) and process
 # it into two output lists
 def process_andersen_output(current, output):
@@ -132,13 +141,16 @@ def process_andersen_output(current, output):
 	    outfile.write(line)
 	else:
 	    statefile.write(line)
+    statefile.close()
+    outfile.close()
 
 # Compute the rollback time from the previous analysis state, given
 # that we are rolling back to file
 def compute_time(file, state):
     time = 0
     for (nextfile,next_time) in state:
-	if (file == nextfile) return time
+	if (file == nextfile):
+	    return time
 	time = next_time
     return time
 
@@ -155,7 +167,10 @@ def compute_stack(modified, file, filelist):
 # Given the list of modified files, the new file list, and the old
 # analysis state, compute a new filelist (stack) and the rollback time
 # TODO
-def get_new_stack_and_time(modified, filelist, state):
+def get_new_stack_and_time(modified, filelistlf, state):
+    filelist = []
+    for filelf in filelistlf:
+	filelist.append(filelf[:-1])
     for file in filelist:
 	if file in modified:
 	    time = compute_time(file, state)
@@ -213,16 +228,18 @@ def main():
 	    sys.exit(1)
 	modified = get_modified_files(project_prev,project,".i")
 	filelist = get_filelist(project,".i")
-	os.system("rm -rf %s" % project_prev)
-	os.system("mv %s %s" % (project, project_prev))
-	print modified
 	time,files = get_new_stack_and_time(modified,filelist,banshee_state)
-	cmd = "%s -fserialize-constraints -fback%s %s 2>/dev/null" % (parser_ns, time, files)
+	print "Backtracking to : %s" % time
+	cmd = "%s -fserialize-constraints -fback%s %s 2>/dev/null" % (parser_ns, time, list_to_string_nolf(files))
+	print cmd
 	output = os.popen(cmd).readlines()
 	process_andersen_output(current,output)
+  	os.system("rm -rf %s" % project_prev)
+	os.system("mv %s %s" % (project, project_prev))
 
-	
     os.system("rm -rf %s" % project)
+    os.system("rm -rf %s" % project_prev)
+    os.system("rm -f andersen.out")
 
 if __name__ == "__main__":
     main()
