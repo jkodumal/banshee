@@ -406,6 +406,7 @@ class setsort_gen =
 	"EPRIME CONSTRUCTOR_projNUMBER(EXPRID arg1) \n \
 	  {\n\
 	    EPRIME c;\n\
+            banshee_clock_tick();\n\
 	    if (setif_is_var(arg1))\n\
 	       {\n\
 		  setif_var v = (setif_var)arg1;\n\

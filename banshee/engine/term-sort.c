@@ -202,14 +202,15 @@ bool term_eq(gen_e e1, gen_e e2)
 }
 
 
-static void term_register_rollback(void) {
+static void term_register_rollback(void) 
+{
   current_rollback_info = 
     ralloc(banshee_rollback_region, struct term_rollback_info_); 
   banshee_set_time((banshee_rollback_info)current_rollback_info);
+  current_rollback_info->kind = term_sort;
   current_rollback_info->added_edges = 
     make_hash_table(banshee_rollback_region,
 		    4, ptr_hash, ptr_eq);
-  current_rollback_info->kind = term_sort;
   
   banshee_register_rollback((banshee_rollback_info)current_rollback_info);
 }

@@ -375,6 +375,7 @@ class setstsort_gen =
 	"EPRIME CONSTRUCTOR_projNUMBER(EXPRID arg1) \n \
 	  {\n\
 	    EPRIME c;\n\
+            banshee_clock_tick();\n\
 	    if (setst_is_var(arg1))\n\
 	       {\n\
 		  setst_var v = (setst_var)arg1;\n\

@@ -146,8 +146,13 @@ so, here are the tasks:
        What about internal constraints added due to the creation of
        terms (e.g. proj)? We don't ever want to undo these. One
        approach would be to add a notion of an internal constraint
-       that cannot be undone.
+       that cannot be undone. But then how should the constraints
+       induced by the creation of proj be handled? 
 
+       New strategy: any terms that create constraints also call tick()...
+       then rollback will invalidate these terms, and they must be
+       rebuilt.
+  
        General list of things to keep track of:
         
         --- Unifications

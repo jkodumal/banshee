@@ -309,7 +309,6 @@ static term_hash get_sort_hash(sort_kind s)
   return NULL;
 }
 
-
 static gen_e get_named_proj_var(sort_kind s, bool large, char *name) /* HACK */
 {
   switch (s)
@@ -359,7 +358,6 @@ static gen_e get_vinv_proj_var(sort_kind s, constructor c, int i,gen_e e)
   snprintf(temp,512,"%s-%d(%s)",c->name,i,sv_get_name((setif_var)e));
   return get_named_proj_var(s,FALSE,temp);
 }
-
 
 static gen_e get_cinv_proj_var(sort_kind s,constructor c, int i)
 {
@@ -566,12 +564,14 @@ gen_e setif_proj(constructor c, int i, gen_e e)
       return NULL;
     }
 
-    if (e->sort != setif_sort)
+  banshee_clock_tick();
+
+  if (e->sort != setif_sort)
     {
       fail("Sort check failed: setif_proj\n");
       return NULL;
     }
-
+  
   else if (i < 0 || i >= c->arity)
     {
       fail("Signature mismatch\n");
@@ -1488,7 +1488,6 @@ char *expr_constant_name(gen_e e)
 
   return setif_get_constant_name(e);
 }
-
 
 int expr_stamp(gen_e e)
 {
