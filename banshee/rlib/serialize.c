@@ -295,12 +295,10 @@ must be large enough to hold at least its first object, so this implementation i
 
 */
 void update_page(char *current, char *end, translation map, Updater update) {
-  int size = 0;
   for(;; ) {
     current = PALIGN(current, RALIGNMENT);
-    if (current + size > end) break;
-    size = update(map, current);
-    current += size;
+    if (current >= end) break;
+    current += update(map, current);
   }
 }
 
