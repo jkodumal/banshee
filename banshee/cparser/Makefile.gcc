@@ -31,12 +31,16 @@ endif
 
 EXTRA_OBJS =  
 
-all: parser.exe
+all: parser.exe parser_st.exe
 
 include Makefile.base
 
 parser.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
 	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o -lm $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine
+
+parser_st.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
+	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o -lm $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine
+
 
 clean:
 	rm -f $(OBJS) parser.exe *~

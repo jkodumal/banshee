@@ -36,10 +36,6 @@
 #include "setif-sort.h"
 #include "utils.h"
 
-#define UNION_TYPE 2
-#define INTER_TYPE 3
-#define CONSTANT_TYPE 4
-
 bool flag_eliminate_cycles = TRUE;
 bool flag_merge_projections = TRUE;
 
@@ -184,7 +180,6 @@ bool setif_eq(gen_e e1, gen_e e2)
 {
   return eq(e1,e2);
 }
-
 
 gen_e_list setif_get_union(gen_e e)
 {

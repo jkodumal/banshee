@@ -97,6 +97,11 @@ static bool eq(gen_e e1, gen_e e2)
   return ( setst_get_stamp(e1) == setst_get_stamp(e2) );
 }
 
+bool setst_eq(gen_e e1, gen_e e2)
+{
+  return eq(e1,e2);
+}
+
 static gen_e_list get_union(gen_e e)
 {
   assert ( ((setst_term)e)->type == UNION_TYPE);
@@ -854,6 +859,11 @@ bool setst_is_union(gen_e e)
 bool setst_is_inter(gen_e e)
 {
   return ((setst_term)e)->type == INTER_TYPE;
+}
+
+bool setst_is_constant(gen_e e)
+{
+  return ((setst_term)e)->type == CONSTANT_TYPE;
 }
 
 char *setst_get_constant_name(gen_e e)

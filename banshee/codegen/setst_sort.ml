@@ -63,24 +63,29 @@ class setstsort_gen =
 	  EXPRID EXPRID_zero(void);\n \
 	  EXPRID EXPRID_one(void);\n \
 	  EXPRID EXPRID_fresh(const char *name);\n \
-	  EXPRID EXPRID_union(EXPRID_list exprs) ;\n \
-	  EXPRID EXPRID_inter(EXPRID_list exprs) ;\n \
-	  EXPRID EXPRID_constant(const char *name) ;\n \
-	  EXPRID_list EXPRID_tlb(EXPRID e) ;\n \
-	 void EXPRID_inclusion(EXPRID e1,EXPRID e2) ;\n \
-	 void EXPRID_unify(EXPRID e1,EXPRID e2) ;\n "
+	  EXPRID EXPRID_union(EXPRID_list exprs);\n \
+	  EXPRID EXPRID_inter(EXPRID_list exprs);\n \
+	  EXPRID EXPRID_constant(const char *name);\n \
+          bool EXPRID_eq(EXPRID e1, EXPRID e2);\n\
+          int EXPRID_cmp(const EXPRID e1,const EXPRID e2);\n\
+	  bool EXPRID_is_constant(EXPRID e,const char *name);\n\
+  	  void EXPRID_inclusion(EXPRID e1,EXPRID e2);\n \
+	  void EXPRID_unify(EXPRID e1,EXPRID e2);\n \
+          EXPRID_list EXPRID_tlb(EXPRID e);\n"
       in
       let file_decl = 
           "DECLARE_OPAQUE_LIST(EXPRID_list,gen_e);\n \
 	  EXPRID EXPRID_zero(void);\n \
 	  EXPRID EXPRID_one(void);\n \
 	  EXPRID EXPRID_fresh(const char *name);\n \
-	  EXPRID EXPRID_union(EXPRID_list exprs) ;\n \
-	  EXPRID EXPRID_inter(EXPRID_list exprs) ;\n \
-	  EXPRID EXPRID_constant(const char *name) ;\n \
-	  EXPRID_list EXPRID_tlb(EXPRID e) ;\n \
-	  void EXPRID_inclusion(EXPRID e1,EXPRID e2) ;\n \
-	  void EXPRID_unify(EXPRID e1,EXPRID e2) ;\n "
+          static EXPRID EXPRID_fresh_large(const char *name);\n\
+	  EXPRID EXPRID_union(EXPRID_list exprs);\n \
+	  EXPRID EXPRID_inter(EXPRID_list exprs);\n \
+	  EXPRID EXPRID_constant(const char *name);\n \
+          bool EXPRID_is_constant(EXPRID e,const char *name);\n\
+	  EXPRID_list EXPRID_tlb(EXPRID e);\n \
+	  void EXPRID_inclusion(EXPRID e1,EXPRID e2);\n \
+	  void EXPRID_unify(EXPRID e1,EXPRID e2);\n "
       in
       let file_defn = 
 	"DEFINE_LIST(EXPRID_list,gen_e);\n \
@@ -116,6 +121,20 @@ class setstsort_gen =
 	 {\n \
 	    return setst_constant(name);\n \
 	 }\n \
+         bool EXPRID_eq(EXPRID e1, EXPRID e2) \n\
+         {\n \
+	    return setst_eq(e1,e2);\n\
+	 }\n\n\
+         int EXPRID_cmp(const EXPRID e1,const EXPRID e2) \n\
+         {\n \
+	    return setst_get_stamp(e1) - setst_get_stamp(e2);\n\
+	 }\n\n\
+	 bool EXPRID_is_constant(EXPRID e, const char *name) \n\
+	 {\n \
+	   if (setst_is_constant(e))\n\
+	       return (! strcmp(name,setst_get_constant_name(e)));\n\
+	   else return FALSE;\n\
+         }\n\n\
 	 EXPRID_list EXPRID_tlb(EXPRID e) \n \
 	 {\n \
 	    return setst_tlb(e,EXPRID_inclusion);\n \
@@ -170,10 +189,18 @@ class setstsort_gen =
       file#add_fdef f
 
   method private gen_constructor file hdr e c consig = 
+      let query_decl = 
+	"bool EXPRID_is_CONSTRUCTOR(EXPRID e);" in
+      let query_defn = 
+	"bool EXPRID_is_CONSTRUCTOR(EXPRID e)\n\
+	 {\n \
+	    return ((setst_term)e)->type == TYPE;\n\
+	 }\n" in 
       let arity = List.length consig in
       let num_args = int_to_string (arity + 1) in
       let ret = (etype e) in 
       let name =  c in 
+      let ctype = this#get_new_type() in
       let args =
 	args (List.map (function (x,_) -> no_qual (Ident x)) consig) in
       let body1 = [ Expr ("struct " ^ c ^ "_ *ret;");
@@ -204,8 +231,12 @@ class setstsort_gen =
 		    Return ( parens e ^ "ret");] in
       let body = body1 @ body2 @ body3 @ (List.rev !body4) @ body5 in
       let p,f = gen_proto_and_fun ~quals:[] (ret,name,args,body) in
+      let names = 
+	[("CONSTRUCTOR",c);("EXPRID",e);("TYPE",ctype)] in
       file#add_macro (define_val (String.uppercase (c ^ "_")) 
 			(this#get_new_type()));
+      hdr#add_gdecl (decl_substitution names query_decl);
+      file#add_fdef (def_substitution names query_defn);
       hdr#add_gdecl p;
       file#add_gdecl p;
       file#add_fdef f

@@ -70,8 +70,10 @@ bool setst_is_var(gen_e e);
 bool setst_is_union(gen_e e);
 bool setst_is_inter(gen_e e);
 bool setst_is_constant(gen_e e);
-
 char *setst_get_constant_name(gen_e e);
+
+bool setst_eq(gen_e e1, gen_e e2);
+
 gen_e_list setst_get_union(gen_e e);
 gen_e_list setst_get_inter(gen_e e);
 

@@ -61,15 +61,15 @@ class setsort_gen =
 	 EXPRID EXPRID_zero(void);\n\
 	 EXPRID EXPRID_one(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
-	 EXPRID EXPRID_union(EXPRID_list exprs) ;\n\
-	 EXPRID EXPRID_inter(EXPRID_list exprs) ;\n\
-	 EXPRID EXPRID_constant(const char *name) ;\n\
+	 EXPRID EXPRID_union(EXPRID_list exprs);\n\
+	 EXPRID EXPRID_inter(EXPRID_list exprs);\n\
+	 EXPRID EXPRID_constant(const char *name);\n\
          bool EXPRID_eq(EXPRID e1, EXPRID e2);\n\
          int EXPRID_cmp(const EXPRID e1,const EXPRID e2);\n\
 	 bool EXPRID_is_constant(EXPRID e,const char *name);\n\
-         void EXPRID_inclusion(EXPRID e1,EXPRID e2) ;\n\
-	 void EXPRID_unify(EXPRID e1,EXPRID e2) ;\n\
-	 EXPRID_list EXPRID_tlb(EXPRID e) ;\n"
+         void EXPRID_inclusion(EXPRID e1,EXPRID e2);\n\
+	 void EXPRID_unify(EXPRID e1,EXPRID e2);\n\
+	 EXPRID_list EXPRID_tlb(EXPRID e);\n"
       in
       let file_decl = 
         "DECLARE_OPAQUE_LIST(EXPRID_list,gen_e);\n\
@@ -77,13 +77,13 @@ class setsort_gen =
 	 EXPRID EXPRID_one(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
          static EXPRID EXPRID_fresh_large(const char *name);\n\
-	 EXPRID EXPRID_union(EXPRID_list exprs) ;\n\
-	 EXPRID EXPRID_inter(EXPRID_list exprs) ;\n\
-	 EXPRID EXPRID_constant(const char *name) ;\n\
+	 EXPRID EXPRID_union(EXPRID_list exprs);\n\
+	 EXPRID EXPRID_inter(EXPRID_list exprs);\n\
+	 EXPRID EXPRID_constant(const char *name);\n\
          bool EXPRID_is_constant(EXPRID e,const char *name);\n\
-	 EXPRID_list EXPRID_tlb(EXPRID e) ;\n\
-	 void EXPRID_inclusion(EXPRID e1,EXPRID e2) ;\n\
-	 void EXPRID_unify(EXPRID e1,EXPRID e2) ;\n"
+	 EXPRID_list EXPRID_tlb(EXPRID e);\n\
+	 void EXPRID_inclusion(EXPRID e1,EXPRID e2);\n\
+	 void EXPRID_unify(EXPRID e1,EXPRID e2);\n"
       in
       let file_defn = 
 	"DEFINE_LIST(EXPRID_list,gen_e);\n\

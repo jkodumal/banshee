@@ -33,7 +33,10 @@ BANSHEE = $(banshee_bindir)/banshee.exe
 
 ANDERSEN = andersen_terms
 
-TARGETS =  andersen.o $(ANDERSEN).h $(ANDERSEN).c $(ANDERSEN).o TAGS
+ANDERSEN_ST = andersen_terms_st
+
+TARGETS =  andersen.o $(ANDERSEN).h $(ANDERSEN).c $(ANDERSEN).o \
+           $(ANDERSEN_ST).h $(ANDERSEN_ST).c $(ANDERSEN_ST).o TAGS
 
 TAGFILES = *.c *.h
 
@@ -51,6 +54,13 @@ $(ANDERSEN).c: $(ANDERSEN).bsp $(BANSHEE)
 	indent -npsl $@ -o $@
 
 $(ANDERSEN).h: $(ANDERSEN).c
+	indent -npsl $@ -o $@
+
+$(ANDERSEN_ST).c: $(ANDERSEN_ST).bsp $(BANSHEE)
+	$(BANSHEE) $(ANDERSEN_ST).bsp $(ANDERSEN_ST)
+	indent -npsl $@ -o $@
+
+$(ANDERSEN_ST).h: $(ANDERSEN_ST).c
 	indent -npsl $@ -o $@
 
 TAGS: $(TAGFILES)
