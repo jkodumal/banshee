@@ -33,7 +33,10 @@
 #include "andersen_terms.h"
 #include "banshee_persist_kinds.h"
 
-typedef T contents_type;
+typedef struct contents_type_* contents_type;
+
+DECLARE_LIST(contents_type_list, contents_type);
+
 
 void pta_init(void);
 

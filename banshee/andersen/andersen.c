@@ -30,8 +30,17 @@
 #include <assert.h>
 #include <stdio.h>
 #include "utils.h"
-#include "pta.h"
+//#include "pta.h"
 #include "regions.h"
+
+#include "andersen_terms.h"
+
+/* Implements the interface defined in pta.h */
+
+typedef T contents_type;
+
+DECLARE_LIST(contents_type_list, T);
+DEFINE_NONPTR_LIST(contents_type_list, T);
 
 extern int flag_print_constraints;
 

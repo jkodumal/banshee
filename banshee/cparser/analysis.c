@@ -1511,12 +1511,12 @@ static void analyze_statement(statement s)
 
 // Measurements
 
-T get_contents(var_info v_info)
-{
-  struct ref_decon t_decon = ref_decon(v_info->t_type);
+/* T get_contents(var_info v_info) */
+/* { */
+/*   struct ref_decon t_decon = ref_decon(v_info->t_type); */
 
-  return t_decon.f1;
-}
+/*   return t_decon.f1; */
+/* } */
 
 void serialize_cs(FILE *f, hash_table *entry_points, unsigned long sz);
 
@@ -1699,32 +1699,32 @@ void analysis_deserialize(const char *filename)
 
 void print_analysis_results() deletes
 {
-  T_list ptset_list;
+  contents_type_list ptset_list;
   region temp_region;
   struct list *visibles;
-  T ptset, ttype;
+  contents_type ptset, ttype;
   char *name;
-  T_list_scanner scan;
+  contents_type_list_scanner scan;
   hash_table_scanner hs;
 
   int things_pointed_to = 0,
     non_empty_sets = 0,
     num_vars = 0;
   temp_region = newregion();
-  ptset_list = new_T_list(temp_region);
+  ptset_list = new_contents_type_list(temp_region);
   visibles = new_list(temp_region,0);
  
   hash_table_scan(collection_hash, &hs);
   while(hash_table_next(&hs, (hash_key*)&name, (hash_data *)&ttype)) {
     assert(ttype);
     assert(name);
-    T_list_cons(pta_get_contents(ttype),ptset_list);
+    contents_type_list_cons(pta_get_contents(ttype),ptset_list);
     num_vars++;
   }
 
-  T_list_scan(ptset_list,&scan);
+  contents_type_list_scan(ptset_list,&scan);
 
-  while (T_list_next(&scan,&ptset))
+  while (contents_type_list_next(&scan,&ptset))
     {
       int size = pta_get_ptsize(ptset);
       non_empty_sets += size ? 1 : 0;
