@@ -1268,7 +1268,8 @@ void setif_rollback(banshee_rollback_info info)
 			(hash_data *) &next_edges)) {
     stamp_list_scan(next_edges, &stamp_scan);
     while(stamp_list_next(&stamp_scan,&next_stamp)) {
-      bounds_remove(next_bounds,next_stamp);
+      bool present = bounds_remove(next_bounds,next_stamp);
+      if (! present) fail("Tried to remove a nonexistent bound\n");
     }
   }
   

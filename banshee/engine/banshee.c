@@ -148,18 +148,17 @@ static void banshee_rollback_dispatch(banshee_rollback_info info) {
 
 void banshee_rollback()
 {
-  banshee_rollback_stack_scanner scan;
   banshee_rollback_info info;
 
   if (banshee_clock > 0) {
 
     uf_rollback();
     
-    banshee_rollback_stack_scan(rb_stack,&scan);
-    
-    while(banshee_rollback_stack_next(&scan,&info)) {
+    while(1) {
+      info = banshee_rollback_stack_head(rb_stack);
       if (info->time.time < banshee_clock) break;
       banshee_rollback_dispatch(info);
+      rb_stack = banshee_rollback_stack_tail(rb_stack);
     }
     banshee_clock--;
   }
