@@ -110,7 +110,7 @@ hash_table hash_table_copy(region rhash, hash_table ht);
 /* Map f to all elements on ht, creating a new hash table */
 hash_table hash_table_map(region r, hash_table ht, hash_map_fn f, void *arg);
 
-typedef struct bucket *bucket;
+typedef struct bucket_ *bucket;
 typedef struct
 {
   hash_table ht;

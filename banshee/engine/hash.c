@@ -34,11 +34,11 @@
 #include "utils.h"
 #include "persist.h"
 
-struct bucket
+struct bucket_
 {
   hash_key key;
   hash_data data;
-  struct bucket *next;
+  struct bucket_ *next;
 };
 
 #define scan_bucket(b, var) for (var = b; var; var = var->next)
@@ -199,7 +199,7 @@ bool hash_table_insert(hash_table ht, hash_key k, hash_data d)
 	}
       cur = &(*cur)->next;
     }
-  *cur = ralloc(ht->r, struct bucket);
+  *cur = ralloc(ht->r, struct bucket_);
   (*cur)->key = k;
   (*cur)->data = d;
   (*cur)->next = NULL;
@@ -248,7 +248,7 @@ hash_table hash_table_copy(region r, hash_table ht)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(result->r, struct bucket);
+	  newbucket = ralloc(result->r, struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = cur->data;
 	  newbucket->next = NULL;
@@ -348,7 +348,7 @@ hash_table hash_table_map(region r, hash_table ht, hash_map_fn f, void *arg)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(result->r, struct bucket);
+	  newbucket = ralloc(result->r, struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = f(cur->key, cur->data, arg);
 	  newbucket->next = NULL;
@@ -486,7 +486,7 @@ void *hash_table_deserialize(FILE *f)
     fread(&num_buckets, sizeof(unsigned long), 1, f); 
     prev = &ht->table[i];
     for (j = 0; j < num_buckets; j++) {
-      newbucket = ralloc(ht->r, struct bucket);
+      newbucket = ralloc(ht->r, struct bucket_);
       fread(&newbucket->key, sizeof(hash_key) + sizeof(hash_data), 1 ,f);
       newbucket->next = NULL;
       assert(!*prev);
