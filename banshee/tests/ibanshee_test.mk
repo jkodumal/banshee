@@ -59,6 +59,7 @@ IBANSHEE_PERSIST_TESTS += row_flow_persist.ibc
 
 IBANSHEE_RPERSIST_TESTS :=
 IBANSHEE_RPERSIST_TESTS := simple_rpersist
+IBANSHEE_RPERSIST_TESTS := constant_rpersist
 
 IBANSHEE_EXEC := $(IBANSHEE_DIR)/ibanshee.exe
 
@@ -86,7 +87,7 @@ ibanshee-persist/clean:
 	rm -f tmpfile
 
 ibanshee-rpersist/clean:
-	rm -f $(IBC_RPERSIST_DIR)/*.out
+	rm -f $(IBC_RPERSIST_DIR)/*.out extras offsets data statics
 
 .PHONY: ibanshee-done ibanshee-bt-done ibanshee-persist-done
 
@@ -118,4 +119,4 @@ ibanshee-rpersist-tests/%:
 $(IBANSHEE_DIR)/ibanshee.exe: 
 	$(MAKE) -C ../ ibanshee
 
-clean: ibanshee-regr/clean ibanshee-bt/clean ibanshee-persist/clean ibanshee-rpersist/clean
+clean: ibanshee-regr/clean ibanshee-bt/clean ibanshee-persist/clean ibanshee-rpersist/clean 
