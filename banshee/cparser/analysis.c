@@ -1416,7 +1416,7 @@ static void analyze_statement(statement s)
     case kind_continue_stmt:
       break;
     default:
-      assert(0);
+      printf(stderr,"Warning, unhandled stmt kind: %d\n", s->kind );
       break;
     }
 }

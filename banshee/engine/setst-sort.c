@@ -891,49 +891,49 @@ char *setst_get_constant_name(gen_e e)
 void setst_print_stats(FILE *f)
 { 
   fprintf(f,"\n========== SetST Var Stats ==========\n");
-  fprintf(f,"Fresh : %d\n",setst_stats.fresh); 
-  fprintf(f,"Fresh Small : %d\n",setst_stats.fresh_small);
-  fprintf(f,"Fresh Large : %d\n",setst_stats.fresh_large);
-  fprintf(f,"Total : %d\n",setst_stats.fresh + setst_stats.fresh_small 
+  fprintf(f,"(SetST) Fresh : %d\n",setst_stats.fresh); 
+  fprintf(f,"(SetST) Fresh Small : %d\n",setst_stats.fresh_small);
+  fprintf(f,"(SetST) Fresh Large : %d\n",setst_stats.fresh_large);
+  fprintf(f,"(SetST) Total Vars: %d\n",setst_stats.fresh + setst_stats.fresh_small 
 	  + setst_stats.fresh_large);
   fprintf(f,"\n========== SetST Sort Stats ==========\n");
   fprintf(f,"\n");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Additions");
+  fprintf(f,"(SetST) Additions");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Var:   %d\n",setst_stats.added_var);
-  fprintf(f,"Source: %d\n",setst_stats.added_source);
-  fprintf(f,"Sink:   %d",setst_stats.added_sink);
+  fprintf(f,"(SetST) Var Added:   %d\n",setst_stats.added_var);
+  fprintf(f,"(SetST) Source Added: %d\n",setst_stats.added_source);
+  fprintf(f,"(SetST) Sink Added:   %d",setst_stats.added_sink);
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Total:  %d",setst_stats.added_var + setst_stats.added_source
+  fprintf(f,"(SetST) Total Added:  %d",setst_stats.added_var + setst_stats.added_source
 	  + setst_stats.added_sink);
   fprintf(f,"\n");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Redundant");
+  fprintf(f,"(SetST) Redundant");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Var:   %d\n",setst_stats.redundant_var);
-  fprintf(f,"Source: %d\n",setst_stats.redundant_source);
-  fprintf(f,"Sink:   %d",setst_stats.redundant_sink);
+  fprintf(f,"(SetST) Var Redundant:   %d\n",setst_stats.redundant_var);
+  fprintf(f,"(SetST) Source Redundant: %d\n",setst_stats.redundant_source);
+  fprintf(f,"(SetST) Sink Redundant:   %d",setst_stats.redundant_sink);
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Total:  %d\n",
+  fprintf(f,"(SetST) Total Redundant:  %d\n",
 	 setst_stats.redundant_var + setst_stats.redundant_source
 	  + setst_stats.redundant_sink);
  
   fprintf(f,"\n");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Iteration Optimizations");
+  fprintf(f,"(SetST) Iteration Optimizations");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Skipped vars:   %d\n",setst_stats.incycle_vars);
-  fprintf(f,"Unchanged vars: %d\n",setst_stats.unchanged_vars);
-  fprintf(f,"Vars w/o sinks: %d\n",setst_stats.no_sinks);
+  fprintf(f,"(SetST) Skipped vars:   %d\n",setst_stats.incycle_vars);
+  fprintf(f,"(SetST) Unchanged vars: %d\n",setst_stats.unchanged_vars);
+  fprintf(f,"(SetST) Vars w/o sinks: %d\n",setst_stats.no_sinks);
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Cycles");
+  fprintf(f,"(SetST) Cycles");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Collapsed:      %d\n",setst_stats.cycles_collapsed);
-  fprintf(f,"Searched:       %d\n",setst_stats.cycles_searched);
-  fprintf(f,"Hit rate:       %f\n",
+  fprintf(f,"(SetST) Collapsed:      %d\n",setst_stats.cycles_collapsed);
+  fprintf(f,"(SetST) Searched:       %d\n",setst_stats.cycles_searched);
+  fprintf(f,"(SetST) Hit rate:       %f\n",
 	 ((float)setst_stats.cycles_collapsed)/((float)setst_stats.cycles_searched));
-  fprintf(f,"Average Length: %f\n",
+  fprintf(f,"(SetST) Average Length: %f\n",
 	 ((float)setst_stats.cycles_length) / ((float)setst_stats.cycles_collapsed));
   fprintf(f,"=====================================\n");
 }

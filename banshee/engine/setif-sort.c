@@ -1018,55 +1018,55 @@ bool setif_proj_merge(setif_var v, gen_e se, get_proj_fn_ptr get_proj,
 void setif_print_stats(FILE *f)
 {
   fprintf(f,"\n========== SetIF Var Stats ==========\n");
-  fprintf(f,"Fresh : %d\n",setif_stats.fresh); 
-  fprintf(f,"Fresh Small : %d\n",setif_stats.fresh_small);
-  fprintf(f,"Fresh Large : %d\n",setif_stats.fresh_large);
-  fprintf(f,"Total : %d\n",setif_stats.fresh + setif_stats.fresh_small 
+  fprintf(f,"(SetIF) Fresh : %d\n",setif_stats.fresh); 
+  fprintf(f,"(SetIF) Fresh Small : %d\n",setif_stats.fresh_small);
+  fprintf(f,"(SetIF) Fresh Large : %d\n",setif_stats.fresh_large);
+  fprintf(f,"(SetIF) Total Vars: %d\n",setif_stats.fresh + setif_stats.fresh_small 
 	  + setif_stats.fresh_large);
   fprintf(f,"\n========== SetIF Sort Stats ==========\n");
   fprintf(f,"\n");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Additions");
+  fprintf(f,"(SetIF) Additions");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Pred:   %d\n",setif_stats.added_pred);
-  fprintf(f,"Succ:   %d\n",setif_stats.added_succ);
-  fprintf(f,"Source: %d\n",setif_stats.added_source);
-  fprintf(f,"Sink:   %d",setif_stats.added_sink);
+  fprintf(f,"(SetIF) Pred Added:   %d\n",setif_stats.added_pred);
+  fprintf(f,"(SetIF) Succ Added:   %d\n",setif_stats.added_succ);
+  fprintf(f,"(SetIF) Source Added: %d\n",setif_stats.added_source);
+  fprintf(f,"(SetIF) Sink Added:   %d",setif_stats.added_sink);
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Total:  %d",setif_stats.added_pred + setif_stats.added_succ
+  fprintf(f,"(SetIF) Total Added:  %d",setif_stats.added_pred + setif_stats.added_succ
 	  + setif_stats.added_source + setif_stats.added_sink);
   fprintf(f,"\n");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Redundant");
+  fprintf(f,"(SetIF) Redundant");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Pred:   %d\n",setif_stats.redundant_pred);
-  fprintf(f,"Succ:   %d\n",setif_stats.redundant_succ);
-  fprintf(f,"Source: %d\n",setif_stats.redundant_source);
-  fprintf(f,"Sink:   %d",setif_stats.redundant_sink);
+  fprintf(f,"(SetIF) Pred Redundant:   %d\n",setif_stats.redundant_pred);
+  fprintf(f,"(SetIF) Succ Redundant:   %d\n",setif_stats.redundant_succ);
+  fprintf(f,"(SetIF) Source Redundant: %d\n",setif_stats.redundant_source);
+  fprintf(f,"(SetIF) Sink Redundant:   %d",setif_stats.redundant_sink);
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Total:  %d\n",
+  fprintf(f,"(SetIF) Total Redundant:  %d\n",
 	 setif_stats.redundant_pred+setif_stats.redundant_succ+setif_stats.redundant_source+setif_stats.redundant_sink);
 
   fprintf(f,"\n");
   
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Forward Cycles");
+  fprintf(f,"(SetIF) Forward Cycles");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Collapsed:      %d\n",setif_stats.cycles_collapsed_forward);
-  fprintf(f,"Searched:       %d\n",setif_stats.cycles_searched_forward);
-  fprintf(f,"Hit rate:       %f\n",
+  fprintf(f,"(SetIF) Collapsed:      %d\n",setif_stats.cycles_collapsed_forward);
+  fprintf(f,"(SetIF) Searched:       %d\n",setif_stats.cycles_searched_forward);
+  fprintf(f,"(SetIF) Hit rate:       %f\n",
 	 ((float)setif_stats.cycles_collapsed_forward)/((float)setif_stats.cycles_searched_forward));
-  fprintf(f,"Average Length: %f\n",
+  fprintf(f,"(SetIF) Average Length: %f\n",
 	 1+((float)setif_stats.cycles_length_forward) / ((float)setif_stats.cycles_collapsed_forward));
   fprintf(f,"\n");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Reverse Cycles");
+  fprintf(f,"(SetIF) Reverse Cycles");
   fprintf(f,"\n------------------------------\n");
-  fprintf(f,"Collapsed:      %d\n",setif_stats.cycles_collapsed_backward);
-  fprintf(f,"Searched:       %d\n",setif_stats.cycles_searched_backward);
-  fprintf(f,"Hit rate:       %f\n",
+  fprintf(f,"(SetIF) Collapsed:      %d\n",setif_stats.cycles_collapsed_backward);
+  fprintf(f,"(SetIF) Searched:       %d\n",setif_stats.cycles_searched_backward);
+  fprintf(f,"(SetIF) Hit rate:       %f\n",
 	 ((float)setif_stats.cycles_collapsed_backward)/((float)setif_stats.cycles_searched_backward));
-  fprintf(f,"Average Length: %f\n",
+  fprintf(f,"(SetIF) Average Length: %f\n",
 	 1+((float)setif_stats.cycles_length_backward) / ((float)setif_stats.cycles_collapsed_backward));
   fprintf(f,"=====================================\n");
 }
