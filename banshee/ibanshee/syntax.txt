@@ -9,11 +9,11 @@ Labels (l)       : [A-Z]{ident}
 
 Expressions (e)  : v | c | c(e1,...,en) | e1 && e2 | e1 || e2
                  | <l1=e1,...,ln=en [| e]> | 0 | 1 | _ | 
-                 | ProjPat(c,i,e) | Proj(c,i,e) | ( e )
+                 | pat(c,i,e) | proj(c,i,e) | ( e )
 
 Sorts            : BaseSort | row(BaseSort)
 
-BaseSort         : setIF | setST | term | flowTerm
+BaseSort         : setIF | setST | term | flow
 
 Var decl         : #v : sort
 Constructor decl : #c(s1,...,sn) : BaseSort
@@ -21,4 +21,4 @@ Sig (s)          : + sort | - sort | = sort
 
 Constraints      : e1 <= e2 | e1 == e2
 
-Commands : help, tlb e, undo [i], time
+Commands : help, tlb e, undo [i], time, trace
