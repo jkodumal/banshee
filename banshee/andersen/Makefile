@@ -33,7 +33,7 @@ BANSHEE = $(banshee_bindir)/banshee.exe
 
 ANDERSEN = andersen_terms
 
-TARGETS =  $(ANDERSEN).h $(ANDERSEN).c $(ANDERSEN).o TAGS
+TARGETS =  andersen.o $(ANDERSEN).h $(ANDERSEN).c $(ANDERSEN).o TAGS
 
 TAGFILES = *.c *.h
 
@@ -43,6 +43,8 @@ CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr=
 
 all: $(TARGETS)
+
+andersen.o: $(ANDERSEN).h
 
 $(ANDERSEN).c: $(ANDERSEN).bsp $(BANSHEE)
 	$(BANSHEE) $(ANDERSEN).bsp $(ANDERSEN)

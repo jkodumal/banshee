@@ -46,6 +46,9 @@ rca: banshee
 andersen: banshee
 	$(MAKE) -C andersen
 
+points-to: andersen
+	$(MAKE) -C cparser
+
 lambda: banshee
 	$(MAKE) -C lambda
 
@@ -67,6 +70,7 @@ clean:
 	$(MAKE) -C engine clean
 	$(MAKE) -C rca clean
 	$(MAKE) -C andersen clean
+	$(MAKE) -C cparser clean
 	$(MAKE) -C lambda clean
 	$(MAKE) -C dyckcfl clean
 	$(MAKE) -C tests clean
