@@ -155,6 +155,7 @@ void banshee_rollback()
     uf_rollback();
     
     while(1) {
+      if (banshee_rollback_stack_empty(rb_stack)) break;
       info = banshee_rollback_stack_head(rb_stack);
       if (info->time < banshee_clock) break;
       banshee_rollback_dispatch(info);

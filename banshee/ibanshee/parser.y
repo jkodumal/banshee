@@ -589,7 +589,7 @@ cmd:       TOK_CMD TOK_IDENT
 	     else if (!strcmp($2,"help")) {
 	       show_help();
 	     }
-             if (!strcmp($2,"save") || !strcmp($2,"load")) {
+             else if (!strcmp($2,"save") || !strcmp($2,"load")) {
 	       fprintf(stderr,"Missing filename\n");
 	     }
 	     /* TODO */
@@ -623,15 +623,14 @@ cmd:       TOK_CMD TOK_IDENT
            }
         |  TOK_CMD TOK_IDENT expr
            { 
-	         if (!strcmp($2,"tlb")) {
-		   print_tlb($3);
-	       	 }
-	       	 else if (!strcmp($2,"ecr")) {
-		   expr_print(stdout,term_get_ecr($3));
-		   printf("\n");
-	       	 }
-	     
-           }
+	     if (!strcmp($2,"tlb")) {
+	       print_tlb($3);
+	     }
+	     else if (!strcmp($2,"ecr")) {
+	       expr_print(stdout,term_get_ecr($3));
+	       printf("\n");
+	     }
+	   }
 ;
 
 %%
