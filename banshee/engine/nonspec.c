@@ -90,6 +90,8 @@ typedef struct cons_group_ *cons_group;
 
 DECLARE_LIST(cons_group_list,cons_group);
 DEFINE_LIST(cons_group_list,cons_group);
+DECLARE_LIST(sig_elt_list,sig_elt*);
+DEFINE_LIST(sig_elt_list, sig_elt*);
 
 struct constructor_
 {
@@ -167,7 +169,8 @@ static int new_type()
   next_type += 2;
   return ret;
 }
-
+		
+// A sort is fixed if it does not permit user-defined constructors
 static bool fixed_sort(sort_kind s)
 {
   return (s == flowrow_sort);
@@ -431,7 +434,38 @@ constructor make_constructor(const char *name,sort_kind sort, sig_elt s[],
   c->name = rstrdup(get_sort_region(sort),name);
   c->sig = sig;
 
-  if (sort == setif_sort) c->groups = new_cons_group_list(get_sort_region(sort));
+  if (sort == setif_sort) {
+    c->groups = new_cons_group_list(get_sort_region(sort));
+  }
+  else c->groups = NULL;
+
+  return c;
+}
+
+constructor make_constructor_from_list(const char*name, sort_kind sort,
+				       sig_elt_list elts)
+{
+  sig_elt_list_scanner scan;
+  sig_elt *temp;
+  int i = 0;
+  int arity = sig_elt_list_length(elts);
+  constructor c = ralloc(get_sort_region(sort),struct constructor_);
+  sig_elt *sig = rarrayalloc(get_sort_region(sort),arity,sig_elt);
+  
+  sig_elt_list_scan(elts,&scan);
+
+  while(sig_elt_list_next(&scan,&temp)) {
+    sig[i].variance = temp->variance;
+    sig[i].sort = temp->sort;
+  }
+  c->sort = sort;
+  c->arity = arity;
+  c->name = rstrdup(get_sort_region(sort),name);
+  c->sig = sig;
+
+  if (sort == setif_sort) { 
+    c->groups = new_cons_group_list(get_sort_region(sort));
+  }
   else c->groups = NULL;
 
   return c;
@@ -492,6 +526,12 @@ gen_e constructor_expr(constructor c, gen_e exps[], int arity)
 
   return (gen_e)result;
 }
+
+/*  gen_e constructor_expr_from_list(constructor c, gen_e_list exps) */
+/*  { */
+/*    int arity = gen_e_list_length(exps); */
+/*  } */
+
 
 static gen_e make_proj_pat(constructor c, int i, gen_e e)
 {
@@ -855,6 +895,7 @@ gen_e flowrow_make_row(flowrow_map fields, gen_e rest)
   
   return flowrow_row(get_stamp,fields,rest);
 }
+
 
 /* Does a sort check */
 int call_setif_inclusion(gen_e e1,gen_e e2)
@@ -1590,3 +1631,74 @@ gen_e setif_group_proj_pat(cons_group g, int i, gen_e e)
 
 
 
+
+int call_sort_inclusion(gen_e e1, gen_e e2) 
+{
+  if (e1->sort != e2->sort)
+    {
+      fail("Sort check failed during inclusion call\n");
+    }
+
+  switch (e1->sort)
+    {
+    case setif_sort:
+      {
+	call_setif_inclusion(e1,e2);
+      }
+      break;
+    case setst_sort:
+      {
+	call_setst_inclusion(e1,e2);
+      }
+      break;
+    case term_sort:
+      {
+	call_term_unify(e1,e2);
+      }    
+      break;
+    case flowrow_sort:
+      {
+	call_flowrow_inclusion(e1,e2);
+      }
+      break;
+    default :
+      fail("Unmatched sort in call inclusion\n");
+    }
+ return 0;
+}
+
+
+int call_sort_unify(gen_e e1, gen_e e2)
+{
+if (e1->sort != e2->sort)
+    {
+      fail("Sort check failed during inclusion call\n");
+    }
+
+  switch (e1->sort)
+    {
+    case setif_sort:
+      {
+	call_setif_unify(e1,e2);
+      }
+      break;
+    case setst_sort:
+      {
+	call_setst_unify(e1,e2);
+      }
+      break;
+    case term_sort:
+      {
+	call_term_unify(e1,e2);
+      }    
+      break;
+    case flowrow_sort:
+      {
+	call_flowrow_unify(e1,e2);
+      }
+      break;
+    default :
+      fail("Unmatched sort in call unify\n");
+    }
+ return 0;
+}

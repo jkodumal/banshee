@@ -1,6 +1,11 @@
 %{
   /* IBanshee lexer */
   #include <stdio.h>
+  #include "nonspec.h"
+  #include "regions.h"
+  #include "parser.tab.h"
+  #include "hash.h"
+  
 %}
 WHITESPACE ['\t' '\n' '\r' ' ']
 UPPERCASE [A-Z]
@@ -12,7 +17,6 @@ TICK [\']
 %%
 {WHITESPACE}
 "setIF"     return TOK_SETIF;
-"setST"     return TOK_SETST;
 "term"      return TOK_TERM;
 "flow"      return TOK_FLOW;
 "row"       return TOK_ROW;
@@ -41,9 +45,4 @@ TICK [\']
 
 %%
 
-main()
-{
-  yylex();
-}
-
-
+yyerror( char *msg ) { fprintf( stderr, "%s\n", msg ); }

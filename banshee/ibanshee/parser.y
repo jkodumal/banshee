@@ -2,30 +2,22 @@
 %{
 #include "nonspec.h"
 #include "regions.h"
+#include "hash.h"
 
-DECLARE_LIST(signature, sig_elt);
-DEFINE_LIST(signature, sig_elt); 
-
-struct pattern {
-  constructor c;
-  int index;
-  gen_e e;
-};
-
-// Fully expanded sort kinds. Translate to sort_kinds as needed
-// These are needed when we have row(base) and need to know the base
-// which occurs when we have 0,1, or _ row expressions
-enum e_sort {
-  e_setif_sort,
-  e_term_sort,
-  e_flowrow_setif_sort;
-  e_flowrow_term_sort;
-};
 
 static region ibanshee_region;
 static hash_table constructor_env;
 static hash_table named_env;
 static hash_table var_env;
+
+void ibanshee_init(void) {
+  region_init();
+  nonspec_init();
+  ibanshee_region = newregion();
+  constructor_env = make_string_hash_table(ibanshee_region,32);
+  named_env = make_string_hash_table(ibanshee_region,32);
+  var_env = make_string_hash_table(ibanshee_region,32);
+}
 
 %}			
 
@@ -48,8 +40,8 @@ static hash_table var_env;
 %token TOK_WILD "_"
 %token TOK_COLON ":"
 %token TOK_CMD "!"
-%token TOK_INTER "&&"
-%token TOK_UNION "||"
+%left TOK_INTER "&&"
+%left TOK_UNION "||"
 %token TOK_LEQ "<="
 %token TOK_DEQ "=="
 %token TOK_LINE
@@ -65,21 +57,28 @@ static hash_table var_env;
 %token TOK_PROJ "proj"
 %token TOK_PAT "pat"
 
-%type <gen_e> expr
-%type <gen_e_list> expr_list
-%type <e_sort> esort
-%type <sort_kind> basesort
+%type <expr> expr
+%type <exprs> expr_list
+%type <esort> esort
+%type <sort> basesort
 %type <sort> sort 
-%type <sig_elt> sig_elt
-%type <pattern> pattern
-%type <flowrow_map> rowmap
-%type <gen_e> row
-%type <signature> signature
-
+%type <sig_elt_ptr> sig_elt
+%type <pat> pattern
+%type <rowmap> rowmap
+%type <expr> row
+%type <sig> signature
 
 %union {
   int num;
   char *str;
+  gen_e expr;
+  gen_e_list exprs;
+  e_sort esort;
+  sort_kind sort;
+  sig_elt* sig_elt_ptr;
+  flowrow_map rowmap;
+  sig_elt_list sig;
+  pattern pat;
 }
 			      
  
@@ -116,7 +115,7 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	       fail("A variable named %s already exists.\n",$2);
 	     }
 
-	     switch(sort) {
+	     switch($4) {
 	     case setif_sort:
 	       fresh_var = setif_fresh($2);
 	       break;
@@ -160,11 +159,7 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	       fail("An expression named %s already exists.\n",$1);
  	     }
 	     else {
-               constructor c = 
-		 make_constructor($1,$6,
-				  signature_array_from_list(ibanshee_region,
-							    $3),
-				  signature_length($3));
+               constructor c = make_constructor_from_list($1,$6,$3);
 	       hash_table_insert(constructor_env,$1,c);
 	     }
            }
@@ -172,36 +167,51 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 
 signature: sig_elt
            { 
-             signature sig = new_signature(ibanshee_region);
-             signature_cons($1,sig);
+             sig_elt_list sig = new_sig_elt_list(ibanshee_region);
+             sig_elt_list_cons($1,sig);
              $$ = sig;
            }
          | signature TOK_COMMA sig_elt
            {
-             signature_cons($3,$1);
+             sig_elt_list_cons($3,$1);
              $$ = $1; 
            }
 ;
 
 sig_elt:   TOK_POS sort
-           { $$ = (sig_elt){vnc_pos,$2}; }
+           {
+	     sig_elt *eltptr = ralloc(ibanshee_region,sig_elt);
+	     eltptr->variance = vnc_pos;
+	     eltptr->sort = $2;
+	     $$ = eltptr;
+           }
          | TOK_NEG sort
-           { $$ = (sig_elt){vnc_neg,$2}; }
+            {
+	     sig_elt *eltptr = ralloc(ibanshee_region,sig_elt);
+	     eltptr->variance = vnc_neg;
+	     eltptr->sort = $2;
+	     $$ = eltptr;
+           }
          | TOK_EQ sort
-           { $$ = (sig_elt){vnc_non,$2}; }
+             {
+	     sig_elt *eltptr = ralloc(ibanshee_region,sig_elt);
+	     eltptr->variance = vnc_non;
+	     eltptr->sort = $2;
+	     $$ = eltptr;
+           }
 ;
  
 sort:       basesort
            { $$ = $1}
          | TOK_ROW TOK_LPAREN basesort TOK_RPAREN
            { $$ = flowrow_sort }
+;
 
 esort:      basesort
            {
              switch($1) {
  	       case setif_sort: $$ = e_setif_sort; break;
                case term_sort: $$ = e_term_sort; break;
-               case flow_sort: $$ = e_flow_sort; break;
 	       default: fail("Bad base sort\n");
 	     } 
            }
@@ -210,7 +220,6 @@ esort:      basesort
              switch($3) {
 	       case setif_sort: $$ = e_flowrow_setif_sort; break;
                case term_sort: $$ = e_flowrow_term_sort; break;
-               case flow_sort: $$ = e_flowrow_flow_sort; break;
 	       default: fail("Bad base sort\n");
 	     }
            } 
@@ -232,7 +241,7 @@ expr:    TOK_VAR
            { 
 	     gen_e v = NULL;
 	     
-	     if (hash_table_lookup(var_env,$1,&v)) {
+	     if (hash_table_lookup(var_env,$1,(hash_data*)&v)) {
 	       $$ = v;
 	     }
 	     else {
@@ -243,10 +252,10 @@ expr:    TOK_VAR
            {
 	     constructor c = NULL;
 	     gen_e n = NULL;
-             if (hash_table_lookup(constructor_env,$1,&c)) {
+             if (hash_table_lookup(constructor_env,$1,(hash_data *)&c)) {
 	       $$ = constructor_expr(c,NULL,0);
 	     }
-	     else if (hash_table_lookup(named_env,$1,&n)) {
+	     else if (hash_table_lookup(named_env,$1,(hash_data*)&n)) {
 	       $$ = n;
 	     }
 	     else {
@@ -257,10 +266,10 @@ expr:    TOK_VAR
            {
 	     constructor c = NULL;
 
-	     if (hash_table_lookup(constructor_env,$1,&c)) {
+	     if (hash_table_lookup(constructor_env,$1,(hash_data *)&c)) {
 	       $$ = 
 		 constructor_expr(c,
-				  gen_e_array_from_list(ibanshee_region,$3),
+				  gen_e_list_array_from_list(ibanshee_region,$3),
 				  gen_e_list_length($3));
 	     }
 	     else {
@@ -313,10 +322,9 @@ expr:    TOK_VAR
          | TOK_WILD TOK_COLON esort	/* wildcard */
            { 
              switch($3) {
-	       case e_setif_sort: $$ = setif_wild(); break;
-  	       case e_flowrow_setif_sort: $$ = flowrow_wild(setif_sort); break;
-               case e_flowrow_term_sort: $$ = flowrow_wild(term_sort); break;
-               default: fail("Invalid sort for wildcard expression\n");
+	     case e_flowrow_setif_sort: $$ = flowrow_wild(setif_sort); break;
+	     case e_flowrow_term_sort: $$ = flowrow_wild(term_sort); break;
+	     default: fail("Invalid sort for wildcard expression\n");
              }  
            }
          | TOK_PAT pattern	/* a projection pattern */
@@ -363,7 +371,7 @@ rowmap:    TOK_IDENT TOK_EQ expr
            }
          | rowmap TOK_COMMA TOK_IDENT TOK_EQ expr
            {
-             flowrow_field field = flowrow_make_field($1,$3);
+             flowrow_field field = flowrow_make_field($3,$5);
              flowrow_map_cons(field,$1);
              $$ = $1;
            }
@@ -372,7 +380,7 @@ rowmap:    TOK_IDENT TOK_EQ expr
 pattern:   TOK_LPAREN TOK_IDENT TOK_COMMA TOK_INTEGER TOK_COMMA expr TOK_RPAREN
            { 
 	     constructor c = NULL;
-	     if (hash_table_lookup(constructor_env,$2,&c)) {
+	     if (hash_table_lookup(constructor_env,$2,(hash_data *)&c)) {
 	       $$ = (pattern){c,$4,$6}; 
 	     }
 	     else {

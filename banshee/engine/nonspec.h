@@ -42,7 +42,7 @@ typedef enum
   flowrow_sort,
   setif_sort,
   setst_sort,
-  term_sort
+  term_sort,
 } sort_kind;
 
 typedef struct gen_e_ *gen_e;
@@ -66,7 +66,26 @@ typedef struct sig_elt_ sig_elt;
 typedef struct constructor_ *constructor;
 typedef struct flowrow_field_ *flowrow_field;
 
+DECLARE_LIST(sig_elt_list,sig_elt*);
 DECLARE_LIST(flowrow_map,flowrow_field);
+
+typedef struct {
+  constructor c;
+  int i;
+  gen_e e;
+} pattern;
+
+// Fully expanded sort kinds. Translate to sort_kinds as needed
+// These are needed when we have row(base) and need to know the base
+// which occurs when we have 0,1, or _ row expressions (for ibanshee)
+typedef enum {
+  e_setif_sort,
+  e_term_sort,
+  e_flowrow_setif_sort,
+  e_flowrow_term_sort
+} e_sort;
+
+
 /*
    Flags
 */
@@ -83,8 +102,13 @@ extern bool flag_warning_msgs;
 constructor make_constructor(const char *name,sort_kind sort, sig_elt[],
 			     int arity);
 
+constructor make_constructor_from_list(const char*name, sort_kind sort,
+				       sig_elt_list elts);
+
 /* Build the term c(exps[0]....exps[n]) */
 gen_e constructor_expr(constructor c, gen_e exps[], int arity);
+
+/*  gen_e constructor_expr_from_list(constructor c, gen_e_list exps); */
 
 /* make a constant of sort s */
 gen_e setif_constant(const char *name);
@@ -159,6 +183,9 @@ gen_e flowrow_make_row(flowrow_map fields, gen_e rest);
 /* 
    Inclusion functions
 */
+int call_sort_inclusion(gen_e e1, gen_e e2);
+int call_sort_unify(gen_e e1, gen_e e2);
+
 int call_setif_inclusion(gen_e e1,gen_e e2);
 
 int call_setif_unify(gen_e e1, gen_e e2);

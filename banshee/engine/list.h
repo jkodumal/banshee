@@ -74,6 +74,7 @@ bool list_member(struct list *a, void *data);
 void list_clear(struct list *a);
 struct list *list_reverse(struct list *a);
 struct list *list_from_array(region r,void **data, int length);
+void **array_from_list(region r,struct list *a);
 
 #define DECLARE_OPAQUE_LIST(name,type) \
 typedef struct list_scanner name ## _scanner; \
@@ -108,7 +109,8 @@ bool name ## _empty(name a); \
 void name ## _clear(name a); \
 bool name ## _member(name a, type data); \
 name name ## _reverse(name a); \
-name name ## _from_array(region r,type data[], int length);
+name name ## _from_array(region r,type data[], int length); \
+type *name ##_array_from_list(region r, name a);
 
 #define DEFINE_LIST(name,type) \
 name new_ ## name(region r) \
@@ -199,6 +201,10 @@ name name ## _from_array(region r,type data[], int length) \
 {\
  return (name)list_from_array(r,(void **)data,length); \
 }\
+type *name ##_array_from_list(region r, name a) \
+{\
+ return (type *)array_from_list(r,(struct list *)a);\
+}
 
 EXTERN_C_END
 

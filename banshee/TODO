@@ -1,48 +1,12 @@
-Task 1: Revising the directory structure
-
-the goal is to realize the following layout:
-
-banshee
-  --- libcompat 
-  --- dyckcfl    (builds libdyckcfl.a)
-  --- andersen   (builds libandersen.a)
-  --- rca        (builds librca.a)
-  --- lambda     (builds liblambda.a)
-  --- docs       (builds banshee.ps)
-  --- engine     (builds libnsengine.a, libengine.a)
-  --- codegen    (builds banshee)
-  --- bin        (contains banshee)
-  --- tests      (dyckcfl-test, dyckcfl-random-test, lambda-test)
-  --- lib        (libraries *.a)
+TODO -*- outline -*-	
 
 
-to accomplish this, the following changes must be made:
-  
-  -x- rename directory dyck-cfl to dyckcfl
-  -x- move dyckcfl-test dyckcfl-random to examples
-  -x- move lambda.spec to lambda
-  -x- move points-to to andersen
-  -x- update every makefile
-    
-other tasks (a wishlist)
-  -x- bring .cvsignore files up to date
-  -x- check builds on both unix and windows/cygwin
-  -x- get dyckcfl ready for release (copyrights, etc)
-  -x- fix dyckcfl-random
-  -x- set up test suite
-  -x- update copyrights (year)
-  -x- fix all <>-style includes to "", and remove engine/ in codegen
-  -x- add semicolon to end of all DECLARE_XXXX macros in codegen
-  -x- write script for banshee to run output through indent (just through make)
-  -x- fix etags dependencies
-  -x- tests/Makefile dependencies are not right (they seem correct now)
-  -x- update website, move to sourceforge
-  --- fix code generator so that error callbacks are called instead of fail(..)
-  --- update manual
-  --- RELEASE
-  --- dependencies aren't quite right: autogenerate header dependencies
+* Miscellaneous Tasks
+** update manual
+** RELEASE
+** dependencies aren't quite right: autogenerate header dependencies
 
-Task 2: Supporting backtracking
+* Supporting backtracking
 
 Backtracking adds limited incremental support to the system. The idea
 is that you can "pop" off some number of constraints, effectively
@@ -73,50 +37,48 @@ For mixed constraints, there must be a global "clock" that advances
 with each constraint added for ANY sort. So backtracking is a
 system-wide property. You cannot backtrack an individual sort.
 
-so, here are the tasks:
-   -x- Implement backtracking in union-find
+so, here are the subtasks:
+
+** Implement backtracking in union-find
        
-       DONE.
+DONE.
  
-       The implementation of backtracking is based on a
-       stack-based algorithm due to Westbrook and Tarjan. There is
-       a more general algorithm that allows one to do arbitrary
-       deunions (see Mannila and Ukkonen "Time Parameter and Arbitrary
-       Deunions in the Set Union Problem" or Galil and Italiano 
-       "Data Structures and Algorithms for Disjoint Set Union
-       Problems").
+The implementation of backtracking is based on a stack-based algorithm
+due to Westbrook and Tarjan. There is a more general algorithm that
+allows one to do arbitrary deunions (see Mannila and Ukkonen "Time
+Parameter and Arbitrary Deunions in the Set Union Problem" or Galil
+and Italiano "Data Structures and Algorithms for Disjoint Set Union
+Problems").
 
-       There are three kinds of operations that may lead to backtrack. 
-       They are: union, unify, and update.
+There are three kinds of operations that may lead to backtrack. They
+are: union, unify, and update.
  
-       Union and unify are similar operations, except that unify takes
-       a user-defined function pointer (the combine_fn_ptr) and uses this
-       to select/create the info stored in the ecr. Undoing either of
-       these involves storing in the union stack the new ecr's old
-       info, as well as a pointer to the former root. Find operations
-       store old pointers in the former root's node stack, following
-       Westbrook and Tarjan.
+Union and unify are similar operations, except that unify takes a
+user-defined function pointer (the combine_fn_ptr) and uses this to
+select/create the info stored in the ecr. Undoing either of these
+involves storing in the union stack the new ecr's old info, as well as
+a pointer to the former root. Find operations store old pointers in
+the former root's node stack, following Westbrook and Tarjan.
 
-       Update is a slightly different operation. To rollback an update,
-       we store in the union stack the root (it remains a root after 
-       the update) and the old info. When we do a backtrack operation, we
-       can tell whether we were dealing with a union/unify or update because
-       the 'nonroot' field of the stack entry will actually be a root in the
-       latter case. All we have to do is restore the old info. In the first two
-       cases 'nonroot' will be a nonroot as we expect.
+Update is a slightly different operation. To rollback an update, we
+store in the union stack the root (it remains a root after the update)
+and the old info. When we do a backtrack operation, we can tell
+whether we were dealing with a union/unify or update because the
+'nonroot' field of the stack entry will actually be a root in the
+latter case. All we have to do is restore the old info. In the first
+two cases 'nonroot' will be a nonroot as we expect.
 
-       Also, now note that the args to combine_fn_ptr in ufind.h are
-       const. The idea is that combine shouldn't destructively update
-       its arguments, rather it should merely select one of the two,
-       or create a new info by joining the two existing infos. However,
-       the original infos should remain unchanged for the purposes of
-       undoing.
+Also, now note that the args to combine_fn_ptr in ufind.h are
+const. The idea is that combine shouldn't destructively update its
+arguments, rather it should merely select one of the two, or create a
+new info by joining the two existing infos. However, the original
+infos should remain unchanged for the purposes of undoing.
 
-   -x- Add rollback control structure
+** Add rollback control structure
 
-       DONE.	
+DONE.	
 
-       Control flow for rollback proceeds in the following manner--
+Control flow for rollback proceeds in the following manner--
   
          1) Each toplevel constraint calls banshee_clock_tick()
          2) Each internal constraint calls banshee_check_rollback() to
@@ -133,10 +95,11 @@ so, here are the tasks:
             rollback code for each sort
 
     
-   -x- Differentiate between toplevel and internal constraints, and 
-       add tick() for toplevel constraints
+** Differentiate between toplevel and internal constraints, add tick()
 
-   --- Rollback support for each sort
+DONE.
+
+** Rollback support for each sort
  
        PROBLEM: How do we handle union-find rollbacks? Is it always OK
        to unroll all unifications first? This is probably the solution we 
@@ -171,8 +134,11 @@ so, here are the tasks:
 
        Support each of the following sorts:
 
-        -x- Term
-        -x- FlowRow
+*** Term
+
+Just change pending representation to bounds
+
+*** FlowRow
            Keep track of:
            -x- normalization (non destructive)
            -x- contour instantiation (probably don't have to do
@@ -181,19 +147,7 @@ so, here are the tasks:
            -x- fv_set_alias (unset alias)
            -x- fv_set_contour should automatically be undone (ufind)
            -x- contour unifications should automatically be undone (ufind)
-        --- SetIF
-        --- SetST
-
-
-   -x- Add rollback support to terms
-
-       -x- change pending representation to bounds       
-
-   -x- Add rollback support to bounds
-  
-       DONE
-
-       Not really rollback support, but deletion support
+*** SetIF
 
    --- Make cycle elimination support rollback
  
@@ -203,6 +157,17 @@ so, here are the tasks:
       
        -x- Remove entries from ub_projs
 
+
+
+*** SetST
+
+** Other data structure modifications for rollback
+
+*** Add rollback support to bounds
+  
+       DONE
+
+       Not really rollback support, but deletion support
 
 
 

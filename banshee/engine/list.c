@@ -450,7 +450,7 @@ bool list_member(struct list *l,void *data)
 }
 
 
-struct list *list_from_array(region r,void **data, int length)
+struct list *list_from_array(region r, void **data, int length)
 {
   struct list *result = new_list(r);
   int i;
@@ -458,6 +458,20 @@ struct list *list_from_array(region r,void **data, int length)
   for (i = length -1; i >= 0; i--)
     {
       list_cons(data[i],result);
+    }
+  return result;
+}
+
+void **array_from_list(region r, struct list *l) 
+{
+  int i = 0;
+  void **result = rarrayalloc(r,list_length(l),void *);
+  list_node n = NULL;
+
+  scan_node(l->head,n)
+    {
+      result[i] = n->data;
+      i++;
     }
   return result;
 }
