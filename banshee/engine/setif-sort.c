@@ -575,6 +575,10 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
     setif_register_rollback();
   }
 
+  if ( setif_is_wild(e1) || setif_is_wild(e2)) {
+    return;
+  }
+
   if ( setif_is_zero(e1) || setif_is_one(e2) )
     return;
   
@@ -698,6 +702,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 
 setif_term zero;
 setif_term one;
+setif_term wild;
 
 gen_e setif_zero(void)
 {
@@ -707,6 +712,11 @@ gen_e setif_zero(void)
 gen_e setif_one(void)
 {
   return (gen_e)one;
+}
+
+gen_e setif_wild(void)
+{
+  return (gen_e)wild;
 }
 
 gen_e setif_fresh(const char *name)
@@ -908,6 +918,11 @@ bool setif_is_one(gen_e e)
   return ((setif_term)e)->type == ONE_TYPE;
 }
 
+bool setif_is_wild(gen_e e)
+{
+  return ((setif_term)e)->type == WILD_TYPE;
+}
+
 bool setif_is_var(gen_e e)
 {
   return ((setif_term)e)->type == VAR_TYPE;
@@ -964,6 +979,13 @@ void setif_init(void)
 #endif
   one->st = ONE_TYPE;
   one->type = ONE_TYPE;
+
+  wild = ralloc(banshee_nonptr_region, struct setif_term);
+#ifdef NONSPEC
+  wild->sort = setif_sort;
+#endif
+  wild->st = WILD_TYPE;
+  wild->type = WILD_TYPE;  
 }
 
 
@@ -1078,7 +1100,7 @@ static jcoll tlb_aux(gen_e e)
     }
   else
     {
-      fail("Unmatched case in setif tlb computation\n");
+      //fail("Unmatched case in setif tlb computation\n");
       return NULL;
     }
 }

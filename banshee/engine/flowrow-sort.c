@@ -41,10 +41,6 @@
 #include "banshee_region_persist_kinds.h"
 
 
-#define ABS_TYPE 2
-#define WILD_TYPE 3
-#define ROW_TYPE 4
-
 extern hash_table fn_ptr_table;
 
 

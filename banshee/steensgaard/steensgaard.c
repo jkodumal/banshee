@@ -112,10 +112,9 @@ static struct contents_type_ decompose_ref_or_fresh(T t) {
     return  (struct contents_type_) {decon.f1, decon.f2};
   }
   else {
-    alabel_t tag = alabel_t_fresh("'fv");
     T ptr = T_fresh("'fv");
     L fun = L_fresh("'fv");
-    T_cunify_hook(t, ref(tag, ptr, fun));
+    T_cunify_hook(t, ref(alabel_t_wild(), ptr, fun));
     return (struct contents_type_){ptr,fun};
   }
   assert(0);
@@ -194,7 +193,7 @@ T pta_join(T t1, T t2) {
   L_cunify_hook(c1.fun, fun);
   L_cunify_hook(c2.fun, fun);
   
-  return ref(alabel_t_fresh("join_tag"), ptr, fun);
+  return ref(alabel_t_fresh("wild"), ptr, fun);
 }
 
 /* ref(tag, ptr, fun) --> ptr */
@@ -205,7 +204,7 @@ T pta_deref(T t) {
   }
   else {
     T ptr = T_fresh("'ptr");
-    T_unify_hook(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
+    T_unify_hook(t, ref(alabel_t_fresh("wild"), ptr, L_wild()));
     
     return ptr;
   }
@@ -221,7 +220,7 @@ T pta_rvalue(T t) {
   }
   else {
     T ptr = T_fresh("'ptr");
-    T_cunify_hook(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
+    T_cunify_hook(t, ref(alabel_t_fresh("wild"), ptr, L_wild()));
     
     return ptr;
   }
@@ -231,7 +230,7 @@ T pta_rvalue(T t) {
 }
 
 T pta_address(T t1) {
-  return ref(alabel_t_fresh("wild"), t1,L_fresh("wild"));
+  return ref(alabel_t_fresh("wild"), t1,L_wild());
 }
 
 void pta_assignment(T t1, T t2) {
@@ -251,7 +250,7 @@ T pta_make_fun(const char *name, T ret, T_list args) {
     T_list_cons(get_ref(temp),arg_list);
   }
   
-  T_unify_hook(body, ref(alabel_t_fresh("mkFun"), T_fresh("'fv"),
+  T_unify_hook(body, ref(alabel_t_fresh("wild"), T_wild(),
 		    lam(alabel_t_fresh(name), fun_rec_T(arg_list), get_ref(ret))));
   return body;
 }
@@ -276,7 +275,7 @@ T pta_application(T t, T_list actuals) {
   }
 
   args = fun_rec_T(formals);
-  fun = lam(alabel_t_fresh("app"), args, retVal);
+  fun = lam(alabel_t_fresh("wild"), args, retVal);
   L_unify_hook(contents.fun, fun);
   deleteregion(scratch);
 

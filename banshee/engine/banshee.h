@@ -45,6 +45,10 @@
 #define INTER_TYPE 3
 #define CONSTANT_TYPE 4
 
+#define ABS_TYPE 5
+#define WILD_TYPE 6
+#define ROW_TYPE 7
+
 /* This must be an even number larger than any of the types defined above */
 #define LARGEST_BUILTIN_TYPE 10
 

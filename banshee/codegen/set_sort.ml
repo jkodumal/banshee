@@ -60,6 +60,7 @@ class setsort_gen =
 	"DECLARE_LIST(EXPRID_list,EXPRID);\n\
 	 EXPRID EXPRID_zero(void);\n\
 	 EXPRID EXPRID_one(void);\n\
+         EXPRID EXPRID_wild(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
 	 EXPRID EXPRID_union(EXPRID_list exprs);\n\
 	 EXPRID EXPRID_inter(EXPRID_list exprs);\n\
@@ -75,6 +76,7 @@ class setsort_gen =
         "DECLARE_OPAQUE_LIST(EXPRID_list,gen_e);\n\
 	 EXPRID EXPRID_zero(void);\n\
 	 EXPRID EXPRID_one(void);\n\
+         EXPRID EXPRID_wild(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
          EXPRID EXPRID_fresh_large(const char *name);\n\
 	 EXPRID EXPRID_union(EXPRID_list exprs);\n\
@@ -94,6 +96,10 @@ class setsort_gen =
 	 EXPRID EXPRID_one(void)\n\
 	 {\n \
 	    return setif_one();\n\
+	 }\n\n\
+	 EXPRID EXPRID_wild(void)\n\
+	 {\n \
+	    return setif_wild();\n\
 	 }\n\n\
 	 EXPRID EXPRID_fresh(const char *name)\n\
 	 {\n \

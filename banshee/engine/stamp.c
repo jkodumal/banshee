@@ -34,6 +34,7 @@
 #include "utils.h"
 #include "hash.h"
 #include "list.h"
+#include "banshee.h"
 #include "banshee_persist_kinds.h"
 
 #define INITIAL_SIZE 32
@@ -45,7 +46,7 @@
 
 static hash_table str_hash;
 
-static int count1 = INITIAL1, count2 = INITIAL2, count3 = INITIAL3;
+static int count1 = INITIAL1 + LARGEST_BUILTIN_TYPE, count2 = INITIAL2, count3 = INITIAL3;
 static int bounds1 = INT_MIN, bounds2 = 536870911, bounds3 = INT_MAX;
 
 DEFINE_NONPTR_LIST(stamp_list,stamp);

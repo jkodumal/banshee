@@ -65,6 +65,7 @@ class termsort_gen =
 	"DECLARE_LIST(EXPRID_list,EXPRID);\n\
 	 EXPRID EXPRID_zero(void);\n\
 	 EXPRID EXPRID_one(void);\n\
+         EXPRID EXPRID_wild(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
 	 EXPRID EXPRID_constant(const char *name) ;\n\
 	 bool EXPRID_is_constant(EXPRID e,const char *name);\n\
@@ -78,6 +79,7 @@ class termsort_gen =
         "DECLARE_OPAQUE_LIST(EXPRID_list,gen_e);\n\
 	 EXPRID EXPRID_zero(void);\n\
 	 EXPRID EXPRID_one(void);\n\
+         EXPRID EXPRID_wild(void);\n\
 	 EXPRID EXPRID_fresh(const char *name);\n\
 	 EXPRID EXPRID_constant(const char *name) ;\n\
          bool EXPRID_is_constant(EXPRID e,const char *name);\n\
@@ -95,6 +97,10 @@ class termsort_gen =
 	 EXPRID EXPRID_one(void)\n\
 	 {\n \
 	    return term_one();\n\
+	 }\n\n\
+	 EXPRID EXPRID_wild(void)\n\
+	 {\n \
+	    return term_wild();\n\
 	 }\n\n\
 	 EXPRID EXPRID_fresh(const char *name)\n\
 	 {\n \

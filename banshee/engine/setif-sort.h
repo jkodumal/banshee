@@ -67,6 +67,7 @@ bool setif_proj_merge(setif_var v, gen_e se, get_proj_fn_ptr get_proj,
 
 gen_e setif_zero(void);
 gen_e setif_one(void);
+gen_e setif_wild(void);
 gen_e setif_fresh(const char *name);
 gen_e setif_fresh_large(const char *name);
 gen_e setif_fresh_small(const char *name);
@@ -75,6 +76,7 @@ gen_e setif_union(gen_e_list exprs) deletes;
 gen_e setif_inter(gen_e_list exprs) deletes;
 bool setif_is_zero(gen_e e);
 bool setif_is_one(gen_e e);
+bool setif_is_wild(gen_e e);
 bool setif_is_var(gen_e e);
 bool setif_is_union(gen_e e);
 bool setif_is_inter(gen_e e);

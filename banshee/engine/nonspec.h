@@ -239,6 +239,10 @@ gen_e setst_zero(void);
 gen_e flowrow_zero(sort_kind base_sort);
 gen_e term_zero(void);
 
+/* Wild set of sort s */
+gen_e term_wild(void);
+gen_e setif_wild(void);
+
 /* Universal set of sort s */
 gen_e setif_one(void);
 gen_e setst_one(void);

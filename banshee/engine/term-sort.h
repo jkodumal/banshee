@@ -63,11 +63,13 @@ gen_e term_fresh_large(const char *name);
 gen_e term_fresh_small(const char *name);
 gen_e term_zero(void);
 gen_e term_one(void);
+gen_e term_wild(void);
 gen_e term_constant(const char *name);
 
 bool term_is_zero(gen_e e);
 bool term_is_one(gen_e e);
 bool term_is_var(gen_e e);
+bool term_is_wild(gen_e e);
 bool term_is_initial_var(gen_e e);
 bool term_is_constant(gen_e e);
 

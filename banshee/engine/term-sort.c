@@ -95,9 +95,11 @@ gen_e term_fresh_small(const char *name)
 #ifdef NONSPEC
 static struct gen_term zero = {ZERO_TYPE,term_sort,ZERO_TYPE};
 static struct gen_term one  = {ONE_TYPE,term_sort,ONE_TYPE};
+static struct gen_term wild = {WILD_TYPE,term_sort, WILD_TYPE};
 #else
 static struct gen_term zero = {ZERO_TYPE,ZERO_TYPE};
 static struct gen_term one  = {ONE_TYPE,ONE_TYPE};
+static struct gen_term wild = {WILD_TYPE,WILD_TYPE};
 #endif /* NONSPEC */
 
 gen_e term_zero(void)
@@ -108,6 +110,11 @@ gen_e term_zero(void)
 gen_e term_one(void)
 {
   return (gen_e)&one;
+}
+
+gen_e term_wild(void)
+{
+  return (gen_e)&wild;
 }
 
 gen_e term_constant(const char *str)
@@ -149,6 +156,11 @@ static bool term_is_bottom(gen_e e)
 bool term_is_zero(gen_e e)
 {
   return ( ((gen_term)term_get_ecr(e))->type == ZERO_TYPE);
+}
+
+bool term_is_wild(gen_e e) 
+{
+  return ( ((gen_term)term_get_ecr(e))->type == WILD_TYPE);
 }
 
 bool term_is_one(gen_e e)
@@ -274,6 +286,11 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
     term_register_rollback();
   }
 
+  if (term_is_wild(e1) || term_is_wild(e2)) 
+    {
+      return;
+    }
+
   if ( term_eq(e1,e2) )
     {
       return;
@@ -347,9 +364,12 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 void term_cunify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 		 gen_e e1, gen_e e2)
 {
-
   if (!banshee_check_rollback(term_sort)) {
     term_register_rollback();
+  }
+
+  if (term_is_wild(e1) || term_is_wild(e2)) {
+    return;
   }
 
   if (term_is_bottom(e1) && term_is_var(e1))
