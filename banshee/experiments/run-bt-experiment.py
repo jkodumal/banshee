@@ -18,8 +18,6 @@ start_with_entry = 0
 end_with_entry = 100
 compilescript = "./default_compile.sh"
 analysis = "../cparser/parser_ns.exe"
-simfilename = "simulations/" + project + ".sim"
-modfilename = "simulations/" + project + ".mod"
 enhanced_mod_check = False
 stop_on_build_error = False
 use_bitkeeper = False
@@ -126,7 +124,7 @@ def get_modified_files_simple(dir_a, dir_b, extension):
     b_files = os.popen("find %s -name *%s" % (dir_b,extension))
     for filewline in b_files.readlines():
 	file = filewline[:-1]
-	if (os.system("bash -c \"diff %s %s >/dev/null\"" 
+	if (os.system("bash -c \"diff %s %s &>/dev/null\"" 
 		      % (file, dir_a + file[len(dir_b):]))):
 	    result.append(project + file[len(dir_b):])
     return result
@@ -136,7 +134,7 @@ def get_modified_files_enhanced(dir_a, dir_b, extension):
     b_files = os.popen("find %s -name *.o" % dir_b)
     for filewline in b_files.readlines():
 	file = filewline[:-1]
-	if (os.system("bash -c \"diff %s %s >/dev/null\""
+	if (os.system("bash -c \"diff %s %s &>/dev/null\""
 		      % (file, dir_a + file[len(dir_b):]))):
 	    srcfile = os.popen("strings %s | grep CANON_IDENT").readlines()[0][len("CANON_IDENT_"):-3] + extension
 	    srcfound = os.popen("find %s -name %s" % (dir_b, srcfile)).readlines()[0][:-1]
@@ -189,6 +187,15 @@ def list_to_string_nolf(list):
 	result = result + " " + elt
     return result
 
+def list_to_pretty_string_nolf(list):
+    if (len(list) == 0):
+	return "  **"
+    result = list[0]
+    count = 0
+    for elt in list[1:]:
+	count = count + 1
+	result = result + "\n  ** " + str(count) +  " " + elt
+    return result
 
 # Take a string list (the output of running the analysis) and process
 # it into two output lists
@@ -252,14 +259,16 @@ def write_simulation_data(modified, files, prefix,simfile,modfile):
 	preanalyzed_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(prefiles)).readlines()[0].split()[0])
     else:
 	preanalyzed_size = 0
-    modfile.write("modified files: %s\n" % list_to_string_nolf(modified) )
-    modfile.write("analyzed files: %s\n" % list_to_string_nolf(files) )
+    modfile.write("modified files: %s\n#####\n" % list_to_pretty_string_nolf(modified) )
+    modfile.write("analyzed files: %s\n#####\n" % list_to_pretty_string_nolf(files) )
     simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + preanalyzed_size, float(reanalysis_size) / float(reanalysis_size + preanalyzed_size)))
 
 # Entry point 
 def main():
     entrynum = 0
     parse_options()
+    simfilename = "simulations/" + project + ".sim"
+    modfilename = "simulations/" + project + ".mod"
     simfile = open(simfilename, "w")
     modfile = open(modfilename, "w")
     logfile = open(logfilename, "r")
@@ -273,6 +282,7 @@ def main():
     # run one entry to prime the pump
     os.system("rm -rf %s" % project)
     version,_ = next_log_entry(logfile)
+    print "Checking out version %s" % version
     run_checkout(repository, version, project)
     build_error = os.system("%s %s %d" % (compilescript, project, entrynum))
     entrynum = entrynum + 1
@@ -303,7 +313,8 @@ def main():
 	statefile = open(statefilename + str(current-1), "r")
 	banshee_state = get_banshee_state(statefile)
  	version,_ = next_log_entry(logfile)
-	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, version, project))
+	print "Checking out %s" % version
+	os.system("cvs -d %s co -D \"%s\" %s &>/dev/null" % (repository, version, project))
 	build_error = os.system("%s %s" % (compilescript, project))
 	if (build_error):
 	    print "Build error -- skipping this commit"
@@ -317,8 +328,8 @@ def main():
 	removed = get_removed_files(modified, get_modified_files(project, project_prev,extension))
 	time,files,prefix = get_new_stack_and_time(modified,removed, banshee_state)
 	print "Backtracking to : %s" % time
-	cmd = "%s -fserialize-constraints -fdeserialize-constraints -fback%s %s 2>/dev/null" % (analysis, time, list_to_string_nolf(files))
-	print cmd
+	cmd = "%s -frserialize-constraints -frdeserialize-constraints -fback%s %s 2>/dev/null" % (analysis, time, list_to_string_nolf(files))
+	#print cmd
 	output = os.popen(cmd).readlines()
 	process_andersen_output(current,output,prefix)
 	write_simulation_data(modified, files, prefix, simfile, modfile)

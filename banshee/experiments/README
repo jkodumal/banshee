@@ -96,8 +96,14 @@ time after each file has been analyzed)
 
 ** Simulate only
 
-Run:
+We can also run simulations (no analysis is actually performed), as follows:
+
+For C programs:
 
 ./run-bt-experiment.py --analysis "../cparser/parser_ns.exe -fno-points-to"
 
  ./run-bt-experiment.py --analysis "../cparser/parser_ns.exe -fno-points-to" --start-with 0 --end-with 2 
+
+** Simulate only java projects
+
+./run-bt-experiment.py -d ~/work/local_repositories/azureus --ext ".java" --analysis "./no_analysis.py" -c "./no_compile.sh" -p azureus2 --start-with 0 --end-with 2 -o out/azureus.out -l logs/azureus2.log
