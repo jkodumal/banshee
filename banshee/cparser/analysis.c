@@ -640,10 +640,15 @@ deletes
     return;
   else
     {
-      expression assign = 
-	make_assign(init->location,kind_assign,lhs,init);
-      analyze_expression (assign);
-      return;
+      /* TODO-- this is a HACK! */
+      if (!init->type)
+	return;
+      else {
+	expression assign = 
+	  make_assign(init->location,kind_assign,lhs,init);
+	analyze_expression (assign);
+	return;
+      }
     }
   
 }
@@ -666,7 +671,6 @@ static type return_type(type t)
   else if (type_pointer(t))
     return type_function_return_type(type_points_to(t));
 
-  assert(0);
   return t;
 }
 
