@@ -63,6 +63,9 @@ static term_var make_var(region r, const char *name, stamp st)
   result->pending = bounds_create(r);
   result->name = name ? rstrdup(r,name) : "fv";
   result->elt = new_tv_elt(r,info);
+#ifdef NONSPEC
+  result->sort = term_sort;
+#endif
 
   return result;
 }
