@@ -44,7 +44,7 @@ regions.o: regions.c pages.c alloc.c regions.h
 	gcc -c $(CFLAGS) -o regions.o regions.c
 
 libregions.a: regions.o
-	$(AR) rc $@ $^
+	$(AR) rcs $@ $^
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)

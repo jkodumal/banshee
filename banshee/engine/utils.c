@@ -108,7 +108,7 @@ unsigned long lcm(unsigned long x, unsigned long y)
   return (x * y) / gcd(x, y); 
 }
 
-#ifndef HAVE_STRTOLD
+#ifdef __FreeBSD__
 long double strtold(const char *str, char **endptr)
 {
   long double ld;

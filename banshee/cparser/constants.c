@@ -367,7 +367,7 @@ known_cst foldaddress_field_ref(known_cst object, field_declaration fdecl)
 }
 
 
-long double strtold (char *, char **);
+long double strtold (const char *, char **);
 
 lexical_cst fold_lexical_real(type realtype, location loc, cstring tok)
 {

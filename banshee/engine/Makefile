@@ -38,7 +38,7 @@ region_dir = ../libcompat
 CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -Wall -Werror -fno-strict-aliasing
+	 -Dparentptr= -Wall -Werror -fno-strict-aliasing -Wno-long-double
 
 ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
@@ -66,11 +66,11 @@ all: $(TARGETS) TAGS
 
 libengine.a: $(OBJS)
 	@echo $(OBJS)
-	$(AR) rc $@ $^
+	$(AR) rcs $@ $^
 
 libnsengine.a: $(NSOBJS) 
 	@echo $(NSOBJS)
-	$(AR) rc $@ $^
+	$(AR) rcs $@ $^
 
 nonspec.o: nonspec.c nonspec.h
 	$(CC) -c $(CFLAGS) -DNONSPEC $(CPPFLAGS) $< -o $@
