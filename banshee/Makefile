@@ -25,7 +25,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-.PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
+.PHONY: banshee libcompat codegen engine tests rca andersen steensgaard lambda dyckcfl \
         docs points-to install perf ibanshee rlib
 
 all: banshee ibanshee tests points-to 
@@ -50,7 +50,10 @@ rca: banshee
 andersen: banshee
 	$(MAKE) -C andersen
 
-points-to: andersen
+steensgaard: banshee
+	$(MAKE) -C steensgaard
+
+points-to: andersen steensgaard
 	$(MAKE) -C cparser
 
 ibanshee: banshee
@@ -62,7 +65,7 @@ lambda: banshee
 dyckcfl: banshee
 	$(MAKE) -C dyckcfl
 
-tests: banshee rca andersen lambda dyckcfl
+tests: banshee rca andersen steensgaard lambda dyckcfl
 	$(MAKE) -C tests
 
 docs: 
@@ -101,6 +104,7 @@ clean:
 	$(MAKE) -C engine clean
 	$(MAKE) -C rca clean
 	$(MAKE) -C andersen clean
+	$(MAKE) -C steensgaard clean
 	$(MAKE) -C cparser clean
 	$(MAKE) -C lambda clean
 	$(MAKE) -C dyckcfl clean

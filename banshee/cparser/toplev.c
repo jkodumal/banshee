@@ -839,7 +839,7 @@ int update_var_info(translation t, void *m);
 #define REGION_PROFILE
 #ifdef REGION_PROFILE
 void profile(void);
-#endif REGION_PROFILE
+#endif /* REGION_PROFILE */
 
 int main(int argc, char **argv) deletes
 {

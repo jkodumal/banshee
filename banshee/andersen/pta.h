@@ -74,4 +74,8 @@ void pta_serialize(FILE *f, hash_table *entry_points, unsigned long sz);
 
 hash_table *pta_deserialize(FILE *f);
 
+void pta_region_serialize(FILE *f);
+
+void pta_region_deserialize(translation t, FILE *f);
+
 #endif

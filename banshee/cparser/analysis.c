@@ -1639,7 +1639,7 @@ void analysis_region_serialize(const char *filename)
     }
   }
 
-  andersen_terms_region_serialize(f);
+  pta_region_serialize(f);
 }
 
 void analysis_region_deserialize(translation t, const char *filename)
@@ -1662,7 +1662,7 @@ void analysis_region_deserialize(translation t, const char *filename)
   collection_hash = hash_table_list_last(state.collection_envs);
   update_pointer(t, (void **)&global_var_hash);
 
-  andersen_terms_region_deserialize(t, f);
+  pta_region_deserialize(t, f);
 }
 
 void analysis_deserialize(const char *filename)
@@ -1808,13 +1808,13 @@ void analysis_reset() deletes
 
 void analysis_stats(FILE *f)
 {
-  andersen_terms_stats(f);
+  //andersen_terms_stats(f);
 }
 
 void analysis_print_graph(void)
 {
-  FILE *f = fopen("andersen.dot","w");
-  andersen_terms_print_graph(f);
-  fclose(f);
+/*   FILE *f = fopen("andersen.dot","w"); */
+/*   andersen_terms_print_graph(f); */
+/*   fclose(f); */
 }
 

@@ -45,6 +45,57 @@ typedef struct contents_type_ {
 DECLARE_LIST(contents_type_list, contents_type);
 DEFINE_NONPTR_LIST(contents_type_list, contents_type);
 
+extern int flag_print_constraints;
+
+/* Hooks for debugging */
+static void T_cunify_hook(T t1, T t2)
+{
+  if (flag_print_constraints)
+    {
+      T_print(stdout,t1);
+      fprintf(stdout," <= ");
+      T_print(stdout,t2);
+      puts("");
+    }
+  T_cunify(t1,t2);
+}
+
+static void T_unify_hook(T t1, T t2)
+{
+  if (flag_print_constraints)
+    {
+      T_print(stdout,t1);
+      fprintf(stdout," == ");
+      T_print(stdout,t2);
+      puts("");
+    }
+  T_unify(t1,t2);
+}
+
+static void L_cunify_hook(L t1, L t2)
+{
+  if (flag_print_constraints)
+    {
+      L_print(stdout,t1);
+      fprintf(stdout," <= ");
+      L_print(stdout,t2);
+      puts("");
+    }
+  L_cunify(t1,t2);
+}
+
+static void L_unify_hook(L t1, L t2)
+{
+  if (flag_print_constraints)
+    {
+      L_print(stdout,t1);
+      fprintf(stdout," == ");
+      L_print(stdout,t2);
+      puts("");
+    }
+  L_unify(t1,t2);
+}
+
 /* If t is ref(...), return its contents, otherwise, build a ref
    constructor and unify it with t, returning its contents */
 static struct contents_type_ decompose_ref_or_fresh(T t) {
@@ -56,7 +107,7 @@ static struct contents_type_ decompose_ref_or_fresh(T t) {
     alabel_t tag = alabel_t_fresh("'fv");
     T ptr = T_fresh("'fv");
     L fun = L_fresh("'fv");
-    T_cunify(t, ref(tag, ptr, fun));
+    T_cunify_hook(t, ref(tag, ptr, fun));
     return (struct contents_type_){ptr,fun};
   }
   assert(0);
@@ -130,10 +181,10 @@ T pta_join(T t1, T t2) {
   struct contents_type_ c1 = decompose_ref_or_fresh(t1);
   struct contents_type_ c2 = decompose_ref_or_fresh(t2);
   
-  T_cunify(c1.ptr, ptr);
-  T_cunify(c2.ptr, ptr);
-  L_cunify(c1.fun, fun);
-  L_cunify(c2.fun, fun);
+  T_cunify_hook(c1.ptr, ptr);
+  T_cunify_hook(c2.ptr, ptr);
+  L_cunify_hook(c1.fun, fun);
+  L_cunify_hook(c2.fun, fun);
   
   return ref(alabel_t_fresh("join_tag"), ptr, fun);
 }
@@ -146,7 +197,7 @@ T pta_deref(T t) {
   }
   else {
     T ptr = T_fresh("'ptr");
-    T_unify(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
+    T_unify_hook(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
     
     return ptr;
   }
@@ -162,7 +213,7 @@ T pta_rvalue(T t) {
   }
   else {
     T ptr = T_fresh("'ptr");
-    T_cunify(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
+    T_cunify_hook(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
     
     return ptr;
   }
@@ -176,13 +227,13 @@ T pta_address(T t1) {
 }
 
 void pta_assignment(T t1, T t2) {
-  T_cunify(t2, pta_deref(t1));
+  T_cunify_hook(t2, pta_deref(t1));
 }
 
 T pta_make_fun(const char *name, T ret, T_list args) {
   T body = pta_make_ref(name);
   
-  T_unify(body, ref(alabel_t_fresh("mkFun"), T_fresh("'fv"),
+  T_unify_hook(body, ref(alabel_t_fresh("mkFun"), T_fresh("'fv"),
 		    lam(alabel_t_fresh(name), fun_rec_T(args), ret)));
   return body;
 }
@@ -202,13 +253,13 @@ T pta_application(T t, T_list actuals) {
 
   while(T_list_next(&scan,&next)) {
     T nextFormal = T_fresh("arg");
-    T_cunify(next, nextFormal);
+    T_cunify_hook(next, nextFormal);
     T_list_append_tail(nextFormal, formals);
   }
 
   args = fun_rec_T(formals);
   fun = lam(alabel_t_fresh("app"), args, retVal);
-  L_unify(contents.fun, fun);
+  L_unify_hook(contents.fun, fun);
   deleteregion(scratch);
 
   return pta_address(retVal);
@@ -275,3 +326,14 @@ hash_table *pta_deserialize(FILE *f)
   assert(f);
   return steensgaard_terms_deserialize(f);
 }
+
+void pta_region_serialize(FILE *f)
+{
+  steensgaard_terms_region_serialize(f);
+}
+
+void pta_region_deserialize(translation t, FILE *f)
+{
+  steensgaard_terms_region_deserialize(t, f);
+}
+

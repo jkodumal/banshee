@@ -27,13 +27,11 @@ endif
 
 ifdef DEBUG
 CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing 
+CFLAGS_SG = -g -pg -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../steensgaard -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing
 else
 CFLAGS = -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing 
+CFLAGS_SG = -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../steensgaard -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing 
 endif
-
-#ifdef ANDERSEN_ST
-#CFLAGS := -DANDERSEN_ST= ${CFLAGS}
-#endif
 
 ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
@@ -41,7 +39,7 @@ endif
 
 EXTRA_OBJS =  
 
-all: parser.exe parser_st.exe parser_ns.exe
+all: parser.exe parser_st.exe parser_ns.exe parser_sg.exe
 
 include Makefile.base
 
@@ -53,6 +51,9 @@ parser_st.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
 
 parser_ns.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
 	$(CC) $(CFLAGS) -DNONSPEC -o parser_ns.exe $(LDFLAGS) $(OBJS)  ../andersen/andersen_terms_nonspec.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lnsengine -lm
+
+parser_sg.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
+	$(CC) $(CFLAGS_SG) -o parser_sg.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms.o ../steensgaard/steensgaard.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
 
 
 clean:
