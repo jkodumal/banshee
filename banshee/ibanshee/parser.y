@@ -249,6 +249,7 @@ decl:      TOK_VAR TOK_COLON esort
 		 break;
 	       case e_flowrow_setif_sort:
 		 fresh_var = flowrow_fresh($1,setif_sort);
+		 break;
 	       case e_flowrow_term_sort:
                  fresh_var = flowrow_fresh($1,term_sort); 
 		 break;
@@ -516,7 +517,7 @@ expr_list: expr
  
 row:       rowmap
            { 
-             $$ = flowrow_make_row($1, flowrow_fresh("rest", 
+             $$ = flowrow_make_row($1, flowrow_fresh("'rest", 
 						     current_row_base_sort ));
            }
          | rowmap TOK_REST expr

@@ -1144,7 +1144,7 @@ void flowrow_print(FILE *f,get_stamp_fn_ptr get_stamp,
     case ROW_TYPE:
       fprintf(f, "<");
       fields_print(f, flowrow_get_fields(e), field_print);
-      fprintf(f, "|");
+      fprintf(f, " | ");
       flowrow_print(f, get_stamp, field_print, flowrow_get_rest(e));
       fprintf(f, ">");
       break;

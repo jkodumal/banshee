@@ -39,6 +39,7 @@ PTA_LARGE += li.preproc
 
 PTA_BT :=
 PTA_BT += ML-typecheck.preproc
+PTA_BT += li.preproc
 
 PTA_EXEC := $(PARSER_DIR)/parser.exe
 

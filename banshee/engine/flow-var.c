@@ -57,7 +57,7 @@ DEFINE_LIST(flow_var_list, flow_var);
 
 #define get_contour(x) (contour_elt_get_info((x)->elt))
 
-static flow_var make_var(region r, const char *name, stamp st)
+static flow_var make_var(region r,const char *name, stamp st)
 {
   flow_var result = ralloc(r,struct flow_var);
 
@@ -67,6 +67,7 @@ static flow_var make_var(region r, const char *name, stamp st)
   result->ubs = bounds_create(r);
   result->lbs = bounds_create(r);
   result->elt = new_contour_elt(r,NULL);
+  result->name = name ? rstrdup(r,name) : "fv";
 
 #ifdef NONSPEC
   result->sort = flowrow_sort; /* FIX : this is a hack, sort may not be flowrow */

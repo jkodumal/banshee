@@ -43,6 +43,7 @@ IBANSHEE_TESTS += row_norm.ibc
 IBANSHEE_TESTS += row.ibc
 IBANSHEE_TESTS += trans.ibc
 IBANSHEE_TESTS += trans2.ibc
+IBANSHEE_TESTS += row_flow.ibc
 
 IBANSHEE_BT_TESTS := 
 IBANSHEE_BT_TESTS += simple.ibc
