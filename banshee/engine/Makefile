@@ -28,9 +28,9 @@
 
 # if HASH_BOUNDS is defined, use hash_bounds.o, otherwise, use bounds.o
 ifdef NO_HASH_BOUNDS
-FILTERBOUNDS = hash_bounds.o
+FILTEREDOBJS = hash_bounds.o
 else
-FILTERBOUNDS = bounds.o
+FILTEREDOBJS = bounds.o
 endif
 
 NONSPEC_OBJ = nonspec.o
@@ -50,7 +50,7 @@ HDRS = $(wildcard *.h)
 
 NFOBJS = $(patsubst %.c,%.o,$(wildcard *.c))
 
-AOBJS = $(filter-out $(FILTERBOUNDS), $(NFOBJS))
+AOBJS = $(filter-out $(FILTEREDOBJS), $(NFOBJS))
 
 OBJS = $(filter-out $(NONSPEC_OBJ), $(AOBJS))
 
@@ -73,18 +73,12 @@ libengine.a: $(OBJS)
 	../bin/build_funptr_table.py $(OBJS) > fn_ptrs.c
 	$(CC) -c $(CFLAGS) fn_ptrs.c
 	$(AR) rcs $@ $^ fn_ptrs.o
-#	../bin/build_funptr_table.py $@ > fn_ptrs.c
-#	$(CC) -c fn_ptrs.c
-#	$(AR) rvs $@ fn_ptrs.o
 
 libnsengine.a: $(NSOBJS) 
 	@echo $(NSOBJS)
 	../bin/build_funptr_table.py $(NSOBJS) > fn_ptrs.ns.c
 	$(CC) -c $(CFLAGS) fn_ptrs.ns.c
 	$(AR) rcs $@ $^ fn_ptrs.o
-#	../bin/build_funptr_table.py $@ > fn_ptrs.ns.c
-#	$(CC) -c fn_ptrs.ns.c
-#	$(AR) rs $@ fn_ptrs.ns.o
 
 nonspec.o: nonspec.c nonspec.h
 	$(CC) -c $(CFLAGS) -DNONSPEC $(CPPFLAGS) $< -o $@

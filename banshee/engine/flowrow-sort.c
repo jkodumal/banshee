@@ -413,7 +413,7 @@ gen_e contour_instantiate(fresh_fn_ptr fresh,
       return result;
     }
   
-  else /* TODO */
+  else
     {
       fail("Unmatched contour\n");
       return NULL;
@@ -435,7 +435,7 @@ static contour make_contour(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 	  
       return result;
     }
-  else /* TODO */
+  else
     {
       fail("Unmatched contour\n");
       return NULL;

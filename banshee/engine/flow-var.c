@@ -73,7 +73,7 @@ static flow_var make_var(region r,const char *name, stamp st)
   result->extra_persist_kind = NULL;
 
 #ifdef NONSPEC
-  result->sort = flowrow_sort; /* TODO: remove hack, sort may not be flowrow */
+  result->sort = flowrow_sort;
 #endif
 
   return result;

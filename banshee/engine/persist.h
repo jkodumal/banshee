@@ -57,7 +57,7 @@
    deserialization a second pass over the object graph will fill in
    these pointers after an initial construction phase where all
    pointers are invalid (contain object id's, not valid
-   pointers). TODO -- what about embedded function pointers, generics?
+   pointers). 
 
    Each struct must provide the following methods to support
    persistence:

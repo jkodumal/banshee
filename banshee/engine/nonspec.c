@@ -202,7 +202,6 @@ static bool setif_is_gpat(gen_e e)
 */
 static bool type_is_pat(int type)
 {
-  /* TODO -- check, this was 11, not smallest_special_type */
   return ( (type % 2) && (type > smallest_special_type) );
 }
 
@@ -1739,6 +1738,7 @@ void *cons_group_deserialize(FILE *f)
 
   fread((void *)&g->arity, sizeof(int), 1, f);
   g->name = (char *)string_data_deserialize(f);
+  g->sig = rarrayalloc(permanent, g->arity, sig_elt);
   fread((void *)g->sig, sizeof(sig_elt), g->arity, f);
   fread((void *)&g->gid, sizeof(int), 1, f);
 
@@ -1855,6 +1855,8 @@ static void *cons_expr_deserialize(FILE *f)
   fread((void *)&e->st, sizeof(stamp), 1, f);
   fread((void *)&e->arity, sizeof(int), 1, f);
   e->name = (char *)string_data_deserialize(f);
+  e->sig = rarrayalloc(permanent, e->arity, sig_elt);
+  e->exps = rarrayalloc(permanent, e->arity, gen_e);
   fread((void *)e->sig, sizeof(sig_elt), e->arity, f);
   fread((void *)e->exps, sizeof(gen_e), e->arity, f);
   fread((void *)&e->c, sizeof(constructor), 1, f);
@@ -2210,6 +2212,7 @@ void *constructor_deserialize(FILE *f)
   fread((void *)&c->type, sizeof(int), 1, f);
   fread((void *)&c->arity, sizeof(int), 1, f);
   c->name = (char *)string_data_deserialize(f);
+  c->sig = rarrayalloc(permanent, c->arity, sig_elt);
   fread((void *)c->sig, sizeof(sig_elt), c->arity, f);
   fread((void *)&c->groups, sizeof(cons_group_list), 1, f);
 

@@ -358,7 +358,6 @@ void term_print_stats(FILE *f)
   fprintf(f,"=====================================\n");
 }
 
-/* TODO */
 void term_print_constraint_graph(FILE *f)
 {
 }
