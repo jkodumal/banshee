@@ -57,6 +57,7 @@ void banshee_region_persistence_init()
   banshee_ptr_region = newregion();
   banshee_nonptr_region = newregion();
 
+  /* TODO -- make this persistent */
   extra_regions = make_hash_table(permanent, 32, ptr_hash, ptr_eq);
 }
 
@@ -178,6 +179,7 @@ region *get_persistent_regions(const char *filename)
 
   result[30] = cons_expr_region;	
   result[31] = term_constant_region; 
+  result[32] = bucketptr_region;
 
   {
     int count = 0;
@@ -251,6 +253,7 @@ Updater *get_updater_functions(const char *filename)
 
   result[30] = update_cons_expr;
   result[31] = update_term_constant;
+  result[32] = update_bucketptr;
 
   return result;
 #endif  /* NONSPEC  */

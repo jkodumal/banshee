@@ -32,7 +32,7 @@
 
 EXTERN_C_BEGIN
 
-#define NUM_REGIONS 32
+#define NUM_REGIONS 33
 
 /*****************************************************************************
  *                                                                           *
@@ -68,64 +68,65 @@ void unregister_persistent_region(region r);
 
 /* A region containing non pointers. The update function won't touch
    any of these values */
-extern region banshee_nonptr_region; /* 1 */
+extern region banshee_nonptr_region; 
 
 /* A region containing pointers. The update function will call
    update_pointer on adjacent word values */
-extern region banshee_ptr_region; /* 2 */
+extern region banshee_ptr_region;
 
 /* Regions for hash.c */
-extern region bucket_region;	/* 3 */
-extern region table_region;	/* 4 */
+extern region bucket_region;	
+extern region table_region;	
+extern region bucketptr_region; 
 
 /* Regions for list.c */
-extern region list_header_region; /* 5 */
-extern region list_node_region;  /* 6 */
-extern region list_strnode_region; /* 7 */
+extern region list_header_region;
+extern region list_node_region;  
+extern region list_strnode_region; 
 
 /* Regions for ufind.c */
-extern region uf_element_region; /* 8 */
-extern region ustack_element_region; /* 9 */
+extern region uf_element_region;
+extern region ustack_element_region; 
 
 /* Regions for hash_bounds.c */
-extern region bounds_region;	/* 10 */
-extern region added_edge_info_region; /* 11 */
+extern region bounds_region;	
+extern region added_edge_info_region;
 
 /* Regions for setif-var.c */
-extern region setif_var_region;	/* 12 */
-extern region sv_info_region;	/* 13 */
+extern region setif_var_region;	
+extern region sv_info_region;	
 
 /* Regions for termhash.c */
-extern region hash_entry_region; /* 14 */
-extern region term_bucket_region; /* 15 */
-extern region term_hash_region;	  /* 16 */
+extern region hash_entry_region;
+extern region term_bucket_region;
+extern region term_hash_region;
 extern region strbucket_region;
 
 /* Regions for setif-sort.c */
-extern region setif_rollback_info_region; /* 17 */
-extern region added_ub_proj_info_region;  /* 18 */
-extern region setif_term_region;	  /* 19 */
+extern region setif_rollback_info_region;
+extern region added_ub_proj_info_region; 
+extern region setif_term_region;	
 
 /* Regions for term-var.c */
-extern region term_var_region;	/* 20 */
+extern region term_var_region;	
 
 /* Regions for flowrow_sort.c */
-extern region flowrow_field_region; /* 21 */
-extern region flowrow_region;	    /* 22 */
-extern region contour_region;	    /* 23 */
-extern region flowrow_rollback_info_region; /* 24 */
-extern region flow_var_region;		    /* 25 */
+extern region flowrow_field_region; 
+extern region flowrow_region;	    
+extern region contour_region;	    
+extern region flowrow_rollback_info_region;
+extern region flow_var_region;		    
 
 
 /* Regions for nonspec.c */
-extern region constructor_region; /* 27 */
-extern region cons_expr_region;	  /* 28 */
-extern region cons_group_region;  /* 29 */
-extern region proj_pat_region;	  /* 30 */
-extern region gproj_pat_region;	  /* 31 */
+extern region constructor_region; 
+extern region cons_expr_region;	  
+extern region cons_group_region;  
+extern region proj_pat_region;	  
+extern region gproj_pat_region;	  
 
 /* Regions for term-sort.c */
-extern region term_constant_region; /* 32 */
+extern region term_constant_region;
 
 /*****************************************************************************
  *                                                                           *
@@ -134,13 +135,14 @@ extern region term_constant_region; /* 32 */
  *****************************************************************************/
 
 /* Update functions for banshee_region_persist_kinds.c */
-int update_nonptr_data(translation t, void *m); /* 1 */
-int update_ptr_data(translation t, void *m);	/* 2 */
+int update_nonptr_data(translation t, void *m); 
+int update_ptr_data(translation t, void *m);	
 
 /* Update functions for hash.c */
 int update_hash_table(translation t, void *m);
 int update_bucket(translation t, void *m);
 int update_strbucket(translation t, void *m);
+int update_bucketptr(translation t, void *m);
 
 /* Update functions for list.c */
 int update_list_header(translation t, void *m);

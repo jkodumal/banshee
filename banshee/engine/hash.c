@@ -44,6 +44,8 @@ struct bucket_
 
 #define scan_bucket(b, var) for (var = b; var; var = var->next)
 
+#define BUCKETPTR_REGION banshee_ptr_region
+
 /* #define bucket_region(t) t->r ? t->r : (t->data_persist_kind ? bucket_region : strbucket_region) */
 
 /* TODO -- switch this back */
@@ -72,6 +74,7 @@ struct Hash_table
 region bucket_region = NULL;
 region table_region = NULL;
 region strbucket_region = NULL;
+region bucketptr_region = NULL;
 
 static void rehash(hash_table ht);
 
@@ -87,6 +90,7 @@ static hash_table make_hash_table_int(region r, unsigned long size,
   assert(size > 0);
   assert(table_region);
   assert(bucket_region);
+  assert(bucketptr_region);
 
   result = ralloc(r? r : table_region, 
 		  struct Hash_table);
@@ -113,7 +117,7 @@ static hash_table make_hash_table_int(region r, unsigned long size,
       result->log2size++;
     }
   result->used = 0;
-  result->table = rarrayalloc(result->r ? r : banshee_ptr_region, result->size, bucket);
+  result->table = rarrayalloc(result->r ? r : BUCKETPTR_REGION, result->size, bucket);
 
   return result;
 }
@@ -310,7 +314,7 @@ static void rehash(hash_table ht)
   ht->size = ht->size*2;
   ht->log2size = ht->log2size + 1;
   ht->used = 0;
-  ht->table = rarrayalloc(banshee_ptr_region, ht->size, bucket);
+  ht->table = rarrayalloc(BUCKETPTR_REGION, ht->size, bucket);
 
   for (i = 0; i < old_table_size; i++)
     scan_bucket(old_table[i], cur)
@@ -606,13 +610,14 @@ void hash_table_init()
   table_region = newregion();
   bucket_region = newregion();
   strbucket_region = newregion();
+  bucketptr_region = newregion();
 }
 
 /* void hash_table_reset() */
 /* { */
 /*   deleteregion(table_region); */
 /*   deleteregion(bucket_region); */
-/*   deleteregion(banshee_ptr_region); */
+/*   deleteregion(BUCKETPTR_REGION); */
   
 /*   hash_table_init(); */
 /* } */
