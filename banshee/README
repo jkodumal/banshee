@@ -10,6 +10,10 @@ the following files:
 
 engine/malloc.c (see file for license)
 codegen/OCamlMakefile (no license)
+cparser (GPL)
+
+Note that the cparser is a separate application, no code from cparser
+is linked into banshee itself.
 
 See the COPYRIGHT file for more details.
 
