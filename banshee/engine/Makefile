@@ -49,9 +49,13 @@ ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
 endif
 
-HDRS = $(wildcard *.h)
+#HDRS = $(wildcard *.h)
 
-NFOBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+HDRS = array.h banshee.h banshee_persist_kinds.h banshee_region_persist_kinds.h bool.h bounds.h buffer.h compiler.h cstring.h flow-var.h flowrow-sort.h hash.h hashset.h jcollection.h linkage.h list.h nonspec.h persist.h setif-sort.h setif-var.h setst-sort.h setst-var.h stamp.h term-sort.h term-var.h termhash.h ufind.h usage.h utils.h
+
+COBJS = array.c banshee.c banshee_persist_kinds.c banshee_region_persist_kinds.c bounds.c buffer.c flow-var.c flowrow-sort.c hash.c hash_bounds.c hashset.c jcollection.c list.c malloc.c nonspec.c persist.c setif-sort.c setif-var.c setst-sort.c setst-var.c stamp.c term-sort.c term-var.c termhash.c ufind.c usage.c utils.c
+
+NFOBJS = $(patsubst %.c,%.o,$(COBJS))
 
 AOBJS = $(filter-out $(FILTEREDOBJS), $(NFOBJS))
 
@@ -59,7 +63,7 @@ OBJS = $(filter-out $(NONSPEC_OBJ), $(AOBJS))
 
 NSOBJS = $(patsubst %.o,%.ns.o,$(AOBJS))
 
-TAGFILES = $(wildcard *.c) $(wildcard *.h)
+#TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 TARGETS = libengine.a libnsengine.a 
 
@@ -94,8 +98,9 @@ nonspec.o: nonspec.c nonspec.h
 
 .PHONY: clean
 
-TAGS: $(TAGFILES)
-	etags ${TAGFILES}
+#TAGS: $(TAGFILES)
+#	etags ${TAGFILES}
+
 clean:
 	-rm -f *.o $(TARGETS) *~ fn_ptrs.ns.c fn_ptrs.c
 
