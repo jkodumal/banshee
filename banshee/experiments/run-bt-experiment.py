@@ -32,8 +32,8 @@ options:\n\
   -l <logfile>:   read the CVS log from logfile\n\
   -o <outfile>:   save output as outfile\n\
   -s <statefile>: read/write the analysis state from/to statefile\n\
-  -e:             used enhanced check to find modified files\n\
-  -h:             show this message\n"
+  -e              used enhanced check to find modified files\n\
+  -h              show this message\n"
 	  % sys.argv[0])
 
 def convert_extension(filename):
@@ -60,9 +60,9 @@ def parse_options():
 	    logfilename = a
 	if (o == '-o'):
 	    outfilename = a
-	if (o == 's'):
+	if (o == '-s'):
 	    statefilename = a
-	if (o == 'e'):
+	if (o == '-e'):
 	    enhanced_mod_check = a
 	if (o == '--start-with'):
 	    start_with_entry = int(a)
