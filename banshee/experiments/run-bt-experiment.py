@@ -5,7 +5,7 @@ import string
 import getopt
 
 options='c:d:p:l:o:s:h'
-long_options=['start-with=','end-with=',"help"]
+long_options=['start-with=','end-with=','analysis=',"help"]
 
 # Default values for command line options
 project = "cqual"
@@ -17,7 +17,8 @@ statefilename = "state/" + project
 start_with_entry = 0
 end_with_entry = 1
 compilescript = "./default_compile.sh"
-parser_ns = "../cparser/parser_ns.exe"
+analysis = "../cparser/parser_ns.exe"
+simfilename = "simulations/" + project + ".sim"
 
 # Print a usage message and exit
 def usage():
@@ -38,7 +39,7 @@ def convert_extension(filename):
 # Parse command line options
 def parse_options():
     global project, repository, logfilename, outfilename,statefilename
-    global start_with_entry, end_with_entry
+    global start_with_entry, end_with_entry, analysis 
     try:
 	opts, args = getopt.getopt(sys.argv[1:],options,long_options)
     except getopt.GetoptError:
@@ -64,6 +65,8 @@ def parse_options():
 	if (o in ['-h','--help']):
 	    usage()
 	    sys.exit(0)
+	if (o == '--analysis'):
+	    analysis = a
 
 # Get the next log entry, exit if we are past the desired stopping
 # point. Each entry is a pair consisting of a date string and a list
@@ -175,12 +178,21 @@ def get_new_stack_and_time(modified, state):
 	    stack,prefix = compute_stack(modified, file, state, nexttime)
 	    return (time,stack, prefix)
     # TODO-- what if we just added a file, so it's not in state?
-    print "Failed to compute rollback time and new stack (possibly files were only added?)!"
-    sys.exit(1)
+    print "Warning: failed to compute rollback time and new stack; presumably the commit just added some files..."
+    return (state[-1][1], modified, state)
+
+def write_simulation_data(files, prefix,simfile):
+    prefiles = []
+    for (file,_) in prefix:
+	prefiles.append(file)
+    reanalysis_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(files)).readlines()[0].split()[0])
+    savings_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(prefiles)).readlines()[0].split()[0])
+    simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + savings_size, float(reanalysis_size) / float(reanalysis_size + savings_size)))
 
 # Entry point 
 def main():
     parse_options()
+    simfile = open(simfilename, "w")
     logfile = open(logfilename, "r")
     #skip the initial blank
     logfile.readline()
@@ -198,7 +210,7 @@ def main():
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
     files = list_to_string(get_filelist(project,".i"))
-    cmd = "%s -fserialize-constraints %s 2>/dev/null" % (parser_ns,files)
+    cmd = "%s -fserialize-constraints %s 2>/dev/null" % (analysis,files)
     output = os.popen(cmd).readlines()
     process_andersen_output(start_with_entry,output,[])
     # move the analysis to the _prev directory
@@ -228,13 +240,16 @@ def main():
 	modified = get_modified_files(project_prev,project,".i")
 	time,files,prefix = get_new_stack_and_time(modified,banshee_state)
 	print "Backtracking to : %s" % time
-	cmd = "%s -fserialize-constraints -fdeserialize-constraints -fback%s %s 2>/dev/null" % (parser_ns, time, list_to_string_nolf(files))
+	cmd = "%s -fserialize-constraints -fdeserialize-constraints -fback%s %s 2>/dev/null" % (analysis, time, list_to_string_nolf(files))
 	print cmd
 	output = os.popen(cmd).readlines()
 	process_andersen_output(current,output,prefix)
+	write_simulation_data(files, prefix, simfile)
   	os.system("rm -rf %s" % project_prev)
 	os.system("mv %s %s" % (project, project_prev))
 
+    logfile.close()
+    simfile.close()
 #    os.system("rm -rf %s" % project)
 #    os.system("rm -rf %s" % project_prev)
 #    os.system("rm -f andersen.out")
