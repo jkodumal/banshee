@@ -1,4 +1,6 @@
-ibanshee: parser.tab.c lex.yy.c
+all: ../bin/ibanshee.exe
+
+../bin/ibanshee.exe: parser.tab.c lex.yy.c
 	gcc -o ../bin/ibanshee.exe lex.yy.c parser.tab.c -I../engine -I../libcompat -L../engine -L../libcompat -lnsengine -lregions -lfl
 
 parser.tab.c: parser.y

@@ -1,13 +1,19 @@
 %{
   /* IBanshee lexer */
   #include <stdio.h>
+  #include <string.h>
   #include "nonspec.h"
   #include "regions.h"
   #include "parser.tab.h"
   #include "hash.h"
   
 %}
-WHITESPACE ['\t' '\n' '\r' ' ']
+
+%option always-interactive
+%option noyywrap
+
+WHITESPACE ['\t' ' ']
+LINE ['\n''\r']
 UPPERCASE [A-Z]
 LOWERCASE [a-z]
 DIGIT [0-9]
@@ -15,7 +21,7 @@ DIGITS ({DIGIT}+)
 IDENT [A-Za-z][A-Za-z0-9_]*
 TICK [\']
 %%
-{WHITESPACE}
+{LINE}      return TOK_LINE;
 "setIF"     return TOK_SETIF;
 "term"      return TOK_TERM;
 "flow"      return TOK_FLOW;
@@ -39,10 +45,12 @@ TICK [\']
 "||"        return TOK_UNION;
 "<="        return TOK_LEQ;
 "=="        return TOK_DEQ;
-{TICK}{IDENT} return TOK_VAR;
-{IDENT} return TOK_IDENT;
-{DIGITS} return TOK_INTEGER;
-
+{TICK}{IDENT} {yylval.str = strdup(yytext); return TOK_VAR; }
+{IDENT} { yylval.str = strdup(yytext); return TOK_IDENT; }
+{DIGITS} { yylval.num = atoi(yytext); return TOK_INTEGER; }
+[ \t]+				/* ignore whitespace */
+.
 %%
 
 yyerror( char *msg ) { fprintf( stderr, "%s\n", msg ); }
+
