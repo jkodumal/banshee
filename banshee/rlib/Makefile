@@ -1,5 +1,11 @@
 CC=gcc
-CFLAGS = -O9 -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG 
+#CFLAGS = -O9 -Wall -Ddeletes=""
+
+ifndef DEBUG
+CFLAGS = -O9 -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG
+else
+CFLAGS = -Wall -Ddeletes="" -g -pg
+endif
 
 ifdef REGION_MAIN
 CFLAGS := -DREGION_MAIN ${CFLAGS}

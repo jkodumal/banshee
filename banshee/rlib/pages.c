@@ -283,7 +283,8 @@ struct page *alloc_pages(int n, struct page *next)
   int bestn;
   struct page *scan;
 
-  assert(n >= K);
+
+  /* assert(n >= K); jk */ 
 
   scan = unused_pages;
   /* Find first fit */

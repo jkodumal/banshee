@@ -1091,7 +1091,7 @@ int main(int argc, char **argv) deletes
       translation t;
       region temp = newregion();
       begin_time();
-      t = deserialize("data","offsets", NULL, temp);
+      t = deserialize("data","offsets", get_updater_functions("extras"), temp);
       end_time(&region_deserialization_time);
 
       printf("\nRegion deserialization time: ");

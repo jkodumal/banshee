@@ -119,10 +119,11 @@ region *get_persistent_regions(const char *filename)
   unsigned long num_extra_regions = hash_table_size(extra_regions);
 
   result = rarrayalloc(permanent, num_extra_regions + NUM_REGIONS+1, region);
-  result[0] = banshee_nonptr_region;
+  /* TODO -- swap table region and banshee_nonptr_region */
+  result[3] = banshee_nonptr_region;
   result[1] = banshee_ptr_region;
   result[2] = bucket_region;
-  result[3] = table_region;	
+  result[0] = table_region;	
   result[4] = strbucket_region;
 
   result[5] = list_header_region; 
@@ -189,10 +190,11 @@ Updater *get_updater_functions(const char *filename)
   result = read_extra_info(filename); 
     //rarrayalloc(permanent, NUM_REGIONS, Updater);
 
-  result[0] = update_nonptr_data;
+  /* TODO -- swap back update_hash_table and update_nonptr_data */
+  result[3] = update_nonptr_data;
   result[1] = update_ptr_data;
   result[2] = update_bucket;
-  result[3] = update_hash_table;
+  result[0] = update_hash_table;
   result[4] = update_strbucket;
  
   result[5] = update_list_header;
