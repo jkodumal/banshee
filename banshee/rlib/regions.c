@@ -214,10 +214,8 @@ region newsubregion(region parent)
   r = (region)(first + rstart + offsetof(struct page, previous));
   postclear(r, sizeof *r);
   initregion(r);
-
+  ((struct page *) first)->available = r->normal.page.allocfrom;
   link_region(r, parent);
-
-
   return r;
 }
 

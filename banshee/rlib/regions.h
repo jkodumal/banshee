@@ -52,7 +52,7 @@ EXTERN_C_BEGIN
 #define MAXREGIONS 32
 #endif
 
-#define RPAGELOG 13
+#define RPAGELOG 11
 
 typedef struct region *region;
 
@@ -252,7 +252,6 @@ extern translation deserialize(char *, char *, Updater *, region);
 extern void update_pointer(translation, void **);
 extern void *translate_pointer(translation, void *);
 
-#define SHIFT 13
 #define TRANSLATEPOINTER(m,a) ((*(m->map + (((unsigned int) a) >> SHIFT))) + (((unsigned int) a) & 0x00001FFF))
 #define UPDATEPOINTER(map,loc) *(loc) = TRANSLATEPOINTER(map,loc)
 

@@ -95,6 +95,9 @@ file (see description of page_state).
 void serialize_pages(struct page_list *pgs, int data, int state, int first_page, int last_page, enum allocator_kinds akind, enum page_kinds pkind, int size, struct allocator *a) {
   struct page_state ps;
   int numbytes;
+#ifndef NMEMDEBUG
+  unsigned int used = 0, total = 0;
+#endif
   for (; pgs != NULL; pgs = pgs->next) {
     ps.old_address = pgs->pg;
     ps.first_page = first_page; 
@@ -115,6 +118,10 @@ void serialize_pages(struct page_list *pgs, int data, int state, int first_page,
 	ps.actual_size = ((char *) a->hyperpage.allocfrom) - ((char *) pgs->pg);
     }
 
+#ifndef NMEMDEBUG
+   used += ((unsigned int) pgs->pg->available) - ((unsigned int) pgs->pg);
+   total += ps.size;
+#endif
     numbytes = write(data, pgs->pg, ps.size);
     if (numbytes != ps.size) {
       fprintf(stderr,"Serialization failed: Could not write full page.\n");
@@ -126,6 +133,10 @@ void serialize_pages(struct page_list *pgs, int data, int state, int first_page,
       exit(1);
     }
   }
+#ifndef NMEMDEBUG
+  if (total != 0)
+    fprintf(stderr,"\tPage list of size %d bytes uses %d bytes = %0.2f\n", total, used, (float) used / (float) total);
+#endif
 }
 
 /*
@@ -140,6 +151,9 @@ int serialize_region(region r, int data, int state) {
   struct page_list *big_normal = make_page_list(r->normal.bigpages, temp);
   struct page_list *big_atomic = make_page_list(r->atomic.bigpages, temp);
 
+#ifndef NMEMBDEBUG
+  fprintf(stderr,"Region: serializing pages (normal pages first, then big pages)\n");
+#endif
   serialize_pages(normal, data, state, 1,     (atomic == NULL) && (big_normal == NULL) && (big_atomic == NULL), NORMAL, REGULAR, RPAGESIZE, &(r->normal));
   serialize_pages(atomic, data, state, 0,     (atomic != NULL) && (big_normal == NULL) && (big_atomic == NULL), NORMAL, REGULAR, RPAGESIZE, &(r->atomic));
   serialize_pages(big_normal, data, state, 0, (big_normal != NULL) && (big_atomic == NULL), NORMAL, BIG, RPAGESIZE, NULL);
@@ -171,14 +185,14 @@ int serialize(region *r, char *datafile, char *statefile) {
   Translating a serialized pointer to its new location after
 deserialization consists of an array lookup using the high order bits
 of the old address as the index.  Note that this implementation
-requires that pages be aligned at addresses where the last SHIFT bits are 0's.
+requires that pages be aligned at addresses where the last RPAGELOG bits are 0's.
 */
 inline void *translate_pointer(translation map, void *old_address) {
 #ifndef NMEMDEBUG 
-  if (old_address && (*(map->map + (((unsigned int) old_address) >> SHIFT)) == 0)) 
+  if (old_address && (*(map->map + (((unsigned int) old_address) >> RPAGELOG)) == 0)) 
     fprintf(stderr,"Warning: The pointer %x has no translation.\n", (unsigned int) old_address);
 #endif
-  return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + (((unsigned int) old_address) & 0x00001FFF);
+  return (*(map->map + (((unsigned int) old_address) >> RPAGELOG))) + (((unsigned int) old_address) & (((unsigned int) 0xFFFFFFFF) >> (32 - RPAGELOG)));
 }
 
 void update_pointer(translation map, void **location) {
@@ -250,17 +264,17 @@ void allocate_regions(int state, translation map) {
 
     set_region(newpage,num_pages,r);	  
     /* Now we record the address of the new page(s) as the translation of the address of the old page(s). */
-    if (((((unsigned int) ps.old_address) >> SHIFT) << SHIFT) != (unsigned int) ps.old_address) {
+    if (((((unsigned int) ps.old_address) >> RPAGELOG) << RPAGELOG) != (unsigned int) ps.old_address) {
       fprintf(stderr,"Pages are not aligned properly!\n");
       exit(1);
     }
     /*
-    *(map->map + (((unsigned int) ps.old_address) >> SHIFT)) = 
+    *(map->map + (((unsigned int) ps.old_address) >> RPAGELOG)) = 
       (void *) newpage;
     */
     for(; num_pages > 0; ) {
       num_pages--;
-      *(map->map + ((((unsigned int) ps.old_address) + (num_pages * RPAGESIZE)) >> SHIFT)) = 
+      *(map->map + ((((unsigned int) ps.old_address) + (num_pages * RPAGESIZE)) >> RPAGELOG)) = 
 	(void *) (((char *) newpage) + (num_pages * RPAGESIZE));
      }
 
@@ -301,10 +315,9 @@ must be large enough to hold at least its first object, so this implementation i
 */
 void update_page(char *current, char *end, translation map, Updater update) {
   int size = 0;
-  if (current >= end) return;
   for(;; ) {
     current = PALIGN(current, RALIGNMENT);
-    if (current + size > end) break;
+    if (current >= end) break;
     size = update(map, current);
     current += size;
   }
@@ -328,7 +341,7 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
   struct page_state ps;
   struct page p, *newp, *save_previous;
   int numbytes = 0;
-  char *mem;
+  char *mem, *save_available;
   struct region save_new_region, save_old_region;
 
   numbytes = read(state, &ps, sizeof(struct page_state));
@@ -351,14 +364,17 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
     /* 
        At this point we have overwritten the newly allocated page header with the old (serialized) header of the page.
        While neither the old nor new headers are completely correct at this point, the new header requires fewer
-       pointer updates than the old header.  So, here we overwrite the old header with the new header again.  There is
-       one wrinkle: The very last field of a page header is used only when the page is on the free list and is in fact
+       pointer updates than the old header.  So, here we overwrite the old header with the new header again.  There are
+       two wrinkles: The very last field of a page header is used only when the page is on the free list and is in fact
        the start of allocation when the page is in use.  So, we copy and restore that field from the serialized version
-       so that we don't lose any data.
+       so that we don't lose any data.  Also, we actually want the available field from the old page; we save it and translate it
+       to show us how much of the new page has been allocated.
     */
     save_previous = newp->previous;  
+    save_available = newp->available;
     *newp = p;                      /* restore the current page structure */
     newp->previous = save_previous; /* and restore any lost data */
+    newp->available = translate_pointer(map, save_available);
 
     /* If this page has a region object, restore the region and update its allocation state. */
     if (ps.first_page) {
@@ -379,7 +395,8 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
        If this is the last page in the region, move to the next update function for the next region. 
     */
     if (update != NULL) {
-      update_page(mem, ((char *) newp) + ps.actual_size, map, *update);
+      /* update_page(mem, ((char *) newp) + ps.actual_size, map, *update); */
+      update_page(mem, newp->available, map, *update); 
       if (ps.last_page) update++;
     }
 
@@ -391,7 +408,7 @@ translation new_translation(region r) {
   struct translation *t = (struct translation *) rstralloc(r, sizeof(struct translation));
   t->reg = newregion();
   /* We rely on this map be zeroed out by the memory allocator. */
-  t->map = (void **) rstralloc(t->reg, sizeof(void *) * (1 << (32 - SHIFT)));
+  t->map = (void **) rstralloc(t->reg, sizeof(void *) * (1 << (32 - RPAGELOG)));
   return t;
 }
 
@@ -413,7 +430,7 @@ translation deserialize(char *datafile, char *statefile, Updater *update, region
   if ((data == -1) || (state == -1)) 
     return NULL;
 
-  if (RPAGESIZE != (1 << SHIFT)) {
+  if (RPAGESIZE != (1 << RPAGELOG)) {
     fprintf(stderr,"Error: Unexpected page size in deserialization\n");
   }
   
