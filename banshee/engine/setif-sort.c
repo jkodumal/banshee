@@ -81,6 +81,7 @@ typedef struct setif_inter_ *setif_inter_;
 typedef struct setif_union_ *setif_union_;
 typedef struct setif_constant_ *setif_constant_;
 
+static bool tlb_cache_valid = FALSE;
 static setif_var_list setif_vars;
 static region tlb_cache_region;
 static setif_var_list tlb_var_cache;
@@ -133,6 +134,11 @@ static bool tlv_lower(stamp st, gen_e e)
   tlv_lower_aux(buf,st,e);
   
   return TRUE;
+}
+
+static void lazy_invalidate_tlb_cache(void) deletes
+{
+  tlb_cache_valid = FALSE;
 }
 
 static void invalidate_tlb_cache(void) deletes
@@ -419,7 +425,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	setif_inclusion(con_match,res_proj,pr,lb, (gen_e) witness);
       
       bounds_delete(b);
-      invalidate_tlb_cache();
+      lazy_invalidate_tlb_cache();
 
       setif_stats.cycles_collapsed_backward++;
       setif_stats.cycles_length_backward += setif_var_list_length(cycle);
@@ -462,7 +468,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	setif_inclusion(con_match,res_proj,pr,(gen_e) witness, ub);
 	
       bounds_delete(b);
-      invalidate_tlb_cache();
+      lazy_invalidate_tlb_cache();
 
       setif_stats.cycles_collapsed_forward++;
       setif_stats.cycles_length_backward += setif_var_list_length(cycle);
@@ -492,7 +498,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	  
 	  setif_register_edge(sv_get_lbs(v),setif_get_stamp(e));
 
-	  invalidate_tlb_cache();
+	  lazy_invalidate_tlb_cache();
 
 	  bounds_scan(sv_get_ubs(v),&scan_bounds);
 	  while(bounds_next(&scan_bounds,&ub))
@@ -529,7 +535,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 
 	  setif_register_edge(sv_get_ubs(v),setif_get_stamp(e));
 
-	  invalidate_tlb_cache();
+	  lazy_invalidate_tlb_cache();
 	  
 	  bounds_scan(sv_get_lbs(v),&scan);
 	  while (bounds_next(&scan,&lb))
@@ -1026,6 +1032,9 @@ static jcoll tlb_aux(gen_e e)
 
 gen_e_list setif_tlb(gen_e e) deletes
 {
+  if (!tlb_cache_valid)
+    invalidate_tlb_cache();
+  tlb_cache_valid = TRUE;
   return jcoll_flatten(tlb_dict,tlb_aux(e));
 }
 
@@ -1252,7 +1261,7 @@ void setif_rollback(banshee_rollback_info info)
   
   assert(tinfo->kind = setif_sort);
 
-  invalidate_tlb_cache();
+  lazy_invalidate_tlb_cache();
   
   hash_table_scan(tinfo->added_edges, &hash_scan);
   while(hash_table_next(&hash_scan,(hash_key *)&next_bounds,
