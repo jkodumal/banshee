@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+             
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <title>Banshee</title>
+                       
+  <style type="text/css"><!--
+ 
+
+.smallcap { font-variant: small-caps }
+
+
+--></style>
+</head>
+  <body bgcolor="#ffffff">
+        
+<p align="center"> <img src="banshee-banner.gif" alt="Banshee"
+ width="320" height="120">
+   <br>
+    <b>&nbsp;A toolkit for building constraint-based analyses<br>
+  <br>
+  </b>  </p>
+          
+<div align="center"><img src="line.gif" alt="" width="480" height="5">
+  <br>
+       [ <a href="#intro">Introduction</a> |   <a href="#apps">Applications</a>&nbsp;
+ |   <a href="#download">Download</a> ] <br>
+  <img src="line.gif" alt="" width="480" height="5">
+  <br>
+  </div>
+   
+<center> </center>
+        
+<h1><a name="intro"></a></h1>
+ 
+<h1>Introduction</h1>
+        
+<p>BANSHEE is a toolkit that simplfies the task of building
+constraint-based program analyses. Program analyses are widely used in
+compilers and software engineering tools for discovering or verifying
+specific properties of software systems, such as type safety and
+opportunities for program optimization.  To use BANSHEE, the analysis
+designer provides a short specification file describing the kinds of
+constraints used in the analysis. From this specification, BANSHEE
+builds a customized constraint resolution engine which solves those
+constraints very efficiently. BANSHEE also builds a customized
+interface for that engine which is easy to use.<br>
+</p>
+<p>BANSHEE is the successor to BANE, the Berkeley ANalysis Engine, which
+can be found <a href="http://bane.cs.berkeley.edu">here</a>. <br>
+</p>
+<p> <span class="smallcap"></span></p>
+     
+<p>   </p>
+          
+<center><img src="line.gif" alt="" width="480" height="5">
+ &nbsp;  </center>
+    <a name="apps"></a>   
+<h1>Example Applications</h1>
+     Here are a few of the program analyses we have built using BANSHEE.<span
+ class="smallcap"></span>     
+<ul>
+
+    <li><i>Pointer Analysis</i>: We have implemented Andersen's
+points-to analysis in BANSHEE, achieving orders of magnitude<i>
+</i>improvement over BANE. Our implementation of Andersen's analysis
+uses a C front-end derived from GCC and is therefore distributed under
+the GNU General Public License.<br>
+
+    <li><i>CFL Reachability</i>: We have implemented an API for
+    solving context-free language reachability problems with
+    BANSHEE. This API can be used for a large class of program
+    analyses including polymorphic flow analysis, interprocedural
+    dataflow analysis, and field-sensitive points-to analysis.
+     
+</ul>
+             
+<center></center>
+ 
+<p>  </p>
+          
+<center><img src="line.gif" alt="" width="480" height="5">
+&nbsp;   </center>
+    <a name="download"></a>   
+<h1>Download</h1>
+        
+<p> BANSHEE is available for download under the BSD License.  The code
+has been tested under various versions of RedHat Linux and Windows
+with Cygwin. The pointer analysis application, which includes a
+version of David Gay's C parser, is available separately and is
+released under the GNU General Public License.</p>
+
+<p>
+Software releases and CVS access are managed through SourceForge.  To
+download the latest release (or a CVS snapshot) click <a
+href="http://sf.net/projects/banshee/">here</a>.
+</p>
+         
+<center><img src="line.gif" alt="" width="480" height="5">
+&nbsp;</center>
+<center></center>
+&nbsp;          
+<p> <br>
+    <i>This page is maintained by <a
+ href="http://www.cs.berkeley.edu/%7Ejkodumal">John Kodumal</a></i> (jkodumal AT cs.berkeley.edu)
+  </p>
+               <br>
+   <br>
+  <br>
+ 
+</body>
+</html>
