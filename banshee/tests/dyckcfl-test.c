@@ -241,6 +241,7 @@ int main()
 {
   nonspec_init();
   dyck_init(TRUE);
+  flag_merge_projections = FALSE;
   mr_dyck_init(TRUE,NULL);
 
   test_dyck_isomorphism();
