@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 # This is a test script for multidelta that flags instances where
-# Andersen's analysis reports a smaller points-to set size than
-# Steensgaard's analysis. Such behavior is clearly a bug in one of the
+# Steensgaard's analysis reports a smaller points-to set size than
+# Andersen's analysis. Such behavior is clearly a bug in one of the
 # analyses
 
 import os
