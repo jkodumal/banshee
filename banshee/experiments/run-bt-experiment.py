@@ -12,10 +12,10 @@ project = "cqual"
 #repository = ":pserver:anonymous@cvs.sourceforge.net:/cvsroot/" + project
 repository = "/Users/jkodumal/work/local_repositories/" + project
 logfilename = "logs/" + project + ".log"
-outfilename = "out/" + project + ".out"
-statefilename = "state/" + project + ".state"
+outfilename = "out/" + project 
+statefilename = "state/" + project
 start_with_entry = 0
-end_with_entry = 1000
+end_with_entry = 1
 compilescript = "./default_compile.sh"
 parser_ns = "../cparser/parser_ns.exe"
 
@@ -85,10 +85,12 @@ def next_log_entry(logfile):
 # modified in dir_b as compared to dir_a
 def get_modified_files(dir_a, dir_b, extension):
     result = []
-    b_files = os.popen("find %s -name %s" % (dir_b,extension))
-    for file in b_files.readlines():
-	if (os.system("diff <(md5 %s) <(md5 %s)" 
-		  % (file[:len(dir_b)],dir_a + file) )):
+    b_files = os.popen("find %s -name *%s" % (dir_b,extension))
+    for filewline in b_files.readlines():
+	file = filewline[:-1]
+	if (os.system("bash -c \"diff %s %s >/dev/null\"" 
+		      % (file, dir_a + file[len(dir_b):]))):
+	    #		  % (file[:len(dir_b)],dir_a + file) )):
 	    result.append(file)
     return result
 
@@ -127,10 +129,10 @@ def list_to_string(list):
 
 # Take a string list (the output of running the analysis) and process
 # it into two output lists
-def process_andersen_output(output):
+def process_andersen_output(current, output):
     found = False
-    statefile = open(statefilename,"w")
-    outfile = open(outfilename,"w")
+    statefile = open(statefilename + str(current),"w")
+    outfile = open(outfilename + str(current),"w")
     for line in output:
 	if (line == '##################\n'):
 	    found = True
@@ -142,7 +144,7 @@ def process_andersen_output(output):
 # Entry point 
 def main():
     parse_options()
-    logfile = open(logfilename,"r")
+    logfile = open(logfilename, "r")
     #skip the initial blank
     logfile.readline()
     # skip the specified entries
@@ -153,16 +155,16 @@ def main():
     dirname = get_dirname(start_with_entry)
     os.system("rm -rf %s" % dirname) 
     os.system("cvs -d %s co -D \"%s\" %s >/dev/null" % (repository, date, project))
-    os.system("mv %s %s" % (project, dirname))
-    build_error = os.system("%s %s" % (compilescript, dirname))
+    build_error = os.system("%s %s" % (compilescript, project))
     if (build_error):
 	print "Build error"
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
+    os.system("mv %s %s" % (project, dirname))
     files = list_to_string(get_filelist(dirname,".i"))
     cmd = "%s -fserialize-constraints %s 2>/dev/null" % (parser_ns,files)
     output = os.popen(cmd).readlines()
-    process_andersen_output(output)
+    process_andersen_output(start_with_entry,output)
 
     # for each entry, do the following:
     # 1. run cvs co -d -D date
@@ -174,19 +176,20 @@ def main():
     #    files on the top of the stack
     # 7. run the alias analysis, rolling back to the specified time 
     # 8. save the new statefile and analysis output
-    for current in range(start_with_entry+1,end_with_entry):
-	statefile = open(statefilename, "r")
+    for current in range(start_with_entry+1,end_with_entry+1):
+	statefile = open(statefilename + str(current-1), "r")
 	banshee_state = get_banshee_state(statefile)
  	date,_ = next_log_entry(logfile)
 	dirname = get_dirname(current)
 	os.system("rm -rf %s" % dirname)
 	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, date, project))
-	os.system("mv %s %s" % (project, dirname))
-	build_error = os.system("%s %s" % (compilescript, dirname))
+	build_error = os.system("%s %s" % (compilescript, project))
 	if (build_error):
 	    print "Build error"
 	    sys.exit(1)
+	os.system("mv %s %s" % (project, dirname))
 	modified = get_modified_files(get_dirname(current-1),get_dirname(current),".i")
+	print modified
 
 if __name__ == "__main__":
     main()
