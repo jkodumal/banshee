@@ -83,6 +83,11 @@ static void default_error_handler(gen_e e1, gen_e e2,banshee_error_kind k)
   fail("Unhandled banshee error: code %d\n",k);
 }
 
+void banshee_set_time(banshee_rollback_info info)
+{
+  info->time = (banshee_time) {banshee_clock};
+}
+
 void banshee_clock_tick()
 {
   banshee_clock++;
