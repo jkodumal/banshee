@@ -29,7 +29,6 @@ sub diagnostic {
 
 # defaults
 $showLog = 1;
-$showDate = 0;
 
 # read arguments
 my $i = 0;
@@ -47,10 +46,7 @@ while ($i < @ARGV) {
     $showLog = 0;
   }
   elsif ($arg eq "-l") {
-      $showLog = 0;
-  }
-  elsif ($arg eq "-dates") {
-      $showDate = 1;
+    $showLog = 0;
   }
   else {
     usage();
@@ -111,13 +107,9 @@ for ($i=0; $i < @history; $i++) {
   if ($curWhen ne $when) {
     # starting new section; print info
     $curWhen = $when;
-    
-    if ($showDate) {
-	print("\n$when\n");
-    }
-    else {
-	print("\n$when    $who\n");
-    }
+    #print("#####\n");
+    #print("$when    $who\n");
+
     # get log information about this
     if ($showLog) {
       $cmd = "cvs log -r$rev $file";
@@ -146,9 +138,21 @@ for ($i=0; $i < @history; $i++) {
 
   # print action information
   print("  ");
-  print("$kind: "); 
+  if ($kind eq "A") {
+    print("added:    ");
+  }
+  elsif ($kind eq "M") {
+    print("modified: ");
+  }
+  elsif ($kind eq "R") {
+    print("removed:  ");
+  }
+  else {
+    print("unknown:        ");    # unknown action
+  }
 
   print("$file\n");
+  print("#####\n");
 }
 
 
