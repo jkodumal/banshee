@@ -15,7 +15,7 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek)
   fprintf(stderr,"Warning: ");
   switch(bek) {
   case bek_cons_mismatch:         // c(...) <= d(...)
-    fprintf(stderr, "constructor mismatch ");
+    fprintf(stderr, "constructor mismatch (inconsistent constraint) ");
     break;
   case bek_occurs_check:	// occurs check failed (cyclic unification)
     fprintf(stderr, "occurs check failure ");
@@ -203,7 +203,7 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	       yyerror("Attempted to redefine existing expression\n");
  	     }
 	     else {
-               constructor c = make_constructor_from_list($2,$7,$4);
+               constructor c = make_constructor_from_list($2,$7,sig_elt_list_reverse($4));
 	       hash_table_insert(constructor_env,$2,c);
 	     }
            }
@@ -313,7 +313,7 @@ expr:    TOK_VAR
 	     if (hash_table_lookup(constructor_env,$1,(hash_data *)&c)) {
 	       $$ = 
 		 constructor_expr(c,
-				  gen_e_list_array_from_list(ibanshee_region,$3),
+				  gen_e_list_array_from_list(ibanshee_region,gen_e_list_reverse($3)),
 				  gen_e_list_length($3));
 	     }
 	     else {
