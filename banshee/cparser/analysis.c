@@ -766,7 +766,7 @@ expr_type analyze_init(data_declaration ddecl,expression init) deletes
 
 static expr_type analyze_expression(expression e) deletes
 {
-  assert(e);
+  if (!e) return BOTTOM_INT;
   
   switch(e->kind)
     {
@@ -1492,6 +1492,8 @@ static void analyze_statement(statement s)
     case kind_empty_stmt:
      case kind_break_stmt:
     case kind_continue_stmt:
+      break;
+    case kind_asm_stmt:
       break;
     default:
       fprintf(stderr,"Warning, unhandled stmt kind: %d\n", s->kind );
