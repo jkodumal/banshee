@@ -26,6 +26,8 @@ Boston, MA 02111-1307, USA. */
 #include "c-parse.h"
 #include <stddef.h>
 
+region types_region = NULL;
+
 struct type
 {
   enum { tk_primitive, tk_complex, tk_tagged, tk_error, tk_void,
@@ -167,14 +169,23 @@ type error_type;
 
 static type copy_type(type t)
 {
-  type nt = xmalloc(sizeof *t);
+/*   type nt = xmalloc(sizeof *t); */
+  type nt = NULL;
+  assert(types_region);
+  nt = ralloc(types_region, struct type);
+
   *nt = *t;
   return nt;
 }
 
 static type new_type(int kind)
 {
-  type nt = xmalloc(sizeof *nt);
+/*   type nt; = xmalloc(sizeof *nt); */
+  type nt = NULL;
+  assert(types_region);
+  
+  nt = ralloc(types_region, struct type);
+  
   nt->kind = kind;
   nt->qualifiers = 0;
   nt->size = nt->alignment = 0;
@@ -320,8 +331,45 @@ type type_for_cval(cval c, bool isunsigned)
   return NULL;
 }
 
+void register_persistent_region(region r, Updater u);
+
+int update_type(translation tr, void *m)
+{
+  struct type *t = m;
+
+  switch(t->kind) {
+  case tk_primitive:
+    break;
+  case tk_complex:
+    break;
+  case tk_tagged:
+    break;
+  case tk_error:
+    break;
+  case tk_void:
+    break;
+  case tk_pointer:
+    update_pointer(tr, t->u.pointsto);
+  case tk_function:
+    update_pointer(tr, t->u.fn.returns);
+    t->u.fn.argtypes = new_typelist(permanent); /* TODO -- serialize the typelist */
+    break;
+  case tk_array:
+    update_pointer(tr, t->u.array.arrayof);
+    t->u.array.size = NULL; 	/* TODO -- put a placeholder here */
+    break;
+  }
+
+  return (sizeof (struct type));
+}
+
+
 void init_types(void)
 {
+  types_region = newregion();
+  register_persistent_region(types_region, update_type);
+
+
   float_type = make_primitive(tp_float, sizeof(float), __alignof__(float));
   double_type = make_primitive(tp_double, sizeof(double), __alignof__(double));
   long_double_type = make_primitive

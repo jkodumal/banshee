@@ -160,15 +160,14 @@ region *get_persistent_regions(const char *filename)
   result[31] = term_constant_region; 
 
   {
-    int i = 0;
+    int i = NUM_REGIONS;
     region next_region;
     hash_table_scanner scan;
     hash_table_scan(extra_regions, &scan);
     
     while(hash_table_next(&scan, (hash_key *)&next_region, 
 			  NULL)) {
-      result[NUM_REGIONS+i] = next_region;
-      i++;
+      result[i++] = next_region;
     }
   }
 
