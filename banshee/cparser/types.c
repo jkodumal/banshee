@@ -349,13 +349,13 @@ int update_type(translation tr, void *m)
   case tk_void:
     break;
   case tk_pointer:
-    update_pointer(tr, t->u.pointsto);
+    update_pointer(tr, (void **)&t->u.pointsto);
   case tk_function:
-    update_pointer(tr, t->u.fn.returns);
+    update_pointer(tr, (void **)& t->u.fn.returns);
     t->u.fn.argtypes = new_typelist(permanent); /* TODO -- serialize the typelist */
     break;
   case tk_array:
-    update_pointer(tr, t->u.array.arrayof);
+    update_pointer(tr, (void **)&t->u.array.arrayof);
     t->u.array.size = NULL; 	/* TODO -- put a placeholder here */
     break;
   }

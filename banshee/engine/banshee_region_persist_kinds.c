@@ -95,13 +95,14 @@ Updater *read_extra_info(const char *filename)
   unsigned long num_extra_regions = 0, i = 0;
   int next_id = 0;
   FILE *f  = fopen(filename, "rb");
-  Updater *result = rarrayalloc(permanent,num_extra_regions + NUM_REGIONS, 
-				Updater);
-
+  Updater *result;
   assert(f);
 
   fread((void *)&num_extra_regions, sizeof(unsigned long), 1, f);
-  
+
+  result = rarrayalloc(permanent,num_extra_regions + NUM_REGIONS, 
+		       Updater);
+
   for (i = 0; i < num_extra_regions; i++) {
     fread((void *)&next_id, sizeof(int), 1, f); 
     result[NUM_REGIONS + i] = update_funptr_data(next_id);
