@@ -550,16 +550,6 @@ static void compile_file(char *name) deletes
 	{
 	  files_processed++;
 
-	  /* TODO -- add backtracking support here */
-	  if (flag_points_to && flag_deserialize_constraints) 
-	    {
-	      analysis_deserialize("andersen.out");
-
-	      if (flag_backtrack_constraints) {
-		fprintf(stderr, "Backtracking...\n");
-		banshee_backtrack(backtrack_time);
-	      }
-	    } 
 	  if (flag_points_to)
 	    {
 	      int last_clock;
@@ -1071,18 +1061,30 @@ int main(int argc, char **argv) deletes
   /* RC doesn't like shadowing */
   /*warn_shadow = error_shadow = 1;*/
 
-  if (dd_is_empty(files))
-    compile_file(0);
-  /* compile_file (filename); */
-  else
-    dd_scan(cur, files)
-    {
-      char *file;
-      file = DD_GET(char *, cur);
-      fprintf(stderr, "Parsing %s...", file);
-      compile_file(file);
-    }
 
+  if (flag_points_to && flag_deserialize_constraints) 
+    {
+      analysis_deserialize("andersen.out");
+      
+      if (flag_backtrack_constraints) {
+	fprintf(stderr, "Backtracking...\n");
+	banshee_backtrack(backtrack_time);
+      }
+    } 
+
+/*   if (dd_is_empty(files)) */
+/*     compile_file(0); */
+/*   else */
+
+  if (!dd_is_empty(files))
+    dd_scan(cur, files)
+      {
+	char *file;
+	file = DD_GET(char *, cur);
+	fprintf(stderr, "Parsing %s...", file);
+	compile_file(file);
+      }
+  
   if (flag_debug_backtrack) {
     fprintf(stderr, "Backtracking...\n");
     banshee_backtrack(debug_backtrack_time);
@@ -1093,58 +1095,58 @@ int main(int argc, char **argv) deletes
   printf("Files skipped: %d\n",files_skipped);
     
 
-     
-    fprintf(stderr,"Computing tlb...\n");
-    begin_time();
-    print_analysis_results();
-    end_time(&tlb_time);
-    fprintf(stderr,"Finished computing tlb\n");
-   
- 
-    if(flag_pta_profile) {
-        struct rusage usage;
-        printf("========Profile=========\n");
-        printf("Parse time: ");
-        print_time(stdout,&parse_time);
-        printf("\nAnalyze time: ");
-        print_time(stdout,&analyze_time);
-        printf("\nTLB time: ");
-        print_time(stdout,&tlb_time);
-
-        getrusage(RUSAGE_SELF,&usage);
-
-        printf("\nUser time:");
-        print_time(stdout,&usage.ru_utime); 
-        printf("\nSystem time:");
-        print_time(stdout,&usage.ru_stime); 
-                                      
-    }
-
-
-    if (flag_print_results) 
-      print_points_to_sets();        
-    if (flag_print_stats)
-      {
-	analysis_stats(stdout);
-      }
-
-    if (flag_print_graph)
-      {
-	analysis_print_graph();
-      }
-    
-    if(flag_serialize_constraints)
-      {
-	analysis_serialize("andersen.out");
-      }
-
-/*     if (flag_print_memusage) */
-/*       { */
-/* 	print_memory_usage(); */
-/* 	// printf("\nMemory usage (bytes): %li\n",get_memusage()); */
-/*       } */
   
+  fprintf(stderr,"Computing tlb...\n");
+  begin_time();
+  print_analysis_results();
+  end_time(&tlb_time);
+  fprintf(stderr,"Finished computing tlb\n");
+  
+  
+  if(flag_pta_profile) {
+    struct rusage usage;
+    printf("========Profile=========\n");
+    printf("Parse time: ");
+    print_time(stdout,&parse_time);
+    printf("\nAnalyze time: ");
+    print_time(stdout,&analyze_time);
+    printf("\nTLB time: ");
+    print_time(stdout,&tlb_time);
+    
+    getrusage(RUSAGE_SELF,&usage);
+    
+    printf("\nUser time:");
+    print_time(stdout,&usage.ru_utime); 
+    printf("\nSystem time:");
+    print_time(stdout,&usage.ru_stime); 
+    
+  }
 
+  
+  if (flag_print_results) 
+    print_points_to_sets();        
+  if (flag_print_stats)
+    {
+      analysis_stats(stdout);
+    }
+  
+  if (flag_print_graph)
+    {
+      analysis_print_graph();
+    }
+  
+  if(flag_serialize_constraints)
+    {
+      analysis_serialize("andersen.out");
+    }
+  
+  /*     if (flag_print_memusage) */
+  /*       { */
+  /* 	print_memory_usage(); */
+  /* 	// printf("\nMemory usage (bytes): %li\n",get_memusage()); */
+  /*       } */
+  
+  
   if (errorcount)
     exit (FATAL_EXIT_CODE);
   exit (SUCCESS_EXIT_CODE);
