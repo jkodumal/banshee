@@ -35,11 +35,13 @@
 #include "regions.h"
 #include "hash.h"
 
-
 static region ibanshee_region;
 static hash_table constructor_env;
 static hash_table named_env;
 static hash_table var_env;
+static int interactive = 1;
+
+extern FILE * yyin;
 
 static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek) 
 {
@@ -137,6 +139,8 @@ void flush_lexer(void);
 
 %}			
 
+%start program
+
 /* Things with multiple spellings */
 %token <num> TOK_INTEGER
 %token <str> TOK_IDENT
@@ -203,18 +207,23 @@ void flush_lexer(void);
  
 %%
 
+program: line 
+         { }
+        | program line
+         { }
+
 line:      TOK_LINE
-           { YYACCEPT; }
+           { if (interactive) YYACCEPT; }
          | toplev TOK_LINE
-           { YYACCEPT; }
+           { if (interactive) YYACCEPT; }
          | TOK_EOF
-           { exit(0); }
+           {exit(0);}
 ;
 
 toplev:    decl
            { }
          | constraint
-           { }
+           {  }
          | cmd
            { }
 ;
@@ -552,7 +561,7 @@ cmd:       TOK_CMD TOK_IDENT
 	     else if (!strcmp($2,"help")) {
 	       show_help();
 	     }
-				/* TODO */
+	     /* TODO */
 	     else if (!strcmp($2,"trace")) {
 	       fprintf(stderr,"Trace not yet implemented\n");
 	     }
@@ -566,7 +575,7 @@ cmd:       TOK_CMD TOK_IDENT
 	     if (!strcmp($2,"undo")) {
 	       banshee_backtrack((banshee_time){$3});
 	     }
-				/* TODO */
+	     /* TODO */
 	     else if (!strcmp($2,"trace")) {
 	       fprintf(stderr,"Trace not yet implemented\n");
 	     }
@@ -585,18 +594,42 @@ cmd:       TOK_CMD TOK_IDENT
 ;
 
 %%
-int main() {
+int main(int argc, char **argv) {
   ibanshee_init();
-  printf("iBanshee version 0.1\n");
-  do {
-    int time = banshee_get_time().time;
-    printf("[%d] > ",time);
-    fflush(stdout);
-				
-    if (yyparse()) { /* error parsing the line, ignore the remaining input */
-      flush_lexer();
+  
+  if (argc > 1) {
+    if (!strcmp(argv[1],"-f")) {
+      yyin = fopen(argv[2],"r");
+      interactive = 0;
+      
+      if (yyin == NULL) {
+	fprintf(stderr,"Failed to open file: %s\n",argv[2]);
+      }
+      else {
+	if (yyparse()) {
+	  fprintf(stderr,"Warning: some errors occurred\n");
+	  exit(1);
+	}
+	else {
+	  exit(0);
+	}
+      }
     }
   }
-  while (1);
+
+
+  if (interactive) {
+    printf("iBanshee version 0.1\n");
+    do {
+      int time = banshee_get_time().time;
+      printf("[%d] > ",time);
+      fflush(stdout);
+      
+      if (yyparse()) { /* error parsing the line, ignore the remaining input */
+	flush_lexer();
+      }
+    }
+    while (1);
+  }
 }
 

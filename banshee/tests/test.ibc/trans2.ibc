@@ -1,7 +1,7 @@
-#a: setIF
-#'x: setIF
-#'y: setIF
-#c(+setIF,+setIF) : setIF
+a: setIF
+'x: setIF
+'y: setIF
+c(+setIF,+setIF) : setIF
 c(a,a) <= 'x
 a <= 'y
 !tlb 'x

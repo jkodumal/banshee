@@ -169,3 +169,18 @@ Just change pending representation to bounds
 
 * Add serialization support
 
+* Modify Andersen's to support backtracking
+
+* iBanshee interpreter
+
+** Allow programs to be read from files
+
+*** Add a command line flag to read from files
+
+*** Add a !load command
+
+!load should act somewhat differently, it shouldn't YYACCEPT at line ends,
+nor should there be any > output
+
+
+
