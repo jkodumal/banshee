@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "rc.h"
 #include "analysis.h"
 
-// extern long get_memusage(void);
+extern long get_memusage(void);
 extern int banshee_get_time();
 extern void banshee_backtrack(int);
 extern region *get_persistent_regions(const char *filename);
@@ -298,6 +298,7 @@ int flag_rdeserialize_constraints = 0;
 int debug_backtrack_prefix = 0;
 static int debug_backtrack_time = 0;
 static int backtrack_time = 0;
+static int have_backtracked = 0;
 
 /* Table of language-independent -f options.
    STRING is the option name.  VARIABLE is the address of the variable.
@@ -511,7 +512,7 @@ void outofmemory(void)
 static int files_processed = 0;
 static int files_skipped = 0;
 
-static void compile_file(char *name) deletes
+static int compile_file(char *name) deletes
 {
   FILE *ifile;
 
@@ -592,12 +593,14 @@ static void compile_file(char *name) deletes
 	  deleteregion(parse_region);
 	  parse_region = newregion();
 	}
+      return banshee_get_time();
     }
   else
     {
       files_skipped++;
       fprintf(stderr,"Skipping problematic input...\n\n");
       errorcount = 0;
+      return banshee_get_time();
     }
 
 }
@@ -1100,12 +1103,12 @@ int main(int argc, char **argv) deletes
       analysis_deserialize("andersen.out");
       end_time(&deserialize_time);
 
-      if (flag_backtrack_constraints) {
-	fprintf(stderr, "Backtracking...\n");
-	begin_time();
-	analysis_backtrack(backtrack_time);
-	end_time(&rollback_time);
-      }
+/*       if (flag_backtrack_constraints) { */
+/* 	fprintf(stderr, "Backtracking...\n"); */
+/* 	begin_time(); */
+/* 	analysis_backtrack(backtrack_time); */
+/* 	end_time(&rollback_time); */
+/*       } */
     } 
 
 /*   if (dd_is_empty(files)) */
@@ -1119,12 +1122,12 @@ int main(int argc, char **argv) deletes
       t = deserialize("data","offsets", get_updater_functions("extras"), temp);
       analysis_region_deserialize(t, "statics" );
       end_time(&region_deserialization_time);
-      if (flag_backtrack_constraints) {
-	fprintf(stderr, "Backtracking...\n");
-	begin_time();
-	analysis_backtrack(backtrack_time);
-	end_time(&rollback_time);
-      }
+/*       if (flag_backtrack_constraints) { */
+/* 	fprintf(stderr, "Backtracking...\n"); */
+/* 	begin_time(); */
+/* 	analysis_backtrack(backtrack_time); */
+/* 	end_time(&rollback_time); */
+/*       } */
     }
   else if (flag_points_to && flag_debug_region_deserialization)
     {
@@ -1140,14 +1143,34 @@ int main(int argc, char **argv) deletes
       exit(0);
     }
 
-  if (!dd_is_empty(files))
+  if (!dd_is_empty(files)) {
+    int time = 0;
+
+    if (flag_backtrack_constraints && 
+	time > backtrack_time && !have_backtracked) {
+      fprintf(stderr, "Backtracking...\n");
+      begin_time();
+      analysis_backtrack(backtrack_time);
+      end_time(&rollback_time);
+      have_backtracked = 1;
+    }
+
     dd_scan(cur, files)
       {
 	char *file;
 	file = DD_GET(char *, cur);
 	fprintf(stderr, "Parsing %s...", file);
-	compile_file(file);
+	time = compile_file(file);
+	if (flag_backtrack_constraints && 
+	    time > backtrack_time && !have_backtracked) {
+	  fprintf(stderr, "Backtracking...\n");
+	  begin_time();
+	  analysis_backtrack(backtrack_time);
+	  end_time(&rollback_time);
+	  have_backtracked = 1;
+	}
       }
+  }
 
   fprintf(stdout,"##################\n");
   
@@ -1248,11 +1271,11 @@ int main(int argc, char **argv) deletes
 
  /*  regprofile(); */
   
-  /*     if (flag_print_memusage) */
-  /*       { */
-  /* 	print_memory_usage(); */
-  /* 	// printf("\nMemory usage (bytes): %li\n",get_memusage()); */
-  /*       } */
+  if (flag_print_memusage)
+    {
+      //      print_memory_usage();
+      printf("\nMemory usage (bytes): %li\n",get_memusage());
+    }
   
   
   if (errorcount)
