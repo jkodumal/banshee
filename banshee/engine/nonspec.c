@@ -1920,8 +1920,9 @@ static bool setif_expr_serialize(FILE *f, gen_e e)
 static void *setif_expr_deserialize(FILE *f)
 {
   int expr_type;
-  assert(f);
   setif_term result = NULL;
+
+  assert(f);
   fread((void *)&expr_type, sizeof(int), 1, f);
 
   switch(expr_type) 
@@ -2058,8 +2059,8 @@ static bool term_expr_serialize(FILE *f, gen_e e)
 static void *term_expr_deserialize(FILE *f)
 {
   int expr_type;
+  gen_term result = NULL;
   fread((void *)&expr_type, sizeof(int), 1, f);
-  gen_term result;
 
   switch(expr_type) 
     {
@@ -2139,7 +2140,7 @@ bool gen_e_serialize(FILE *f, void *obj)
 
 void *gen_e_deserialize(FILE *f)
 {
-  gen_e result;
+  gen_e result = NULL;
   sort_kind sort;
   assert(f);
 

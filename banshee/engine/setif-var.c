@@ -293,11 +293,10 @@ bool sv_info_serialize(FILE *f, void *obj)
 
 void *sv_info_deserialize(FILE *f)
 {
+  sv_info info = ralloc(permanent, struct sv_info);
   assert(f);
   assert(permanent);
 
-  sv_info info = ralloc(permanent, struct sv_info);
-  
   fread((void *)&info->st, sizeof(stamp), 1, f);
   fread((void *)&info->lbs, sizeof(bounds), 1, f);
   fread((void *)&info->ubs, sizeof(bounds), 1, f);
