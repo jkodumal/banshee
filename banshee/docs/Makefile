@@ -27,9 +27,9 @@
 
 banshee_bindir = ../bin
 
-ALL = banshee.ps 
+ALL = banshee.ps banshee-manual.ps
 PAPERTYPE = letter
-SOURCES = banshee.tex
+SOURCES = banshee.tex banshee-manual.tex
 
 all: $(ALL)
 
