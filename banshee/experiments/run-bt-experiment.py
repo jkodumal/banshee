@@ -5,7 +5,7 @@ import string
 import getopt
 
 options='c:d:p:l:o:s:heb'
-long_options=['start-with=','end-with=','analysis=',"help","stop-on-build-error"]
+long_options=['start-with=','end-with=','analysis=',"help","stop-on-build-error","ext="]
 
 # Default values for command line options
 project = "cqual"
@@ -23,6 +23,7 @@ modfilename = "simulations/" + project + ".mod"
 enhanced_mod_check = False
 stop_on_build_error = False
 use_bitkeeper = False
+extension = ".i"
 
 # Print a usage message and exit
 def usage():
@@ -34,18 +35,15 @@ options:\n\
   -l <logfile>:   read commit log from logfile\n\
   -o <outfile>:   save output as outfile\n\
   -s <statefile>: read/write the analysis state from/to statefile\n\
-  -e              used enhanced check to find modified files\n\
+  -e              used enhanced check to find modified files (C projects only)\n\
   -b              analyze a bitkeeper (not CVS) project\n\
   -h              show this message\n"
 	  % sys.argv[0])
 
-def convert_extension(filename):
-    filename[:-2] + ".i"
-
 # Parse command line options
 def parse_options():
     global project, repository, logfilename, outfilename,statefilename
-    global start_with_entry, end_with_entry, analysis 
+    global start_with_entry, end_with_entry, analysis, extension 
     global enhanced_mod_check, compilescript, stop_on_build_error
     try:
 	opts, args = getopt.getopt(sys.argv[1:],options,long_options)
@@ -78,6 +76,8 @@ def parse_options():
             stop_on_build_error = True
 	if (o == '--analysis'):
 	    analysis = a
+	if (o == '--ext'):
+	    extension = a
 	if (o == '-b'):
 	    use_bitkeeper = True
 
@@ -280,7 +280,7 @@ def main():
 	print "Build error"
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
-    files = list_to_string(get_filelist(project,".i"))
+    files = list_to_string(get_filelist(project,extension))
     cmd = "%s -fserialize-constraints %s 2>/dev/null" % (analysis,files)
     output = os.popen(cmd).readlines()
     process_andersen_output(start_with_entry,output,[])
@@ -313,8 +313,8 @@ def main():
                 sys.exit(1)
 	    os.system("rm -rf %s" % project)
 	    continue
-	modified = get_modified_files(project_prev,project,".i")
-	removed = get_removed_files(modified, get_modified_files(project, project_prev,".i"))
+	modified = get_modified_files(project_prev,project,extension)
+	removed = get_removed_files(modified, get_modified_files(project, project_prev,extension))
 	time,files,prefix = get_new_stack_and_time(modified,removed, banshee_state)
 	print "Backtracking to : %s" % time
 	cmd = "%s -fserialize-constraints -fdeserialize-constraints -fback%s %s 2>/dev/null" % (analysis, time, list_to_string_nolf(files))
