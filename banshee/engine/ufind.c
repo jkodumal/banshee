@@ -227,8 +227,9 @@ bool uf_eq(struct uf_element *e1,struct uf_element *e2)
 
 void uf_update(struct uf_element *e,uf_info i)
 {
+  ustack_elt ue;
   e = find(e);
-  ustack_elt ue = make_ustack_elt(e,e->info);
+  ue = make_ustack_elt(e,e->info);
   union_stack_cons(ue,ustack);
   assert(e->elt_stack == NULL);
 

@@ -46,7 +46,7 @@ CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 EXES = lambda-test.exe dyckcfl-test.exe dyckcfl-random-test.exe \
-          uf-bt-test.exe
+          #uf-bt-test.exe
 
 TARGETS =  $(EXES) TAGS
 
@@ -63,8 +63,8 @@ dyckcfl-test.exe: dyckcfl-test.c $(DYCKCFL_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LI
 dyckcfl-random-test.exe: dyckcfl-random-test.c $(DYCKCFL_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LIB)
 	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lm -lnsengine -lregions
 
-uf-bt-test.exe: uf-bt-test.c $(ENGINE_LIB) $(REGION_LIB)
-	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
+#uf-bt-test.exe: uf-bt-test.c $(ENGINE_LIB) $(REGION_LIB)
+#	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
 
 .PHONY: clean check 
 

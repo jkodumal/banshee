@@ -154,10 +154,11 @@ static int smallest_special_type = LARGEST_BUILTIN_TYPE + NUM_EXTRA_TYPES;
 static int new_type()
 {
   static int next_type = LARGEST_BUILTIN_TYPE + NUM_EXTRA_TYPES;
+  int ret;
 
   assert(next_type %2 == 0);
 
-  int ret = next_type;
+  ret = next_type;
 //   if (next_type > 2000)
 //     {
 //       fprintf(stderr, "Exceeded maximum number of constructors\n");
@@ -789,8 +790,8 @@ static bool setif_res_proj(setif_var v1,gen_e e2)
 {
   if (setif_is_pat(e2) ) {
     proj_pat projection_pat;
-    projection_pat = (proj_pat)e2;
-    
+  
+
     gen_e setif_get_proj(gen_e_list arg1)
       {
 	gen_e_list_scanner scan;
@@ -829,6 +830,7 @@ static bool setif_res_proj(setif_var v1,gen_e e2)
 	return make_proj_pat( ((proj_pat)e2)->c, ((proj_pat)e2)->i,e);
       }
     
+    projection_pat = (proj_pat)e2;
     return setif_proj_merge(v1,((proj_pat)e2)->exp,
 			    setif_get_proj,proj_con,
 			    fresh_large,sort_inclusion,
