@@ -37,8 +37,13 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 CC = gcc
 
+ifdef DEBUG
 CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr= -DNONSPEC -Wall -Werror -g -pg
+else
+CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+         -Dsameregion= -Dparentptr= -DNONSPEC -Wall -Werror 
+endif
 
 .PHONY: clean
 

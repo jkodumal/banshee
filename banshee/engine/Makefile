@@ -38,7 +38,7 @@ region_dir = ../libcompat
 CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -Wall -Werror
+	 -Dparentptr= -Wall -Werror -fno-strict-aliasing
 
 ifdef BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}

@@ -31,8 +31,11 @@ Boston, MA 02111-1307, USA. */
 #include "rc.h"
 #include "AST_utils.h"
 
-// #include <alloca.h>
-#define alloca(size)   __builtin_alloca (size)
+/* On FreeBSD, alloca is defined in stdlib, on most other platforms,
+   (cygwin, linux) it is in alloca.h */
+#ifndef __FreeBSD__
+#include <alloca.h>
+#endif
 
 /* Return TRUE if TTL and TTR are pointers to types that are equivalent,
    ignoring their qualifiers.  */

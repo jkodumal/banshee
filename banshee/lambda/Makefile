@@ -39,8 +39,14 @@ TAGFILES = $(LAMBDA).h $(LAMBDA).c
 
 CC = gcc
 
+ifdef DEBUG
 CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr= -Wall -Werror -g -pg
+else
+CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+         -Dsameregion= -Dparentptr= -Wall -Werror
+endif
+
 
 .PHONY: clean
 

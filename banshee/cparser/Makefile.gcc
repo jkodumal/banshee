@@ -21,9 +21,9 @@ CC = gcc
 
 
 ifdef DEBUG
-CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original -Werror
+CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original -Werror -fno-strict-aliasing
 else
-CFLAGS = -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original -Werror
+CFLAGS = -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original -Werror -fno-strict-aliasing
 endif
 
 #ifdef ANDERSEN_ST

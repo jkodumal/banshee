@@ -37,8 +37,12 @@ Boston, MA 02111-1307, USA.  */
 #include "constants.h"
 
 #include <ctype.h>
-// #include <alloca.h> 
-#define alloca(size)   __builtin_alloca (size)
+/* On FreeBSD, alloca is defined in stdlib, on most other platforms,
+   (cygwin, linux) it is in alloca.h */
+#ifndef __FreeBSD__
+#include <alloca.h> 
+#endif
+//#define alloca(size)   __builtin_alloca (size)
 
 /* MULTIBYTE_CHARS support only works for native compilers.
    ??? Ideally what we want is to model widechar support after
