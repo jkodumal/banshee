@@ -69,8 +69,8 @@ check:
 	$(MAKE) -C tests check
 	$(MAKE) -C tests -f pta_test.mk
 	$(MAKE) -C tests -f pta_test.mk pta-bt-regr
-#	$(MAKE) -C tests -f ibanshee_test.mk
-#	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-bt
+	$(MAKE) -C tests -f ibanshee_test.mk
+	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-bt
 
 perf:
 	$(MAKE) -C tests -f pta_perf.mk
