@@ -647,6 +647,10 @@ gen_e setif_proj(constructor c, int i, gen_e e)
 	  proj_var = get_vinv_proj_var(c->sig[i].sort,c,i,e);
 	  pat = setif_proj_pat(c,i,proj_var);
 	  sv_add_ub_proj(v,pat);
+
+	  if (!banshee_check_rollback(setif_sort)) {
+	    setif_register_rollback();
+	  }
 	  setif_register_ub_proj(sv_get_ub_projs(v),pat);
 
 	  bounds_scan(sv_get_lbs(v),&scan);

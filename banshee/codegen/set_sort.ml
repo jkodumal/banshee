@@ -422,6 +422,9 @@ class setsort_gen =
 		   c = EPRIME_fresh(NULL);\n\
 		   e = CONSTRUCTOR_patNUMBER(c);\n\
 		   sv_add_ub_proj(v,e);\n\
+                   if (!banshee_check_rollback(setif_sort)) {\n\
+	            setif_register_rollback();\n\
+	           }\n\
 		   setif_register_ub_proj(sv_get_ub_projs(v),e);\n\
                    bounds_scan(sv_get_lbs(v),&scan);\n\
 		   while (bounds_next(&scan,&lb))\n\

@@ -321,7 +321,7 @@ static setif_var_list cycle_detect_rev(region r, setif_var v1, setif_var v2)
     }
 }
 
-static void setif_register_rollback(void) 
+void setif_register_rollback(void) 
 {
 #ifdef BANSHEE_ROLLBACK
   setif_current_rollback_info = ralloc(banshee_rollback_region,

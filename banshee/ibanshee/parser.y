@@ -203,7 +203,6 @@ void flush_lexer(void);
  
 %%
 
-// TODO
 line:      TOK_LINE
            { YYACCEPT; }
          | toplev TOK_LINE
@@ -212,7 +211,6 @@ line:      TOK_LINE
            { exit(0); }
 ;
 
-// TODO
 toplev:    decl
            { }
          | constraint
@@ -540,8 +538,6 @@ pattern:   TOK_LPAREN TOK_IDENT TOK_COMMA TOK_INTEGER TOK_COMMA expr TOK_RPAREN
 	   }
 ;
 
-
-// TODO
 cmd:       TOK_CMD TOK_IDENT
            {
 	     if (!strcmp($2,"quit")) {
@@ -556,6 +552,10 @@ cmd:       TOK_CMD TOK_IDENT
 	     else if (!strcmp($2,"help")) {
 	       show_help();
 	     }
+				/* TODO */
+	     else if (!strcmp($2,"trace")) {
+	       fprintf(stderr,"Trace not yet implemented\n");
+	     }
 	     else {
 	       fprintf(stderr,"Unrecognized command: %s\n",$2);
 	       YYABORT;
@@ -565,6 +565,10 @@ cmd:       TOK_CMD TOK_IDENT
            {
 	     if (!strcmp($2,"undo")) {
 	       banshee_backtrack((banshee_time){$3});
+	     }
+				/* TODO */
+	     else if (!strcmp($2,"trace")) {
+	       fprintf(stderr,"Trace not yet implemented\n");
 	     }
 	   }  
         |  TOK_CMD TOK_IDENT expr
