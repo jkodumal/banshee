@@ -3,6 +3,9 @@
 #include "nonspec.h"
 #include "regions.h"
 
+DECLARE_LIST(signature, sig_elt);
+DEFINE_LIST(signature, sig_elt); 
+
 struct pattern {
   constructor c;
   int index;
@@ -20,9 +23,9 @@ enum e_sort {
 };
 
 static region ibanshee_region;
-
-				
-/* TODO - static constructor lookup_constructor(char *name)  */
+static hash_table constructor_env;
+static hash_table named_env;
+static hash_table var_env;
 
 %}			
 
@@ -70,7 +73,7 @@ static region ibanshee_region;
 %type <pattern> pattern
 %type <flowrow_map> rowmap
 %type <row> gen_e
-
+%type <signature> signature
 
 %union {
   int num;
@@ -80,18 +83,21 @@ static region ibanshee_region;
  
 %%
 
+// TODO
 program:   /* empty */ 
            { }
          | program line
            { }
 ;
 
+// TODO
 line:      TOK_LINE
            { }
          | toplev TOK_LINE
            { }
 ;
 
+// TODO
 toplev:    decl
            { }
          | constraint
@@ -101,23 +107,78 @@ toplev:    decl
 ;
 
 decl:      TOK_DECL TOK_VAR TOK_COLON sort
-           { }
-         | TOK_DECL TOK_IDENT TOK_EQ expr
-           { }
-         | TOK_DECL cons_decl TOK_COLON basesort
-           { }
-;
+           { 
+	     gen_e fresh_var;
 
-cons_decl: TOK_IDENT 
-           { }
-         | TOK_IDENT TOK_LPAREN signature TOK_RPAREN
-           { }
+	     if (hash_table_lookup(var_env,$2,NULL)) {
+	       fail("A variable named %s already exists.\n",$2);
+	     }
+
+	     switch(sort) {
+	     case setif_sort:
+	       fresh_var = setif_fresh($2);
+	       break;
+	     case term_sort:
+	       fresh_var = term_fresh($2);
+	       break;
+	     case flowrow_sort:
+	       fresh_var = flowrow_fresh($2);
+	       break;
+	     }	     
+	     hash_table_insert(var_env,$2,fresh_var);
+	   }
+         | TOK_DECL TOK_IDENT TOK_EQ expr
+           {
+	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+	       fail("A constructor named %s already exists.\n",$2);
+	     }
+	     else {
+	       hash_table_insert(named_env,$2,(hash_data)$4);
+	     }
+           }
+         | TOK_IDENT TOK_COLON basesort
+           {
+	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+               fail("Constructor %s already defined.\n",$1);
+	     }
+             else if (hash_table_lookup(named_env,$1,NULL)) {
+	       fail("An expression named %s already exists.\n",$1);
+ 	     }
+	     else {
+               constructor c = make_constructor($1,$3,NULL,0);
+	       hash_table_insert(constructor_env,$1,(hash_data)c);
+	     }
+           }
+         | TOK_IDENT TOK_LPAREN signature TOK_RPAREN TOK_COLON basesort
+           { 
+	     if (hash_table_lookup(constructor_env,$1,NULL)) {
+               fail("Constructor %s already defined.\n",$1);
+	     }
+             else if (hash_table_lookup(named_env,$1,NULL)) {
+	       fail("An expression named %s already exists.\n",$1);
+ 	     }
+	     else {
+               constructor c = 
+		 make_constructor($1,$6,
+				  signature_array_from_list(ibanshee_region,
+							    $3),
+				  signature_length($3));
+	       hash_table_insert(constructor_env,$1,c);
+	     }
+           }
 ;
 
 signature: sig_elt
-           { }
+           { 
+             signature sig = new_signature(ibanshee_region);
+             signature_cons($1,sig);
+             $$ = sig;
+           }
          | signature TOK_COMMA sig_elt
-           { }
+           {
+             signature_cons($3,$1);
+             $$ = $1; 
+           }
 ;
 
 sig_elt:   TOK_POS sort
@@ -152,27 +213,52 @@ basesort:  TOK_SETIF
            { $$ = setif_sort; }
          | TOK_TERM
            { $$ = term_sort; }
-         | TOK_FLOW
-           { $$ = flow_sort; }
 ;
 
 constraint: expr TOK_DEQ expr
-            { }
+            { call_sort_inclusion($1,$3); }
          |  expr TOK_LEQ expr
-            { }
+            { call_sort_unify($1,$3); }
 ;
 
 expr:    TOK_VAR
            { 
-
+	     gen_e v = NULL;
+	     
+	     if (hash_table_lookup(var_env,$1,&v)) {
+	       $$ = v;
+	     }
+	     else {
+	       fail("Could not find variable named %s.\n",$1);
+	     }
            }
          | TOK_IDENT /* constant or named expression */
            {
-             
+	     constructor c = NULL;
+	     gen_e n = NULL;
+             if (hash_table_lookup(constructor_env,$1,&c)) {
+	       $$ = constructor_expr(c,NULL,0);
+	     }
+	     else if (hash_table_lookup(named_env,$1,&n)) {
+	       $$ = n;
+	     }
+	     else {
+	       fail("Could not find constant or expression named %s.\n",$1);
+	     }
            }
          | TOK_IDENT LPAREN expr_list TOK_RPAREN /* a constructed term */
            {
+	     constructor c = NULL;
 
+	     if (hash_table_lookup(constructor_env,$1,&c)) {
+	       $$ = 
+		 constructor_expr(c,
+				  gen_e_array_from_list(ibanshee_region,$3),
+				  gen_e_list_length($3));
+	     }
+	     else {
+	       fail("Could not find constructor named %s.\n",$1);
+	     }
            }
          | expr TOK_UNION expr	/* the union of e1 and e2 */
            {
@@ -277,11 +363,25 @@ rowmap:    TOK_IDENT TOK_EQ expr
 ;
 
 pattern:   TOK_LPAREN TOK_IDENT TOK_COMMA TOK_INTEGER TOK_COMMA expr TOK_RPAREN
-           { $$ = (pattern){lookup_constructor($2),$4,$6}; }
+           { 
+	     constructor c = NULL;
+	     if (hash_table_lookup(constructor_env,$2,&c)) {
+	       $$ = (pattern){c,$4,$6}; 
+	     }
+	     else {
+	       fail("Could not find constructor named %s.\n",$2);
+	     }
+	   }
 ;
 
+
+// TODO
 cmd:       TOK_CMD TOK_IDENT
-           { }
+           {
+	     if (!strcmp($2,"quit")) {
+	       exit(0);
+	     }
+	   }
         |  TOK_CMD TOK_IDENT TOK_INTEGER
            { }  
         |  TOK_CMD TOK_IDENT TOK_EXPR 
