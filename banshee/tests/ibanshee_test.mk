@@ -33,6 +33,9 @@ ibanshee-check: ibanshee-regr
 IBC_DIR := ./test.ibc
 COR_DIR := ./test.ibc.cor
 
+IBC_BT_DIR := ./test.ibc/bt
+COR_BT_DIR := ./test.ibc.cor/bt
+
 IBANSHEE_TESTS := 
 IBANSHEE_TESTS += cons_def.ibc
 IBANSHEE_TESTS += cons_def2.ibc
@@ -41,25 +44,40 @@ IBANSHEE_TESTS += row.ibc
 IBANSHEE_TESTS += trans.ibc
 IBANSHEE_TESTS += trans2.ibc
 
+IBANSHEE_BT_TESTS := 
+IBANSHEE_BT_TESTS += simple.ibc
+
 
 IBANSHEE_EXEC := $(IBANSHEE_DIR)/ibanshee.exe
 
 .PHONY: ibanshee-regr
 ibanshee-regr:  $(IBANSHEE_EXEC) ibanshee-regr/clean \
-           $(patsubst %,ibanshee-tests/%,$(IBANSHEE_TESTS)) ibanshee-done
+           $(patsubst %,ibanshee-tests/%,$(IBANSHEE_TESTS)) ibanshee-done 
+
+ibanshee-bt: $(IBANSHEE_EXEC) ibanshee-bt/clean \
+	$(patsubst %,ibanshee-bt-tests/%,$(IBANSHEE_BT_TESTS)) ibanshee-bt-done
 
 ibanshee-regr/clean:
 	rm -f $(IBC_DIR)/*.out
 
-.PHONY: ibanshee-done
+ibanshee-bt/clean:
+	rm -f $(IBC_BT_DIR)/*.out
+
+.PHONY: ibanshee-done ibanshee-bt-done
 
 ibanshee-done:; @echo "iBanshee tests pass"
+
+ibanshee-bt-done:; @echo "iBanshee backtracking tests pass"
 
 ibanshee-tests/%:
 	$(IBANSHEE_EXEC) -f $(IBC_DIR)/$* > $(IBC_DIR)/$*.out
 	diff $(COR_DIR)/$*.cor $(IBC_DIR)/$*.out
 
+ibanshee-bt-tests/%:
+	$(IBANSHEE_EXEC) -f $(IBC_BT_DIR)/$* > $(IBC_BT_DIR)/$*.out
+	diff $(COR_BT_DIR)/$*.cor $(IBC_BT_DIR)/$*.out
+
 $(IBANSHEE_DIR)/ibanshee.exe: 
 	$(MAKE) -C ../ ibanshee
 
-clean: ibanshee-regr/clean
+clean: ibanshee-regr/clean ibanshee-bt/clean

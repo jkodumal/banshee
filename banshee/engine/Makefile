@@ -27,10 +27,10 @@
 
 
 # if HASH_BOUNDS is defined, use hash_bounds.o, otherwise, use bounds.o
-ifdef HASH_BOUNDS
-FILTERBOUNDS = bounds.o
-else
+ifdef NO_HASH_BOUNDS
 FILTERBOUNDS = hash_bounds.o
+else
+FILTERBOUNDS = bounds.o
 endif
 
 region_dir = ../libcompat
@@ -40,7 +40,7 @@ CC = gcc
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
 	 -Dparentptr= -Wall -Werror -fno-strict-aliasing
 
-ifdef BANSHEE_ROLLBACK
+ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
 endif
 

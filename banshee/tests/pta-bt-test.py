@@ -37,3 +37,8 @@ except:
 
 print "Total number of things pointed to (%d files): %d" % (prefix_size,total)
 print "Total number of things pointed to (%d files): with backtracking: %d" % (prefix_size,total2)
+if (total != total2):
+    print "A backtracking test failed"
+    sys.exit(1)
+else:
+    sys.exit(0)

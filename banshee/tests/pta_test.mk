@@ -37,23 +37,33 @@ PTA_LARGE :=
 PTA_LARGE += ML-typecheck.preproc
 PTA_LARGE += li.preproc
 
+PTA_BT :=
+PTA_BT += ML-typecheck.preproc
 
 PTA_EXEC := $(PARSER_DIR)/parser.exe
 
-.PHONY: pta-regr
+.PHONY: pta-regr pta-bt-regr
 pta-regr:  $(PARSER_DIR)/parser.exe pta-regr/clean \
            $(patsubst %,pta-large/%,$(PTA_LARGE)) pta-done
+
+pta-bt-regr: $(PARSER_DIR)/parser.exe \
+	   $(patsubst %,pta-bt/%,$(PTA_BT)) pta-bt-done
 
 pta-regr/clean:
 	rm -f $(PTA_DIR)/*.out
 
-.PHONY: pta-done
+.PHONY: pta-done pta-bt-done
 
 pta-done:; @echo "PTA tests pass"
+
+pta-bt-done:; @echo "PTA backtracking tests pass"
 
 pta-large/%:
 	$(PTA_EXEC) $(PTA_DIR)/$*/*.c 2> /dev/null | grep "Number of things pointed to" > $(PTA_DIR)/$*.out
 	diff $(COR_DIR)/$*.cor $(PTA_DIR)/$*.out
+
+pta-bt/%:
+	./pta-bt-test.py 7 $(PTA_DIR)/$*/*.c
 
 $(PARSER_DIR)/parser.exe: 
 	$(MAKE) -C ../ points-to	
