@@ -33,14 +33,14 @@ BANSHEE= $(banshee_bindir)/banshee.exe
 
 RCA = rca_types
 
-TARGETS =  $(RCA).h $(RCA).c $(RCA).o TAGS
+TARGETS =  $(RCA).h $(RCA).c $(RCA).o rca_analyze.o TAGS
 
 TAGFILES = *.c *.h
 
 CC = gcc
 
-CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= 
+CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+         -Dsameregion= -Dparentptr= 
 
 .PHONY: clean
 
