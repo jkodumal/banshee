@@ -146,7 +146,7 @@ gen_e setif_fresh(const char *name);
 
 gen_e term_fresh(const char *name);
 
-gen_e flowrow_fresh(const char *name);
+gen_e flowrow_fresh(const char *name,sort_kind base_sort);
 
 gen_e setst_fresh(const char *name);
 

@@ -247,7 +247,7 @@ switch (s)
     case flowrow_sort:
       return flowrow_get_stamp;
     default:
-      fail("Unmatched sort in get_sort_zero\n");
+      fail("Unmatched sort in get_sort_stamp\n");
       return NULL;
     }
   return NULL;
@@ -264,6 +264,7 @@ switch (s)
     case term_sort:
       return term_zero();
     case flowrow_sort:
+      // return flowrow_zero();
     default:
       fail("Unmatched sort in get_sort_zero\n");
       return NULL;

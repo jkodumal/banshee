@@ -40,6 +40,7 @@ static hash_table constructor_env;
 static hash_table named_env;
 static hash_table var_env;
 static int interactive = 1;
+static sort_kind current_row_base_sort;
 
 extern FILE * yyin;
 
@@ -228,7 +229,7 @@ toplev:    decl
            { }
 ;
 
-decl:      TOK_VAR TOK_COLON sort
+decl:      TOK_VAR TOK_COLON esort
            { 
 	     gen_e fresh_var;
 
@@ -238,14 +239,16 @@ decl:      TOK_VAR TOK_COLON sort
 	     }
 	     else {
 	       switch($3) {
-	       case setif_sort:
+	       case e_setif_sort:
 		 fresh_var = setif_fresh($1);
 		 break;
-	       case term_sort:
+	       case e_term_sort:
 		 fresh_var = term_fresh($1);
 		 break;
-	       case flowrow_sort:
-		 fresh_var = flowrow_fresh($1);
+	       case e_flowrow_setif_sort:
+		 fresh_var = flowrow_fresh($1,setif_sort);
+	       case e_flowrow_term_sort:
+                 fresh_var = flowrow_fresh($1,term_sort); 
 		 break;
 	       }	     
 	       hash_table_insert(var_env,$1,fresh_var);
@@ -511,7 +514,8 @@ expr_list: expr
  
 row:       rowmap
            { 
-             $$ = flowrow_make_row($1, flowrow_fresh("rest"));
+             $$ = flowrow_make_row($1, flowrow_fresh("rest", 
+						     current_row_base_sort ));
            }
          | rowmap TOK_REST expr
            { 
@@ -521,6 +525,7 @@ row:       rowmap
 
 rowmap:    TOK_IDENT TOK_EQ expr 
            {
+	     current_row_base_sort = expr_sort($3);
              flowrow_map map = new_flowrow_map(ibanshee_region);
              flowrow_field field = flowrow_make_field($1,$3);
              flowrow_map_cons(field,map);
@@ -528,6 +533,7 @@ rowmap:    TOK_IDENT TOK_EQ expr
            }
          | rowmap TOK_COMMA TOK_IDENT TOK_EQ expr
            {
+	     current_row_base_sort = expr_sort($5);
              flowrow_field field = flowrow_make_field($3,$5);
              flowrow_map_cons(field,$1);
              $$ = $1;

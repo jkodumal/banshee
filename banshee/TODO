@@ -71,8 +71,9 @@ two cases 'nonroot' will be a nonroot as we expect.
 Also, now note that the args to combine_fn_ptr in ufind.h are
 const. The idea is that combine shouldn't destructively update its
 arguments, rather it should merely select one of the two, or create a
-new info by joining the two existing infos. However, the original
-infos should remain unchanged for the purposes of undoing.
+new info that represents a join of the two existing infos. However,
+the original infos must remain unchanged for the purposes of
+undoing.
 
 ** Add rollback control structure
 
@@ -100,6 +101,8 @@ Control flow for rollback proceeds in the following manner--
 DONE.
 
 ** Rollback support for each sort
+
+DONE.
  
        PROBLEM: How do we handle union-find rollbacks? Is it always OK
        to unroll all unifications first? This is probably the solution we 
@@ -136,9 +139,13 @@ DONE.
 
 *** Term
 
+DONE.
+
 Just change pending representation to bounds
 
 *** FlowRow
+
+DONE.
            Keep track of:
            -x- normalization (non destructive)
            -x- contour instantiation (probably don't have to do
@@ -147,7 +154,10 @@ Just change pending representation to bounds
            -x- fv_set_alias (unset alias)
            -x- fv_set_contour should automatically be undone (ufind)
            -x- contour unifications should automatically be undone (ufind)
+
 *** SetIF
+
+DONE.
 
    -x- Make cycle elimination support rollback
  
@@ -159,13 +169,17 @@ Just change pending representation to bounds
 
 *** SetST
 
+DONE.
+
+By ignoring, so not really done.
+
 ** Other data structure modifications for rollback
 
 *** Add rollback support to bounds
   
-       DONE
+DONE.
 
-       Not really rollback support, but deletion support
+Not really rollback support, but deletion support.
 
 * Add serialization support
 
@@ -177,10 +191,18 @@ Just change pending representation to bounds
 
 *** Add a command line flag to read from files
 
+DONE.
+
 *** Add a !load command
 
 !load should act somewhat differently, it shouldn't YYACCEPT at line ends,
 nor should there be any > output
+
+** Test cases for iBanshee
+
+*** Update build process to check iBanshee build
+
+*** Add tests for iBanshee
 
 
 
