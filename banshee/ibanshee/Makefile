@@ -25,10 +25,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-ifdef RLIB
-region_dir = ../rlib
-else
+ifdef LIBCOMPAT
 region_dir = ../libcompat
+else
+region_dir = ../rlib
 endif
 
 all: ibanshee.exe

@@ -19,10 +19,10 @@
 O = mobj/
 CC = gcc
 
-ifdef RLIB
-region_dir = ../rlib
-else
+ifdef LIBCOMPAT
 region_dir = ../libcompat
+else
+region_dir = ../rlib
 endif
 
 ifdef DEBUG
