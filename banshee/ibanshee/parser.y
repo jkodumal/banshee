@@ -363,9 +363,9 @@ sig_elt:   TOK_POS sort
 ;
  
 sort:       basesort
-           { $$ = $1}
+           { $$ = $1;}
          | TOK_ROW TOK_LPAREN basesort TOK_RPAREN
-           { $$ = flowrow_sort }
+           { $$ = flowrow_sort; }
 ;
 
 esort:      basesort
@@ -547,16 +547,19 @@ row:       rowmap
 
 rowmap:    TOK_IDENT TOK_EQ expr 
            {
+	     flowrow_field field;
+	     flowrow_map map;
+	     map = new_flowrow_map(ibanshee_region);
 	     current_row_base_sort = expr_sort($3);
-             flowrow_map map = new_flowrow_map(ibanshee_region);
-             flowrow_field field = flowrow_make_field($1,$3);
-             flowrow_map_cons(field,map);
-             $$ = map;
+	     field = flowrow_make_field($1,$3);
+	     flowrow_map_cons(field,map);
+	     $$ = map;
            }
          | rowmap TOK_COMMA TOK_IDENT TOK_EQ expr
            {
+	     flowrow_field field;
 	     current_row_base_sort = expr_sort($5);
-             flowrow_field field = flowrow_make_field($3,$5);
+             field = flowrow_make_field($3,$5);
              flowrow_map_cons(field,$1);
              $$ = $1;
            }
