@@ -1,19 +1,11 @@
-struct typeExp
+int *malloc_wrapper ()
 {
-};
-struct typeExp *
-CreateType ()
-{
-  struct typeExp *tmp;
-  tmp = (struct typeExp *) malloc (sizeof (struct typeExp));
-  return (tmp);
+  return (int *) malloc (sizeof (int));
 }
-struct typeExp *
-HandleGeneric (struct typeExp *t)
+void main ()
 {
-  Substitute (CreateType ());
+  Substitute (malloc_wrapper ());
 }
-struct typeExp *
-Substitute (struct typeExp *new)
+void Substitute (int *new)
 {
 }

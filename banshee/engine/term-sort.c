@@ -324,7 +324,7 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
     {
       term_var v = (term_var)e2;
 
-      if (! term_is_bottom(e2))
+      if (! term_is_bottom(e1))
 	fire_pending(v,e1,con_match,occurs);
       
       /* v = e1, e1 is not a var */
