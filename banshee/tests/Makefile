@@ -49,7 +49,7 @@ endif
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 EXES = lambda-test.exe dyckcfl-test.exe dyckcfl-random-test.exe \
-          uf-bt-test.exe
+          uf-bt-test.exe persist-test.exe
 
 TARGETS =  $(EXES) 
 
@@ -67,6 +67,9 @@ dyckcfl-random-test.exe: dyckcfl-random-test.c $(DYCKCFL_EXTRA_OBJS) $(ENGINE_LI
 	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lm -lnsengine -lregions
 
 uf-bt-test.exe: uf-bt-test.c $(ENGINE_LIB) $(REGION_LIB)
+	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
+
+persist-test.exe: persist-test.c $(ENGINE_LIB) $(REGION_LIB)
 	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
 
 .PHONY: clean check 
