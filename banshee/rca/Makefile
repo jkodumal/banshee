@@ -48,8 +48,10 @@ all: $(TARGETS) TAGS
 
 $(RCA).c: $(RCA).bsp $(BANSHEE)
 	$(BANSHEE) $(RCA).bsp $(RCA)
+	indent -npsl $@ -o $@
 
 $(RCA).h: $(RCA).c
+	indent -npsl $@ -o $@
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)

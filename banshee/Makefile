@@ -28,9 +28,9 @@
 .PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
         docs points-to install
 
-banshee: libcompat codegen engine docs
-
 all: banshee tests points-to docs
+
+banshee: libcompat codegen engine
 
 libcompat: 
 	$(MAKE) -C libcompat
@@ -80,5 +80,5 @@ clean:
 	$(MAKE) -C tests clean
 	$(MAKE) -C docs clean
 	$(MAKE) -C tests -f pta_test.mk clean
-
+	rm -rf *~
 

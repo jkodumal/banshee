@@ -39,3 +39,4 @@ other tasks (a wishlist)
   -x- tests/Makefile dependencies are not right (they seem correct now)
   --- update website, move to sourceforge
   --- RELEASE
+  --- dependencies aren't quite right: autogenerate header dependencies

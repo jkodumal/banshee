@@ -39,8 +39,8 @@ TAGFILES = $(LAMBDA).h $(LAMBDA).c
 
 CC = gcc
 
-CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= 
+CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+         -Dsameregion= -Dparentptr= 
 
 .PHONY: clean
 
@@ -48,8 +48,10 @@ all: $(TARGETS)
 
 $(LAMBDA).c: $(LAMBDA).bsp $(BANSHEE)
 	$(BANSHEE) $(LAMBDA).bsp $(LAMBDA)
+	indent -npsl $@ -o $@
 
 $(LAMBDA).h: $(LAMBDA).c
+	indent -npsl $@ -o $@
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)

@@ -1,0 +1,16 @@
+This directory contains a points-to analysis application based on a C
+front-end written by David Gay.
+
+To build the application, type 'make points-to' in the parent
+directory. If all goes well, this will create the file parser.exe. 
+
+parser.exe expects preprocessed code. To run the analysis on a whole
+program (with multiple source files) simply list the files on the
+command line. parser.exe also understands wildcards, so, e.g.,
+
+./parser.exe path_to_preprocessed_sources/*.c
+
+will invoke the parser on an entire directory of C files. 
+
+See the file COPYRIGHT for licensing information.
+

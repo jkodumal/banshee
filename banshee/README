@@ -1,35 +1,54 @@
-This is banshee, a toolkit for constructing constraint-based program analyses.
-See the user manual in docs/banshee.ps for a complete description of banshee.
+This is banshee, a toolkit for constructing constraint-based program
+analyses.  See the user manual in docs/banshee.ps for a complete
+description of banshee.
 
-This is a beta release of banshee. Although banshee has been designed to solve
-many kinds of constraints, it has only been extensively tested on 
-Andersen's-style points-to analysis. 
+This is a beta release of banshee. Although banshee has been designed
+to solve many kinds of constraints, it has only been extensively
+tested on Andersen's-style points-to analysis.
 
 To build banshee, the following must be installed: 
- --- o'caml (see http://caml.inria.fr)
- --- gcc
+ --- ocaml (see http://caml.inria.fr)
+ --- gcc (should be standard)
+ --- indent (should be standard)
 
 You can then build banshee by typing 'make' at the command line in
-this directory. 'make check' will verify your build.
+this directory. If everything succeeds, the following files will be
+built:
+
+engine/libnsengine.a
+engine/libengine.a
+bin/banshee.exe
+
+The first library is the nonspecialized constraint resolution
+library. Link with this library if your application does not use the
+code generator. The interface for this library is defined in
+engine/nonspec.h.
+
+The second library should be linked with applications that use the
+banshee code generator (bin/banshee.exe). Interfaces for this library
+are created by the code generator. See the user manual for more
+information.
+
+'make' will also build the user manual (docs/banshee.ps) a suite of
+small test applications (see tests/README) and the points-to analysis
+application (see cparser/README).
 
 Other useful make targets:
 
-'make docs' : build just the documentation
+'make check' will verify your build. 
+'make banshee' will build banshee without building any test applications
+'make docs' will just build the documentation
+'make test' will just build the test applications
+'make points-to' : build the points-to analysis application
 
-
-banshee should build and run on Linux and Windows (with cygwin)
-
-
-
-
-
+banshee should build and run on Linux and Windows (with cygwin).
 
 banshee is distributed under the BSD license, with the exception of
 the following files:
 
 engine/malloc.c (see file for license)
 codegen/OCamlMakefile (no license)
-cparser (GPL)
+cparser (GPL, see cparser/COPYRIGHT)
 
 Note that the cparser is a separate application, no code from cparser
 is linked into banshee itself.

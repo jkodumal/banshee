@@ -37,8 +37,8 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 CC = gcc
 
-CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -DNONSPEC
+CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+         -Dsameregion= -Dparentptr= -DNONSPEC
 
 .PHONY: clean
 

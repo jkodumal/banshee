@@ -48,8 +48,10 @@ andersen.o: $(ANDERSEN).h
 
 $(ANDERSEN).c: $(ANDERSEN).bsp $(BANSHEE)
 	$(BANSHEE) $(ANDERSEN).bsp $(ANDERSEN)
+	indent -npsl $@ -o $@
 
 $(ANDERSEN).h: $(ANDERSEN).c
+	indent -npsl $@ -o $@
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)
