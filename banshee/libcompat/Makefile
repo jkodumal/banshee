@@ -27,7 +27,11 @@
 
 CC=gcc
 
+ifdef DEBUG
+CFLAGS = -Wall -Ddeletes="" -g -pg
+else
 CFLAGS = -O3 -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG
+endif
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 

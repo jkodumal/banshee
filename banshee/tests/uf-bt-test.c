@@ -51,8 +51,10 @@ int main()
   e4 = new_elt(scratchregion,4);
 
   elt_union(e1,e2);		// | e1 e2 | e3 | e4 | 
+  printf("(%d,%d)\n",elt_get_info(e1),elt_get_info(e2));
   assert(elt_get_info(e2) == elt_get_info(e1));
   uf_backtrack(); 		// | e1 | e2 | e3 | e4 | 
+  printf("(%d,%d)\n",elt_get_info(e1),elt_get_info(e2));
   assert(elt_get_info(e1) == 1);
   assert(elt_get_info(e2) == 2);
   elt_union(e1,e2);		// | e1 e2 | e3 | e4 | 

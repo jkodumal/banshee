@@ -97,7 +97,7 @@ static struct uf_element *find(struct uf_element *e)
 
 static ustack_elt make_ustack_elt(uf_element e,void *info)
 {
-  ustack_elt result = ralloc(stackregion,struct ustack_elt_ *);
+  ustack_elt result = ralloc(stackregion,struct ustack_elt_);
   result->nonroot = e;
   result->old_info = info;
   
