@@ -46,7 +46,7 @@ void alloc_block(region r, struct allocator *a, struct ablock *blk,
 {
   struct page *newp;
   char *mem1, *mem2;
-  
+
   mem1 = PALIGN(blk->allocfrom, a1);
   mem2 = PALIGN(mem1 + s1, a2);
 
@@ -72,14 +72,14 @@ void alloc_block(region r, struct allocator *a, struct ablock *blk,
 	}
       blk->base = (char *)newp;
 
-      if (needsclear)
-	preclear(blk->allocfrom, blksize - (blk->allocfrom - (char *)newp));
       mem1 = PALIGN(blk->allocfrom, a1);
       mem2 = PALIGN(mem1 + s1, a2);
     }
 
   ASSERT_INUSE(blk->base, r);
+  clear(mem2, s2);
   blk->allocfrom = mem2 + s2;
+
 
   *p1 = mem1;
   *p2 = mem2;
@@ -112,8 +112,7 @@ void qalloc(region r, struct allocator *a, void **p1, int s1, int a1,
   mem = (char *)p + offsetof(struct page, previous);
   *p1 = PALIGN(mem, a1);
   *p2 = PALIGN(*p1 + s1, a2);
-  if (needsclear)
-    preclear(*p2, s2);
+  clear(*p2, s2);
 }
 
 void free_all_pages(region r, struct allocator *a)

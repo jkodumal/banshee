@@ -63,10 +63,10 @@ int verify()
   hash_table table; 
   region temp = newregion();
 
-  u[0] = update_bucket;
-  u[1] = update_hash_table;
-  u[2] = update_bucketptr;
-  u[3] = update_node;
+  u[3] = update_bucket;
+  u[2] = update_hash_table;
+  u[1] = update_bucketptr;
+  u[0] = update_node;
 
   t = deserialize("data", "offsets", u, temp);
   table = (hash_table) translate_pointer(t, (void *)table);
@@ -82,22 +82,27 @@ int verify()
   return 1;
 }
 
+void seed_fn_ptr_table(region r);
+
 int main(int argc, char *argv[])
 {
   region r[5];
   int i = 0;
   node n = NULL;
   hash_table table;
-  region node_region = newregion();
+  region node_region;
   
   region_init();
   hash_table_init();
+  seed_fn_ptr_table(newregion());
 
-  r[0] = bucket_region;
-  r[1] = table_region;
-  r[2] = bucketptr_region;
-  r[3] = node_region;
+  node_region = newregion();
+
   r[4] = NULL;
+  r[3] = bucket_region;
+  r[2] = table_region;
+  r[1] = bucketptr_region;
+  r[0] = node_region;
 
   table = make_persistent_string_hash_table(table_region, 8, 1);
 
@@ -114,6 +119,7 @@ int main(int argc, char *argv[])
   }
 
   serialize(r, "data", "offsets");
+
   if (!verify()) {
     printf("Failed region persist test\n");
     exit(1);
@@ -122,4 +128,5 @@ int main(int argc, char *argv[])
     printf("Passed region persist test\n");
     exit(0);
   }
+
 }

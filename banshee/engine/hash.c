@@ -90,7 +90,7 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
   if (fn_ptr_table) {
     hash_table_lookup(fn_ptr_table, (hash_key)hash, 
 		      (hash_data*)&result->hash_fn_id);
-    hash_table_lookup(fn_ptr_table, (hash_key)hash,
+    hash_table_lookup(fn_ptr_table, (hash_key)cmp,
 		      (hash_data*)&result->keyeq_fn_id);
   }
 

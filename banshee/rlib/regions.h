@@ -138,7 +138,7 @@ typedef size_t adjust_fn(void *x, int by);
 typedef adjust_fn *type_t;
 
 /* rctypeof hack */
-#define rctypeof(type) 0
+#define rctypeof(type) (void *)sizeof(type)
 
 /* Low-level alloc with dynamic type info */
 void *typed_ralloc(region r, size_t size, type_t type);
