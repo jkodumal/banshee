@@ -79,7 +79,9 @@ static function_decl current_fun_decl = NULL;
 /* static int scope = 0; */
 
 /* TODO -- must serialize this!!! */
-static env global_var_env;
+/* static env global_var_env; */
+static hash_table global_var_hash;
+
 
 static env file_env;
 static env local_env;
@@ -139,6 +141,20 @@ static void analyze_statement(statement) deletes;
 static type return_type(type t);
 static var_kind get_kind(data_declaration ddecl);
 
+// Return true if a name has been defined globally
+/* static bool seen_global(const char *name) */
+/* { */
+/*   if (( env_lookup(global_var_env,name,FALSE)) ) */
+/*     return TRUE; */
+/*   return FALSE; */
+/* } */
+
+static bool seen_global(const char *name)
+{
+  return hash_table_lookup(global_var_hash,(hash_key)name, NULL);
+}
+
+
 static bool var_info_insert(var_info v_info)
 {
   char buf[MAX_STR];
@@ -168,7 +184,10 @@ static bool var_info_insert(var_info v_info)
       break;
     case vk_global :
       {
-	env_add(global_var_env, v_info->name, v_info);
+	assert(!seen_global(v_info->name));
+	//env_add(global_var_env, v_info->name, v_info);
+	hash_table_insert(global_var_hash, (hash_key)v_info->name, 
+			  (hash_data)v_info);
 	return FALSE;
       }
       break;
@@ -192,13 +211,6 @@ static data_declaration make_ret_decl(char *name,type t )
   return ddecl;
 }
 
-// Return true if a name has been defined globally
-static bool seen_global(const char *name)
-{
-  if (( env_lookup(global_var_env,name,FALSE)) )
-    return TRUE;
-  return FALSE;
-}
 
 static bool var_info_lookup(const char *name,var_info *v)
 {
@@ -206,7 +218,8 @@ static bool var_info_lookup(const char *name,var_info *v)
     return TRUE;
   if ( ( (*v)  = env_lookup(file_env,name, FALSE)) )
     return TRUE;
-  else if (( (*v) = env_lookup(global_var_env,name,FALSE)) )
+/*   else if (( (*v) = env_lookup(global_var_env,name,FALSE)) ) */
+  else if (hash_table_lookup(global_var_hash, name, v))
     return TRUE;
   return FALSE;
 }
@@ -1597,6 +1610,7 @@ void analysis_region_serialize(const char *filename)
  
   fwrite((void *)&state, sizeof(struct persistence_state), 1, f);
   fwrite((void *)&acnt, sizeof(struct counts), 1, f);
+  fwrite((void *)&global_var_hash, sizeof(hash_table), 1, f);
 
   {
     int count = 0;
@@ -1621,6 +1635,7 @@ void analysis_region_deserialize(translation t, const char *filename)
 
   fread((void *)&state, sizeof(struct persistence_state), 1, f);
   fread((void *)&acnt, sizeof(struct counts), 1, f);
+  fread((void *)&global_var_hash, sizeof(hash_table), 1, f);
   //update_pointer(t, (void **)&collection_hash);
   update_pointer(t, (void **)&state.scopes);
   update_pointer(t, (void **)&state.collection_counts);
@@ -1630,6 +1645,7 @@ void analysis_region_deserialize(translation t, const char *filename)
   update_pointer(t, (void **)&state.collection_envs);
   //assert(hash_table_list_last(state.collection_envs) == collection_hash);
   collection_hash = hash_table_list_last(state.collection_envs);
+  update_pointer(t, (void **)global_var_hash);
 
   andersen_terms_region_deserialize(t, f);
 }
@@ -1745,7 +1761,11 @@ void analysis_init() deletes
 {
   pta_init();
   analysis_rgn = newregion();
-  global_var_env = new_env(analysis_rgn,NULL);
+/*   global_var_env = new_env(analysis_rgn,NULL); */
+
+  /* Not really a gen_e hash, but the exact kind doesn't matter */
+  global_var_hash = 
+    make_persistent_string_hash_table(128, BANSHEE_PERSIST_KIND_gen_e);
   collection_hash = 
     make_persistent_string_hash_table(128, 
 				      BANSHEE_PERSIST_KIND_gen_e);
