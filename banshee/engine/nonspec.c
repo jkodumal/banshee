@@ -223,7 +223,7 @@ static bool setif_is_cons_expr(gen_e e)
 static bool setst_is_cons_expr(gen_e e)
 {
   int type = ((setst_term)e)->type;
-
+ 
   return ( !(type % 2) && (type >= smallest_special_type) );
 }
 

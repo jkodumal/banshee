@@ -448,9 +448,13 @@ cmd:       TOK_CMD TOK_IDENT
            { }  
         |  TOK_CMD TOK_IDENT expr
            { 
-	     if (!strcmp($2,"tlb")) {
-	       print_tlb($3);
-	     }
+	         if (!strcmp($2,"tlb")) {
+	       		print_tlb($3);
+	       	 }
+	       	 else if (!strcmp($2,"ecr")) {
+				expr_print(stdout,term_get_ecr($3));
+	       	 }
+	     
            }
 ;
 
@@ -460,6 +464,7 @@ int main() {
   printf("iBanshee version 0.1");
   do {
     printf("\n>");
+    fflush(stdout);
     yyparse();
   }
   while (1);

@@ -1,0 +1,3 @@
+parser.tab.h
+lexer.yy.c
+gmon.out

@@ -26,9 +26,9 @@
 # SUCH DAMAGE.
 
 .PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
-        docs points-to install perf
+        docs points-to install perf ibanshee
 
-all: banshee tests points-to 
+all: banshee ibanshee tests points-to 
 
 banshee: libcompat codegen engine
 
@@ -49,6 +49,9 @@ andersen: banshee
 
 points-to: andersen
 	$(MAKE) -C cparser
+	
+ibanshee: banshee
+	$(MAKE) -C ibanshee
 
 lambda: banshee
 	$(MAKE) -C lambda
@@ -84,5 +87,6 @@ clean:
 	$(MAKE) -C tests clean
 	$(MAKE) -C docs clean
 	$(MAKE) -C tests -f pta_test.mk clean
+	$(MAKE) -C ibanshee clean
 	rm -rf *~
 
