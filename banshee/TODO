@@ -1,0 +1,39 @@
+--- Revising the directory structure ---
+
+the goal is to realize the following layout:
+
+banshee
+  --- libcompat 
+  --- dyckcfl    (builds libdyckcfl.a)
+  --- andersen   (builds libandersen.a)
+  --- rca        (builds librca.a)
+  --- lambda     (builds liblambda.a)
+  --- docs       (builds banshee.ps)
+  --- engine     (builds libnsengine.a, libengine.a)
+  --- codegen    (builds banshee)
+  --- bin        (contains banshee)
+  --- tests      (dyckcfl-test, dyckcfl-random-test, lambda-test)
+  --- lib        (libraries *.a)
+
+
+to accomplish this, the following changes must be made:
+  
+  -x- rename directory dyck-cfl to dyckcfl
+  -x- move dyckcfl-test dyckcfl-random to examples
+  -x- move lambda.spec to lambda
+  -x- move points-to to andersen
+  -x- update every makefile
+    
+other tasks (a wishlist)
+  --- bring .cvsignore files up to date
+  -x- check builds on both unix and windows/cygwin
+  -x- get dyckcfl ready for release (copyrights, etc)
+  --- fix dyckcfl-random
+  --- set up test suite
+  --- update manual
+  -x- update copyrights (year)
+  -x- fix all <>-style includes to "", and remove engine/ in codegen
+  -x- add semicolon to end of all DECLARE_XXXX macros  in codegen
+  --- write script for banshee to run output through indent
+  -x- fix etags dependencies
+  -x- tests/Makefile dependencies are not right (they seem correct now)
