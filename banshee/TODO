@@ -124,6 +124,10 @@ so, here are the tasks:
             sort_kind_rollback(banshee_rollback_info) which executes the
             rollback code for each sort
 
+    
+   --- Differentiate between toplevel and internal constraints, and 
+       add tick() for toplevel constraints
+
    --- Rollback support for each sort
  
        PROBLEM: How do we handle union-find rollbacks? Is it always OK
@@ -136,7 +140,8 @@ so, here are the tasks:
        constraint may appear as e1 == e3. Really, whether or not the
        constraints are solved online should be transparent to the
        interface, and operations should all be fixed to maintain this
-       illusion.   
+       illusion. Identity is more of a concern with incremental
+       analysis than rollback
 
        General list of things to keep track of:
         
@@ -150,9 +155,16 @@ so, here are the tasks:
 
        -- change pending representation to bounds       
 
-
-   --- Add rollback support to bounds
+   -x- Add rollback support to bounds
   
+       DONE
+
+       Not really rollback support, but deletion support
+
    --- Make cycle elimination support rollback
+ 
+       Really just undo unifications and repair bounds
 
    --- Make projection merging support rollback
+      
+       Remove entries from ub_projs?

@@ -95,6 +95,8 @@ typedef struct banshee_rollback_info_ {
   sort_kind kind;
 } * banshee_rollback_info;
 
+region banshee_rollback_region;
+
 /* Managing the global banshee clock */
 void banshee_set_time(banshee_rollback_info);
 void banshee_clock_tick();

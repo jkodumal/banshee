@@ -46,6 +46,7 @@ DEFINE_LIST(gen_e_list ,gen_e);
 static int banshee_clock = 0;
 static banshee_rollback_stack rb_stack;
 static region engineregion;
+region banshee_rollback_region;
 
 void engine_init(void)
 {
@@ -54,6 +55,7 @@ void engine_init(void)
   uf_init();
 
   engineregion = newregion();
+  banshee_rollback_region = newregion();
   rb_stack = new_banshee_rollback_stack(engineregion);
 }
 

@@ -42,11 +42,18 @@ struct term_constant_ /* extends gen_e */
   char *name;
 };
 
+typedef struct term_rollback_info_ { /* extends banshee_rollback_info */
+  banshee_time time;
+  sort_kind kind;
+} * term_rollback_info; 
+
 typedef struct term_constant_ *term_constant_;
 
 region term_sort_region;
 term_hash term_sort_hash;
 bool flag_occurs_check = FALSE;
+
+static term_rollback_info current_rollback_info = NULL;
 
 struct term_stats term_stats;
 
@@ -192,11 +199,24 @@ bool term_eq(gen_e e1, gen_e e2)
   return eq(e1,e2);
 }
 
+
+static void term_register_rollback(void) {
+  current_rollback_info = ralloc(banshee_rollback_region, struct term_rollback_info_); 
+  banshee_set_time((banshee_rollback_info)current_rollback_info);
+  current_rollback_info->kind = term_sort;
+  
+  banshee_register_rollback((banshee_rollback_info)current_rollback_info);
+}
+
 void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 		gen_e a, gen_e b)
 {
   gen_e e1 = term_get_ecr(a),
     e2 = term_get_ecr(b);
+
+  if (!banshee_check_rollback(term_sort)) {
+    term_register_rollback();
+  }
 
   if ( term_eq(e1,e2) )
     {
