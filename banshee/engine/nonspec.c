@@ -57,6 +57,7 @@
 #include "term-var.h"
 #include "utils.h"
 #include "hash.h"
+#include "ufind.h"
 #include "banshee_persist_kinds.h"
 
 /* Types defined here MUST be larger than LARGEST_BUILTIN_TYPE (banshee.h). */
@@ -94,8 +95,8 @@ typedef struct cons_group_ *cons_group;
 
 DECLARE_LIST(cons_group_list,cons_group);
 DEFINE_LIST(cons_group_list,cons_group);
-DECLARE_LIST(sig_elt_list,sig_elt_ptr);
-DEFINE_LIST(sig_elt_list, sig_elt_ptr);
+DECLARE_LIST(sig_elt_list, sig_elt_ptr);
+DEFINE_NONPERSISTENT_LIST(sig_elt_list, sig_elt_ptr);
 
 struct constructor_
 {
@@ -127,7 +128,6 @@ typedef struct gproj_pat_
   stamp st;
   int i;
   gen_e exp;
-  //  vnc_kind variance;
   cons_group g;
 } *gproj_pat;
 
@@ -165,11 +165,6 @@ static int new_type()
   assert(next_type %2 == 0);
 
   ret = next_type;
-//   if (next_type > 2000)
-//     {
-//       fprintf(stderr, "Exceeded maximum number of constructors\n");
-//       assert(0);
-//     }
   next_type += 2;
   return ret;
 }
@@ -205,25 +200,35 @@ static bool setif_is_gpat(gen_e e)
    Convention : constructor types are even, pats are odd.
    The smallest specialized type is smallest_special_type.
 */
+static bool type_is_pat(int type)
+{
+  /* TODO -- check, this was 11, not smallest_special_type */
+  return ( (type % 2) && (type > smallest_special_type) );
+}
+
+static bool type_is_cons_expr(int type)
+{
+ return ( !(type % 2) && (type >= smallest_special_type) );
+}
+
 static bool setif_is_pat(gen_e e)
 {
   int type = ((setif_term)e)->type;
-  return ( (type % 2) && (type > 11) );
+  return type_is_pat(type);
 }
 
 static bool setst_is_pat(gen_e e)
 {
   int type = ((setst_term)e)->type;
-  return ( (type % 2) && (type > smallest_special_type) );
+  return type_is_pat(type);
 }
 
 static bool setif_is_cons_expr(gen_e e)
 {
   int type = ((setif_term)e)->type;
-
-  return ( !(type % 2) && (type >= smallest_special_type) );
+  return type_is_cons_expr(type);
 }
-
+ 
 static bool setst_is_cons_expr(gen_e e)
 {
   int type = ((setst_term)e)->type;
@@ -972,8 +977,6 @@ static void flowrow_inclusion_ind(gen_e e1, gen_e e2)
   get_stamp_fn_ptr get_stamp;
   incl_fn_ptr field_incl;
   gen_e zero_elem;
-  
-  banshee_clock_tick();
 
   if (flowrow_base_sort(e1) != flowrow_base_sort(e2))
     fail("Row base sorts do not match\n");
@@ -1391,81 +1394,6 @@ static void setst_inter_print(FILE *f, gen_e e)
     }
 }
 
-// TODO
-static gen_e expr_deserialize(FILE *f)
-{
-  return NULL;
-}
-
-static void sort_serialize(FILE *f, sort_kind s)
-{
-  int success = 0;
-  assert(f);
-  
-  success = fwrite((void *)&s,sizeof(sort_kind),1,f);
-
-  if (! success) fail ("Failed to write a sort in sort_serialize");
-}
-
-				/* TODO --make static */
-sort_kind sort_deserialize(FILE *f)
-{
-  int success = 0;
-  sort_kind result;
-
-  assert(f);
-
-  success = fread((void *)&result,sizeof(sort_kind),1,f);
-
-  if (! success) fail ("Failed to read sort in sort_deserialize");
-
-  assert(result == setif_sort ||
-	 result == term_sort ||
-	 result == flowrow_sort ||
-	 result == setst_sort);
-
-  return result;
-}
-
-static void serialize_type(FILE *f, int type)
-{
-  int success = 0;
-  assert(f);
-  
-  success = fwrite((void *)&type,sizeof(int),1,f);
-
-  if (!success) fail("Failed to serialize type\n");
-}
-
-static void expr_serialize(FILE *f, gen_e e)
-{
-  assert(f);
-  assert(e);
-  sort_serialize(f, e->sort);
-  switch(e->sort)
-    {
-    case setif_sort:
-      {
-	serialize_type(f, ((setif_term)e)->type);
-	if (setif_is_var(e)) {
-	  sv_serialize(f,(setif_var)e);
-	}
-      }
-      break;
-    case setst_sort:
-      {
-      }
-      break;
-    case term_sort:
-      {
-      }
-      break;
-    case flowrow_sort:
-      {
-      }
-      break;
-    }
-}
 
 void expr_print(FILE *f,gen_e e)
 {
@@ -1559,6 +1487,10 @@ void expr_print(FILE *f,gen_e e)
 	  {
 	    fprintf(f,"1");
 	  }
+	else if (term_is_constant(ecr)) 
+	  {
+	    fprintf(f,"%s",term_get_constant_name(ecr));
+	  }
 	else 
 	  {
 	    cons_expr_print(f,(cons_expr)ecr);
@@ -1580,7 +1512,7 @@ void expr_print(FILE *f,gen_e e)
 
 static void print_nonspec_stats(FILE *f)
 {
-  
+  return;
 }
 
 void nonspec_stats(FILE *f)
@@ -1786,105 +1718,594 @@ if (e1->sort != e2->sort)
  return 0;
 }
 
-static void deserialize_entries(FILE *f, hash_table *entry_points,
-				keyread_fn *read_keys, unsigned long sz)
+bool cons_group_serialize(FILE *f, void *obj)
 {
-  int i;
-  unsigned long fsz;
+  cons_group g = (cons_group)obj;
   assert(f);
-  // read the number of hash tables
-  fread((void *)&fsz,sizeof(unsigned long),1,f);
+  assert(g);
+
+  fwrite((void *)&g->arity, sizeof(int), 1, f);
+  string_data_serialize(f,g->name);
+  fwrite((void *)g->sig, sizeof(sig_elt), g->arity, f);
+  fwrite((void *)&g->gid, sizeof(int), 1, f);
   
-  assert(fsz == sz);
+  return TRUE;
+}
 
-  for (i = 0; i < sz; i++) {
-    int cur_sz, j;
-    keyread_fn key_deserialize = read_keys[i];
-    hash_table cur_table = entry_points[i];
+void *cons_group_deserialize(FILE *f)
+{
+  cons_group g = ralloc(permanent, struct cons_group_);
+  assert(f);
 
-    // read the number of entries in each hash table
-    fread((void *)&cur_sz,sizeof(unsigned long), 1, f);
-    
-    for (j = 0; j < cur_sz; j++) {
-      hash_key key = key_deserialize(f);
-      hash_data data = (hash_data) expr_deserialize(f);
-      hash_table_insert(cur_table,key,data);
-    }    
-  }
+  fread((void *)&g->arity, sizeof(int), 1, f);
+  g->name = (char *)string_data_deserialize(f);
+  fread((void *)g->sig, sizeof(sig_elt), g->arity, f);
+  fread((void *)&g->gid, sizeof(int), 1, f);
+
+  return g;
+}
+
+bool cons_group_set_fields(void *obj)
+{
+  return TRUE;
+}
+
+/* Persistence */
+
+static bool setif_proj_pat_serialize(FILE *f, proj_pat pat)
+{
+  assert(f);
+
+  fwrite((void *)&pat->st, sizeof(int), 1, f);
+  fwrite((void *)&pat->i, sizeof(int), 1, f);
+  fwrite((void *)&pat->exp, sizeof(void *), 1, f);
+  fwrite((void *)&pat->variance, sizeof(int), 1, f);
+  fwrite((void *)&pat->c, sizeof(constructor), 1, f);
+
+  serialize_banshee_object(pat->exp, gen_e);
+  serialize_banshee_object(pat->c, constructor);
+
+  return TRUE;
+}
+
+static void *setif_proj_pat_deserialize(FILE *f)
+{
+  proj_pat pat = ralloc(permanent, struct proj_pat_);
+  assert(f);
+  fread((void *)&pat->st, sizeof(int), 1, f);
+  fread((void *)&pat->i, sizeof(int), 1, f);
+  fread((void *)&pat->exp, sizeof(void *), 1, f);
+  fread((void *)&pat->variance, sizeof(int), 1, f);
+  fread((void *)&pat->c, sizeof(constructor), 1, f);
+  
+  return pat;
+}
+
+static bool setif_proj_pat_set_fields(proj_pat pat)
+{
+  deserialize_set_obj((void **)&pat->exp);
+  deserialize_set_obj((void **)&pat->c);
+  return TRUE;
+}
+
+static bool setif_gproj_pat_serialize(FILE *f, gproj_pat gpat)
+{
+  assert(f);
+  assert(gpat);
+
+  fwrite((void *)&gpat->st, sizeof(stamp), 1, f);
+  fwrite((void *)&gpat->i, sizeof(int), 1, f);
+  fwrite((void *)&gpat->exp, sizeof(void *), 1, f);
+  fwrite((void *)&gpat->g, sizeof(cons_group), 1, f);
+
+  serialize_banshee_object(gpat->exp, gen_e);
+  serialize_banshee_object(gpat->g, cons_group);
+
+  return TRUE;
+}
+
+static void *setif_gproj_pat_deserialize(FILE *f)
+{
+  gproj_pat gpat = ralloc(permanent, struct gproj_pat_);
+  assert(f);
+
+  fread((void *)&gpat->st, sizeof(stamp), 1, f);
+  fread((void *)&gpat->i, sizeof(int), 1, f);
+  fread((void *)&gpat->exp, sizeof(void *), 1, f);
+  fread((void *)&gpat->g, sizeof(cons_group), 1, f);
+
+  return gpat;
+}
+
+static bool setif_gproj_pat_set_fields(gproj_pat gpat)
+{
+  deserialize_set_obj((void **)&gpat->exp);
+  deserialize_set_obj((void **)&gpat->g);
+
+  return TRUE;
 }
 
 
-static void serialize_entries(FILE *f, hash_table *entry_points,
-			      keywrite_fn *write_keys, unsigned long sz)
+static bool cons_expr_serialize(FILE *f, cons_expr e)
 {
-  hash_table_scanner scan;
-  hash_key next_key;
-  gen_e next_expr;
   int i;
+  assert(f);
+  assert(e);
 
+  fwrite((void *)&e->st, sizeof(stamp), 1, f);
+  fwrite((void *)&e->arity, sizeof(int), 1, f);
+  string_data_serialize(f, e->name);
+  fwrite((void *)e->sig, sizeof(sig_elt), e->arity, f);
+  fwrite((void *)e->exps, sizeof(gen_e), e->arity, f);
+  fwrite((void *)&e->c, sizeof(constructor), 1, f);
+
+  for (i = 0; i < e->arity; i++) {
+    serialize_banshee_object(e->exps[i], gen_e);
+  }
+  serialize_banshee_object(e->c, constructor);
+
+  return TRUE;
+}
+
+static void *cons_expr_deserialize(FILE *f)
+{
+  cons_expr e = ralloc(permanent, struct cons_expr_);
   assert(f);
 
-  // write down the number of hash tables
-  fwrite((void *)&sz,sizeof(unsigned long),1,f);
-  
-  for (i = 0; i < sz; i++) {
-    hash_table cur_table = entry_points[i];
-    keywrite_fn key_serialize = write_keys[i];
-    int hsz = hash_table_size(cur_table);
+  fread((void *)&e->st, sizeof(stamp), 1, f);
+  fread((void *)&e->arity, sizeof(int), 1, f);
+  e->name = (char *)string_data_deserialize(f);
+  fread((void *)e->sig, sizeof(sig_elt), e->arity, f);
+  fread((void *)e->exps, sizeof(gen_e), e->arity, f);
+  fread((void *)&e->c, sizeof(constructor), 1, f);
 
-    // write down the number of entries in each hash table
-    fwrite((void *)&hsz, sizeof(unsigned long), 1, f);
+  return e;
+}
 
-    hash_table_scan(cur_table,&scan);
+static bool cons_expr_set_fields(cons_expr e)
+{
+  int i;
+  for (i = 0; i < e->arity; i++) {
+    deserialize_set_obj((void **)&e->exps[i]);
+  }
+  deserialize_set_obj((void **)&e->c);
 
-    // write down each key/value pair
-    while(hash_table_next(&scan,&next_key,(hash_data *) &next_expr)) {
-      key_serialize(f, next_key);
-      expr_serialize(f, next_expr);
+  return TRUE;
+}
+
+static bool setif_expr_serialize(FILE *f, gen_e e)
+{
+  assert(f);
+  fwrite((void *)&((setif_term)e)->type, sizeof(int), 1, f);
+
+  if (setif_is_var(e))
+    {
+      return setif_var_serialize(f, e);
+    }
+  else if (setif_is_zero(e))
+    {
+      return TRUE;
+    }
+  else if (setif_is_one(e))
+    {
+      return TRUE;
+    }
+  else if (setif_is_pat(e))
+    {
+      return setif_proj_pat_serialize(f, (proj_pat)e);
+    }
+  else if (setif_is_gpat(e)) 
+    {
+      return setif_gproj_pat_serialize(f, (gproj_pat)e);
+    }
+  else if (setif_is_union(e))
+    {
+      return setif_union_serialize(f, e);
+    }
+  else if (setif_is_inter(e))
+    {
+      return setif_inter_serialize(f, e);
+    }
+  else if (setif_is_constant(e))
+    {
+      return setif_constant_serialize(f, e);
+    }
+  else 
+    {
+      assert(setif_is_cons_expr(e));
+      return cons_expr_serialize(f, (cons_expr) e);
+    }
+}
+
+static void *setif_expr_deserialize(FILE *f)
+{
+  int expr_type;
+  assert(f);
+  setif_term result = NULL;
+  fread((void *)&expr_type, sizeof(int), 1, f);
+
+  switch(expr_type) 
+    {
+    case VAR_TYPE:
+      result = setif_var_deserialize(f);
+      result->type = expr_type;
+      break;
+    case ZERO_TYPE:
+      result = (setif_term)setif_zero();
+      break;
+    case ONE_TYPE:
+      result = (setif_term)setif_one();
+      break;
+    case UNION_TYPE:
+      result = setif_union_deserialize(f);
+      result->type = expr_type;
+      break;
+    case INTER_TYPE:
+      result = setif_inter_deserialize(f);
+      result->type = expr_type;
+      break;
+    case CONSTANT_TYPE:
+      result = setif_constant_deserialize(f);
+      result->type = expr_type;
+      break;
+    case GROUP_PROJ_PAT_TYPE:
+      result = setif_gproj_pat_deserialize(f);
+      result->type = expr_type;
+    default:
+      if (type_is_pat(expr_type)) {
+	result = setif_proj_pat_deserialize(f);
+      }
+      else if (type_is_cons_expr(expr_type)) {
+	result = cons_expr_deserialize(f);
+      }
+      else {
+	fail("Unknown type in setif_expr_deserialize.\n");
+      }
+      result->type = expr_type;
+      break;
     }
 
-  } 
+  return result;
+}
 
+static bool setif_expr_set_fields(void *obj)
+{
+  gen_e e = (gen_e)obj;
+  if (setif_is_var(e))
+    {
+      return setif_var_set_fields(e);
+    }
+  else if (setif_is_zero(e))
+    {
+      return TRUE;
+    }
+  else if (setif_is_one(e))
+    {
+      return TRUE;
+    }
+  else if (setif_is_pat(e))
+    {
+      return setif_proj_pat_set_fields((proj_pat)e);
+    }
+  else if (setif_is_gpat(e)) 
+    {
+      return setif_gproj_pat_set_fields((gproj_pat)e);
+    }
+  else if (setif_is_union(e))
+    {
+      return setif_union_set_fields(e);
+    }
+  else if (setif_is_inter(e))
+    {
+      return setif_inter_set_fields(e);
+    }
+  else if (setif_is_constant(e))
+    {
+      return setif_constant_set_fields(e);
+    }
+  else 
+    {
+      assert(setif_is_cons_expr(e));
+      return cons_expr_set_fields((cons_expr)e);
+    }
+}
+
+static bool setst_expr_serialize(FILE *f, gen_e e)
+{
+  assert(0);
+  return FALSE;
+}
+
+static void * setst_expr_deserialize(FILE *f)
+{
+  assert(0);
+  return NULL;
+}
+
+static bool setst_expr_set_fields(void *obj)
+{
+  assert(0);
+  return FALSE;
+}
+
+static bool term_expr_serialize(FILE *f, gen_e e)
+{
+  fwrite((void *)&((gen_term)e)->type, sizeof(int), 1, f);
+  if (term_is_initial_var(e))
+    {
+      return term_var_serialize(f, e);
+    }
+  else if (term_is_zero(e))
+    {
+      return TRUE;
+    }
+  else if (term_is_one(e))
+    {
+      return TRUE;
+    }
+  else if (term_is_constant(e))
+    {
+      return term_constant_serialize(f,e);
+    }
+  else 
+    {
+      return cons_expr_serialize(f, (cons_expr)e);
+    }
+  
+  return TRUE;
+}
+
+static void *term_expr_deserialize(FILE *f)
+{
+  int expr_type;
+  fread((void *)&expr_type, sizeof(int), 1, f);
+  gen_term result;
+
+  switch(expr_type) 
+    {
+    case VAR_TYPE:
+      result = term_var_deserialize(f);
+      result->type = expr_type;
+      break;
+    case ZERO_TYPE:
+      result = (gen_term)term_zero();
+      break;
+    case ONE_TYPE:
+      result = (gen_term)term_one();
+      break;
+    case CONSTANT_TYPE:
+      result = term_constant_deserialize(f);
+      result->type = expr_type;
+      break;
+    default:
+      result = cons_expr_deserialize(f);
+      result->type = expr_type;
+      break;
+    }
+
+  return result;
+}
+
+static bool term_expr_set_fields(void *obj)
+{
+  gen_e e = (gen_e)obj;
+
+  if (term_is_initial_var(e))
+    {
+      return term_var_set_fields(e);
+    }
+  else if (term_is_zero(e))
+    {
+      return TRUE;
+    }
+  else if (term_is_one(e))
+    {
+      return TRUE;
+    }
+  else if (term_is_constant(e))
+    {
+      return TRUE;
+    }
+  else 
+    {
+      return cons_expr_set_fields((cons_expr)e);
+    }
+  
+  return TRUE;
+}
+
+bool gen_e_serialize(FILE *f, void *obj)
+{
+  gen_e e = (gen_e)obj;
+  assert(f);
+  assert(e);
+
+  fwrite((void *)&e->sort, sizeof(int), 1, f);
+  switch(e->sort)
+    {
+    case setif_sort:
+      return setif_expr_serialize(f, e);
+    case setst_sort:
+      return setst_expr_serialize(f, e);
+    case term_sort:
+      return term_expr_serialize(f, e);
+    case flowrow_sort:
+      return flowrow_expr_serialize(f, e);
+    default:
+      fail("Unknown sort in gen_e_serialize.\n");
+      return FALSE;
+    }
+}
+
+void *gen_e_deserialize(FILE *f)
+{
+  gen_e result;
+  sort_kind sort;
+  assert(f);
+
+  fread((void *)&sort, sizeof(int), 1, f);
+
+  switch(sort) 
+    {
+    case setif_sort:
+      result = setif_expr_deserialize(f);
+      break;
+    case setst_sort:
+      result = setst_expr_deserialize(f);
+      break;
+    case term_sort:
+      result = term_expr_deserialize(f);
+      break;
+    case flowrow_sort:
+      result = flowrow_expr_deserialize(f);
+      break;
+    default:
+      fail("Unknown sort in gen_e deserialize.\n");
+      return NULL;
+    }
+  
+  result->sort = sort;
+  return result;
+}
+
+bool gen_e_set_fields(void *obj)
+{
+  gen_e e = (gen_e)obj;
+  switch(e->sort)
+    {
+    case setif_sort:
+      return setif_expr_set_fields(obj);
+    case setst_sort:
+      return setst_expr_set_fields(obj);
+    case term_sort:
+      return term_expr_set_fields(obj);
+    case flowrow_sort:
+      return flowrow_expr_set_fields(obj);
+    default:
+      fail("Unknown sort in gen_e_set_fields.\n");
+      return FALSE;
+    }
+}
+
+bool constructor_serialize(FILE *f, void *obj)
+{
+  constructor c = (constructor)obj;
+  fwrite((void *)&c->sort, sizeof(int), 1, f);
+  fwrite((void *)&c->type, sizeof(int), 1, f);
+  fwrite((void *)&c->arity, sizeof(int), 1, f);
+  string_data_serialize(f,c->name);
+  fwrite((void *)c->sig, sizeof(sig_elt), c->arity, f);
+  fwrite((void *)&c->groups, sizeof(cons_group_list), 1, f);
+
+  serialize_banshee_object(c->groups, list);
+
+  return TRUE;
+}
+
+void *constructor_deserialize(FILE *f)
+{
+  constructor c = ralloc(permanent, struct constructor_);
+  fread((void *)&c->sort, sizeof(int), 1, f);
+  fread((void *)&c->type, sizeof(int), 1, f);
+  fread((void *)&c->arity, sizeof(int), 1, f);
+  c->name = (char *)string_data_deserialize(f);
+  fread((void *)c->sig, sizeof(sig_elt), c->arity, f);
+  fread((void *)&c->groups, sizeof(cons_group_list), 1, f);
+
+  return c;
+}
+
+bool constructor_set_fields(void *obj)
+{
+  deserialize_set_obj((void **)&((constructor)obj)->groups);
+  return TRUE;
 }
 
 void serialize_cs(const char *filename, hash_table *entry_points, 
-		  keywrite_fn *write_keys, unsigned long sz)
+		  unsigned long sz)
 {
+  unsigned long i;
   FILE *f = fopen(filename,"wb");
-
+  
   if (!f) {
     fprintf(stderr, "Failed to open file %s for writing\n", filename);
     return;
-  }    
+  }
 
+  /* Start the serialization manager */
+  banshee_serialize_start(f);
+
+  /* Write down the size of the array */
+  fwrite((void *)&sz, sizeof(unsigned long), 1, f);
+  /* Write down the address of each table */
+  fwrite((void *)entry_points, sizeof(hash_table), sz, f);
+
+  /* Serialize each of the tables */
+  for (i = 0; i < sz; i++) {
+    serialize_banshee_object(entry_points[i], hash_table);
+  }
+
+  /* Serialize the remaining state */
+  engine_serialize(f);
   stamp_serialize(f);
-  serialize_entries(f, entry_points, write_keys, sz);
+  uf_serialize(f);
+  setif_serialize(f);
+  setst_serialize(f);
+  flowrow_serialize(f);
+  term_serialize(f);
 
-  // TODO
-  // ufind_serialize();
-  // setif_serialize();
-  // setst_serialize();
-  // flowrow_serialize();
-  // term_serialize();
+  banshee_serialize_end();
+  
+  /* Finally, close the file */
+  fclose(f);
 }
 
-void deserialize_cs(const char *filename, hash_table *entry_points,
-		    keyread_fn *read_keys, unsigned long sz)
+hash_table *deserialize_cs(const char *filename)
 {
-  FILE *f = fopen(filename, "rb");
+  unsigned long sz;
+  hash_table *entry_points;
+  unsigned long i;
+  FILE *f = fopen(filename,"rb");
   
   if (!f) {
-    fprintf(stderr, "Failed to open file %s for reading\n", filename);
-    return;
+    fail("Failed to open file %s for reading\n", filename);
   }
+
+  /* Read the size of the array */
+  fread((void *)&sz, sizeof(unsigned long), 1, f);
+  entry_points = rarrayalloc(permanent, sz, hash_table);
+
+  /* Read the address of each table */
+  fread((void *)entry_points, sizeof(hash_table), sz, f);
+
+  /* Call deserialize on each module */
+  engine_deserialize(f);
   stamp_deserialize(f);
-  deserialize_entries(f,entry_points,read_keys,sz);
+  uf_deserialize(f);
+  setif_deserialize(f);
+  setst_deserialize(f);
+  flowrow_deserialize(f);
+  term_deserialize(f);
 
-  // TODO
-  // ufind_deserialize();
-  // setif_deserialize();
-  // setst_deserialize();
-  // flowrow_deserialize();
-  // term_deserialize();
+  /* Start the deserialization manager */
+  banshee_deserialize_all(f);
 
+  /* Call set_obj on each of the tables */
+  for (i = 0; i < sz; i++) {
+    deserialize_set_obj((void **)&entry_points[i]);
+  }
+  
+  /* Call set_fields on each module */
+  engine_set_fields();
+  stamp_set_fields();
+  uf_set_fields();
+  setif_set_fields();
+  setst_set_fields();
+  flowrow_set_fields();
+  term_set_fields();
+
+  /* Finally, close the file */
+  fclose(f);
+
+  return entry_points;
 }

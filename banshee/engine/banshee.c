@@ -45,7 +45,7 @@ DEFINE_LIST(gen_e_list ,gen_e);
 
 static int banshee_clock = 0;
 static banshee_rollback_stack rb_stack;
-static region engineregion;
+static region engine_region;
 region banshee_rollback_region;
 banshee_error_handler_fn handle_error = NULL;
 
@@ -60,9 +60,9 @@ void engine_init(void)
   stamp_init();
   uf_init();
 
-  engineregion = newregion();
+  engine_region = newregion();
   banshee_rollback_region = newregion();
-  rb_stack = new_banshee_rollback_stack(engineregion);
+  rb_stack = new_banshee_rollback_stack(engine_region);
   handle_error = default_error_handler;
 }
 
@@ -70,9 +70,9 @@ void engine_reset(void) deletes
 {
   stamp_reset();
   banshee_clock = 0;
-  deleteregion(engineregion);
-  engineregion = newregion();
-  rb_stack = new_banshee_rollback_stack(engineregion);
+  deleteregion(engine_region);
+  engine_region = newregion();
+  rb_stack = new_banshee_rollback_stack(engine_region);
 }
 
 void engine_stats(FILE *f)
@@ -170,4 +170,120 @@ void banshee_backtrack(int t)
   if (t < 0) return;
   while(banshee_clock > t)
     banshee_rollback();  
+}
+
+/* Persistence */
+static bool banshee_rollback_serialize_dispatch(FILE *f, 
+						banshee_rollback_info info)
+{
+  switch(info->kind) {
+  case flowrow_sort:
+    return flowrow_rollback_serialize(f, info);
+  case setif_sort:
+    return setif_rollback_serialize(f, info);
+  case setst_sort:
+    return setst_rollback_serialize(f, info);
+  case term_sort:
+    return term_rollback_serialize(f, info);
+  default:
+    fail("Unknown sort in banshee_rollback_serialize_dispatch.\n");
+    return FALSE;
+  }
+}
+
+static banshee_rollback_info banshee_rollback_deserialize_dispatch(sort_kind k,
+								   FILE *f)
+{
+  switch(k) {
+  case flowrow_sort:
+    return flowrow_rollback_deserialize(f);
+  case setif_sort:
+    return setif_rollback_deserialize(f);
+  case setst_sort:
+    return setst_rollback_deserialize(f);
+  case term_sort:
+    return term_rollback_deserialize(f);
+  default:
+    fail("Unknown sort in banshee_rollback_deserialize_dispatch.\n");
+    return NULL;
+  }
+}
+
+static bool banshee_rollback_set_fields_dispatch(banshee_rollback_info info)
+{
+  switch(info->kind) {
+  case flowrow_sort:
+    return flowrow_rollback_set_fields(info);
+  case setif_sort:
+    return setif_rollback_set_fields(info);
+  case setst_sort:
+    return setst_rollback_set_fields(info);
+  case term_sort:
+    return term_rollback_set_fields(info);
+  default:
+    fail("Unknown sort in banshee_rollback_set_fields_dispatch.\n");
+    return FALSE;
+  }
+}
+
+bool banshee_rollback_info_serialize(FILE *f, void *obj)
+{
+  banshee_rollback_info info = (banshee_rollback_info)obj;
+  assert(f);
+
+  fwrite((void *)&info->time, sizeof(int), 1, f);
+  fwrite((void *)&info->kind, sizeof(int), 1, f);
+  return banshee_rollback_serialize_dispatch(f, info);
+}
+
+void *banshee_rollback_info_deserialize(FILE *f)
+{
+  int time;
+  sort_kind kind;
+  banshee_rollback_info result = NULL;
+  assert(f);
+
+  fread((void *)&time, sizeof(int), 1, f);
+  fread((void *)&kind, sizeof(int), 1, f);
+
+  result = banshee_rollback_deserialize_dispatch(kind, f);
+			      
+  result->time = time;
+  result->kind = kind;
+  return result;
+}
+
+bool banshee_rollback_info_set_fields(void *obj)
+{
+  assert(obj);
+
+  return banshee_rollback_set_fields_dispatch((banshee_rollback_info)obj);
+}
+
+/* static int banshee_clock = 0; */
+/* static banshee_rollback_stack rb_stack; */
+/* static region engine_region; */
+/* region banshee_rollback_region; */
+/* banshee_error_handler_fn handle_error = NULL; */
+
+void engine_serialize(FILE *f)
+{
+  assert(f);
+  fwrite((void *)&banshee_clock, sizeof(int), 1, f);
+  fwrite((void *)&rb_stack, sizeof(banshee_rollback_stack), 1, f);
+  
+  serialize_banshee_object(rb_stack, list);
+}
+
+void engine_deserialize(FILE *f)
+{
+  assert(f);
+
+  fread((void *)&banshee_clock, sizeof(int), 1, f);
+  fread((void *)&rb_stack, sizeof(banshee_rollback_stack), 1, f);
+}
+
+void engine_set_fields(void)
+{
+  deserialize_set_obj((void **)&rb_stack);
 }

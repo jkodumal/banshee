@@ -32,6 +32,7 @@
 #include "hash.h"
 #include "regions.h"
 #include "utils.h"
+#include "persist.h"
 
 struct bucket
 {
@@ -51,15 +52,20 @@ struct Hash_table
   unsigned long size;		/* Number of buckets */
   unsigned long log2size;	/* log2 of size */
   unsigned long used;		/* Number of elements */
+
+  int key_persist_kind; 	/* Kind for persistent keys */
+  int data_persist_kind;	/* Kind for persistent data */
+
   bucket *table;		/* Array of (size) buckets */
 };
 
 static void rehash(hash_table ht);
 
-/* Make a new hash table, with size buckets initially.  Hash table
-   elements are allocated in region rhash. */
-hash_table make_hash_table(region r, unsigned long size, hash_fn hash,
-			   keyeq_fn cmp)
+
+hash_table make_persistent_hash_table(region r, unsigned long size, 
+				      hash_fn hash, keyeq_fn cmp,
+				      int key_persist_kind,
+				      int data_persist_kind)
 {
   hash_table result;
 
@@ -70,6 +76,10 @@ hash_table make_hash_table(region r, unsigned long size, hash_fn hash,
   result->cmp = cmp;
   result->size = 1;
   result->log2size = 0;
+
+  result->key_persist_kind = key_persist_kind;
+  result->data_persist_kind = data_persist_kind;
+
   /* Force size to a power of 2 */
   while (result->size < size)
     {
@@ -80,28 +90,32 @@ hash_table make_hash_table(region r, unsigned long size, hash_fn hash,
   result->table = rarrayalloc(result->r, result->size, bucket);
 
   return result;
+
 }
+
+/* Make a new hash table, with size buckets initially.  Hash table
+   elements are allocated in region rhash. */
+hash_table make_hash_table(region r, unsigned long size, hash_fn hash,
+			   keyeq_fn cmp)
+{
+  return make_persistent_hash_table(r, size, hash, cmp, NONPTR_PERSIST_KIND, 
+				    NONPTR_PERSIST_KIND);
+}
+
+hash_table make_persistent_string_hash_table(region rhash, unsigned long size,
+					     int data_persist_kind)
+{
+  return make_persistent_hash_table(rhash, size, (hash_fn)string_hash,
+				    (keyeq_fn)string_eq, 
+				    STRING_PERSIST_KIND, data_persist_kind);
+}
+					     
 
 /* Make a hash table for strings. */
 hash_table make_string_hash_table(region rhash, unsigned long size)
 {
   return make_hash_table(rhash, size, (hash_fn) string_hash,
 			 (keyeq_fn) string_eq);
-}
-
-/* Writes a key k interpreted as a string to f */
-void string_keywrite_fn(FILE *f, hash_key k)
-{
-  fprintf(f,"%s",(char *)k);
-}
-
-/* Given that the next thing to read from f is a string, fetch it */
-hash_key string_keyread_fn(FILE *f)
-{
-  char buf[512];
-  fscanf(f,"%s",buf);
-  
-  return (hash_key)strdup(buf);
 }
 
 /* Zero out ht.  Doesn't reclaim bucket space. */
@@ -224,7 +238,9 @@ hash_table hash_table_copy(region r, hash_table ht)
   hash_table result;
   bucket cur, newbucket, *prev;
 
-  result = make_hash_table(r, ht->size, ht->hash, ht->cmp);
+  result = make_persistent_hash_table(r, ht->size, ht->hash, ht->cmp,
+				      ht->key_persist_kind,
+				      ht->data_persist_kind);
   result->used = ht->used;
 
   for (i = 0; i < ht->size; i++)
@@ -322,7 +338,9 @@ hash_table hash_table_map(region r, hash_table ht, hash_map_fn f, void *arg)
   hash_table result;
   bucket cur, newbucket, *prev;
 
-  result = make_hash_table(r, ht->size, ht->hash, ht->cmp);
+  result = make_persistent_hash_table(r, ht->size, ht->hash, ht->cmp,
+				      ht->key_persist_kind,
+				      ht->data_persist_kind);
   result->used = ht->used;
   
   for (i = 0; i < ht->size; i++)
@@ -393,4 +411,119 @@ bool hash_table_next_sorted(hash_table_scanner_sorted *htss, hash_key *k,
       htss->r = NULL;
       return FALSE;
     }
+}
+
+static unsigned long get_num_buckets(bucket b) {
+  bucket cur;
+  unsigned long result = 0;
+  scan_bucket(b, cur) {
+    result++;
+  }
+  return result;
+}
+
+/* Persistence */
+
+bool hash_table_serialize(FILE *f, void *obj)
+{
+  unsigned long i;
+  bucket cur;
+  hash_table ht = (hash_table)obj;
+  assert(f);
+  assert(obj);
+
+  fwrite((void *)&ht->hash, sizeof(void *), 1, f);
+  fwrite((void *)&ht->cmp, sizeof(void *), 1, f);
+  fwrite((void *)&ht->size, sizeof(unsigned long), 1, f);
+  fwrite((void *)&ht->log2size, sizeof(unsigned long), 1, f);
+  fwrite((void *)&ht->used, sizeof(unsigned long), 1, f);
+  
+  fwrite((void *)&ht->key_persist_kind, sizeof(int), 1, f);
+  fwrite((void *)&ht->data_persist_kind, sizeof(int), 1, f);
+
+  serialize_object(ht->hash, 1);
+  serialize_object(ht->cmp, 1);
+
+  /* Write out all the key/value pairs */
+  for (i = 0; i < ht->size; i++) {
+    unsigned long num_buckets = get_num_buckets(ht->table[i]);
+    fwrite((void *)&num_buckets, sizeof(unsigned long), 1, f); 
+    scan_bucket(ht->table[i], cur) {
+      fwrite((void *)&cur->key, sizeof(hash_key), 1, f);
+      fwrite((void *)&cur->data, sizeof(hash_data), 1, f);
+      serialize_object(cur->key,ht->key_persist_kind);
+      serialize_object(cur->data, ht->data_persist_kind);
+    }
+  }
+  return TRUE;
+}
+
+void *hash_table_deserialize(FILE *f)
+{
+  hash_table ht = NULL;
+  unsigned long i;
+  bucket newbucket, *prev;
+
+  assert(f);
+
+  ht = ralloc(permanent, struct Hash_table);
+  ht->r = newregion();
+  ht->hash = NULL;
+  ht->cmp = NULL;
+
+  fread((void *)&ht->hash, sizeof(void *), 1, f);
+  fread((void *)&ht->cmp, sizeof(void *), 1, f);
+  fread((void *)&ht->size, sizeof(unsigned long), 1, f);
+  fread((void *)&ht->log2size, sizeof(unsigned long), 1, f);
+  fread((void *)&ht->used, sizeof(unsigned long), 1, f);
+  fread((void *)&ht->key_persist_kind, sizeof(int), 1, f);
+  fread((void *)&ht->data_persist_kind, sizeof(int), 1, f);
+
+  /* Read all the key/value pairs into the temporary region */
+  ht->table = rarrayalloc(ht->r, ht->size, bucket);
+  for (i = 0; i < ht->size; i++) {
+    unsigned long num_buckets,j;
+    fread((void *)&num_buckets, sizeof(unsigned long), 1, f); 
+    prev = &ht->table[i];
+    for (j = 0; j < num_buckets; j++) {
+      newbucket = ralloc(ht->r, struct bucket);
+      fread((void *)&newbucket->key, sizeof(hash_key), 1, f);
+      fread((void *)&newbucket->data, sizeof(hash_data), 1, f);
+      newbucket->next = NULL;
+      assert(!*prev);
+      *prev = newbucket;
+      prev = &newbucket->next;
+    }
+  }
+  return ht;
+}
+
+bool hash_table_set_fields(void *obj)
+{
+  unsigned long i;
+  hash_table ht = (hash_table)obj;
+  bucket *oldtable = NULL, cur;
+  region oldregion;
+  assert(ht);
+
+  deserialize_set_obj((void **)&ht->hash);
+  deserialize_set_obj((void **)&ht->cmp);
+
+  oldtable = ht->table;
+  oldregion = ht->r;
+  ht->used = 0;
+  ht->r = permanent;
+  ht->table = rarrayalloc(ht->r, ht->size, bucket);
+  
+  /* Reinsert all the key/value pairs after they have been remapped */
+  for (i = 0; i < ht->size; i++) {
+    scan_bucket(oldtable[i], cur) {
+      deserialize_set_obj((void **)&cur->key);
+      deserialize_set_obj((void **)&cur->data);
+      hash_table_insert(ht, cur->key, cur->data);
+    }
+  }
+  deleteregion(oldregion);
+
+  return TRUE;
 }

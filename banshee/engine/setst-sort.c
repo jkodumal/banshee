@@ -949,3 +949,35 @@ void setst_rollback(banshee_rollback_info info)
 {
   assert(0);
 }
+
+bool setst_rollback_serialize(FILE *f, banshee_rollback_info info)
+{
+  assert(0);
+  return FALSE;
+}
+
+banshee_rollback_info setst_rollback_deserialize(FILE *f)
+{
+  assert(0);
+  return NULL;
+}
+
+bool setst_rollback_set_fields(banshee_rollback_info info)
+{
+  assert(0);
+  return TRUE;
+}
+
+void setst_serialize(FILE *f)
+{
+  return;
+}
+
+void setst_deserialize(FILE *f)
+{
+  return;
+}
+void setst_set_fields(void)
+{
+  return;
+}

@@ -34,6 +34,7 @@
 #include "nonspec.h"
 #include "regions.h"
 #include "hash.h"
+#include "banshee_persist_kinds.h"
 
 static region ibanshee_region;
 static hash_table constructor_env;
@@ -67,17 +68,16 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2, banshee_error_kind bek)
 static void save_cs(const char *filename)
 {
   hash_table entry_points[3] = {constructor_env,named_env,var_env};
-  keywrite_fn write_keys[3] = 
-  {string_keywrite_fn,string_keywrite_fn, string_keywrite_fn};
 
-  serialize_cs(filename, entry_points, 
-	       write_keys, 3);
+  serialize_cs(filename, entry_points, 3);
 }
 
-				/* TODO */
 static void load_cs(const char *filename)
 {
-
+  hash_table *entry_points = deserialize_cs(filename);
+  constructor_env = entry_points[0];
+  named_env = entry_points[1];
+  var_env = entry_points[2];
 }
 
 static void show_help()
@@ -149,9 +149,15 @@ static void ibanshee_init(void) {
   register_error_handler(ibanshee_error_handler);
 
   ibanshee_region = newregion();
-  constructor_env = make_string_hash_table(ibanshee_region,32);
-  named_env = make_string_hash_table(ibanshee_region,32);
-  var_env = make_string_hash_table(ibanshee_region,32);
+  constructor_env = 
+    make_persistent_string_hash_table(ibanshee_region,32,
+				      BANSHEE_PERSIST_KIND_constructor);
+  named_env = 
+    make_persistent_string_hash_table(ibanshee_region,32,
+				      BANSHEE_PERSIST_KIND_gen_e);
+  var_env = 
+    make_persistent_string_hash_table(ibanshee_region,32,
+				      BANSHEE_PERSIST_KIND_gen_e);
 }
 
 void flush_lexer(void);

@@ -1430,6 +1430,30 @@ T get_contents(var_info v_info)
   return t_decon.f1;
 }
 
+void serialize_cs(const char *filename, hash_table *entry_points, 
+	     unsigned long sz);
+
+void analysis_serialize(const char *filename)
+{
+  hash_table hash;
+  var_info v_info;
+  env_scanner es;
+  const char *name;
+ 
+   /* TODO -- remove the hard coded gen_e kind, only works with nonspec! */
+  hash = make_persistent_string_hash_table(permanent, 128 ,18);
+
+  env_scan(collection_env,&es);
+  while(env_next(&es, &name, (void **)&v_info)) {
+    if(v_info->visible) {
+      hash_table_insert(hash,(hash_key)name, (hash_data) v_info->t_type);
+    }
+  }
+  
+  serialize_cs(filename, &hash, 1);
+}
+
+
 void print_analysis_results() deletes
 {
   env_scanner es;

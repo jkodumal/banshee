@@ -112,7 +112,8 @@ void stamp_reset(void) deletes
 void stamp_init(void)
 {
   str_hash_rgn = newregion();
-  str_hash = make_string_hash_table(str_hash_rgn,INITIAL_SIZE);
+  str_hash = make_persistent_string_hash_table(str_hash_rgn,INITIAL_SIZE,
+					       NONPTR_PERSIST_KIND);
 }
 
 const char *stamp_to_str(region r,stamp st)
@@ -126,8 +127,11 @@ void stamp_serialize(FILE *f)
   int success = 0;
 
   success = fwrite((void *)counts,sizeof(int),3,f);
+  success += fwrite((void *)&str_hash, sizeof(hash_table), 1, f);
 
-  if (success != 3) fail("Failed to serialize stamp module\n");
+  serialize_banshee_object(str_hash, hash_table);
+
+  if (success != 4) fail("Failed to serialize stamp module\n");
 }
 
 void stamp_deserialize(FILE *f)
@@ -136,10 +140,16 @@ void stamp_deserialize(FILE *f)
   int success = 0;
 
   success = fread((void *)counts,sizeof(int),3,f);
-  
-  if (success != 3) fail("Failed to deserialize stamp module\n");
+  success += fread((void *)&str_hash, sizeof(hash_table), 1, f);
+
+  if (success != 4) fail("Failed to deserialize stamp module\n");
 
   count1 = counts[0];
   count2 = counts[1];
   count3 = counts[2];  
+}
+
+void stamp_set_fields(void)
+{
+  deserialize_set_obj((void **)&str_hash);
 }

@@ -58,19 +58,19 @@ TARGETCHECK = $(patsubst %,check/%,$(EXES))
 all: $(TARGETS) 
 
 lambda-test.exe: lambda-test.c $(LAMBDA_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LIB)
-	$(CC) $(CFLAGS) -I$(lambda_dir) -o $@ $(LAMBDA_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions 
+	$(CC) $(CFLAGS) -I$(lambda_dir) -o $@ $(LAMBDA_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lengine -lregions -lm
 
 dyckcfl-test.exe: dyckcfl-test.c $(DYCKCFL_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LIB)
-	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lm -lnsengine -lregions 
+	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lnsengine -lregions -lm 
 
 dyckcfl-random-test.exe: dyckcfl-random-test.c $(DYCKCFL_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LIB)
-	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lm -lnsengine -lregions
+	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lnsengine -lregions -lm
 
 uf-bt-test.exe: uf-bt-test.c $(ENGINE_LIB) $(REGION_LIB)
-	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
+	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lengine -lregions -lm
 
 persist-test.exe: persist-test.c $(ENGINE_LIB) $(REGION_LIB)
-	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lm -lengine -lregions
+	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lengine -lregions -lm
 
 .PHONY: clean check 
 

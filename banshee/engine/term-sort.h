@@ -47,8 +47,8 @@ struct gen_term /* extends gen_e */
 #ifdef NONSPEC
   const sort_kind sort;
 #endif
-  const int type;
-  const stamp st;
+  int type;
+  stamp st;
 };
 
 typedef struct gen_term *gen_term;
@@ -68,6 +68,7 @@ gen_e term_constant(const char *name);
 bool term_is_zero(gen_e e);
 bool term_is_one(gen_e e);
 bool term_is_var(gen_e e);
+bool term_is_initial_var(gen_e e);
 bool term_is_constant(gen_e e);
 
 bool term_eq(gen_e e1,gen_e e2);
@@ -87,7 +88,19 @@ void term_init(void);
 void term_reset(void);
 
 void term_rollback(banshee_rollback_info);
+bool term_rollback_serialize(FILE *f, banshee_rollback_info info);
+banshee_rollback_info term_rollback_deserialize(FILE *f);
+bool term_rollback_set_fields(banshee_rollback_info i);
 
+/* Persistence */
+bool term_constant_serialize(FILE *f, gen_e e);
+void *term_constant_deserialize(FILE *f);
+
+void term_serialize(FILE *f);
+void term_deserialize(FILE *f);
+void term_set_fields(void);
+
+/* Stats */
 extern struct term_stats term_stats;
 
 struct term_stats

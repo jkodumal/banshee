@@ -241,8 +241,47 @@ int st_get_snk_sz(setst_var v)
   return get_info(v)->snk_sz;
 }
 
+/* Persistence */
 
+/* TODO */
+bool setst_var_serialize(FILE *f, void *obj)
+{
+  fail("setst persistence not implemented");
+  return FALSE;
+}
 
+/* TODO */
+void *setst_var_deserialize(FILE *f)
+{
+  fail("setst persistence not implemented");
+  return NULL;
+}
 
+/* TODO */
+bool setst_var_set_fields(void *obj)
+{
+  fail("setst persistence not implemented");
+  return FALSE;
+}
 
+/* TODO */
+bool st_info_serialize(FILE *f, void *obj)
+{
+  fail("setst persistence not implemented");
+  return FALSE;
+}
+
+/* TODO */
+void *st_info_deserialize(FILE *f)
+{  
+  fail("setst persistence not implemented");
+  return NULL;
+}
+
+/* TODO */
+bool st_info_set_fields(void *obj)
+{
+  fail("setst persistence not implemented");
+  return FALSE;
+}
 

@@ -43,6 +43,7 @@ DEFINE_LIST(elt_stack, uf_element);
 typedef struct ustack_elt_ {
   uf_element nonroot;
   void *old_info;
+  int persist_kind;
 } *ustack_elt;
 
 DECLARE_LIST(union_stack,ustack_elt);
@@ -103,7 +104,8 @@ static ustack_elt make_ustack_elt(uf_element e,void *info)
   ustack_elt result = ralloc(uf_region,struct ustack_elt_);
   result->nonroot = e;
   result->old_info = info;
-  
+  result->persist_kind = e->persist_kind;
+
   return result;
 }
 
@@ -327,7 +329,7 @@ bool uf_element_serialize(FILE *f, void *obj)
   fwrite((void *)&elt->link, sizeof(void *), 1, f);
   fwrite((void *)&elt->elt_stack, sizeof(void *), 1, f);
 
-  serialize_object(elt->persist_kind, elt->info);
+  serialize_object(elt->info, elt->persist_kind);
   serialize_banshee_object(elt->link, uf_element);
   serialize_banshee_object(elt->elt_stack, list);
 
@@ -352,10 +354,64 @@ bool uf_element_set_fields(void *obj)
 {
   uf_element elt = (uf_element)obj;
 
-  elt->info = deserialize_get_obj(elt->info);
-  elt->link = (uf_element)deserialize_get_obj(elt->link);
-  elt->elt_stack = (elt_stack)deserialize_get_obj(elt->elt_stack);
+  deserialize_set_obj((void **)&elt->info);
+  deserialize_set_obj((void **)&elt->link);
+  deserialize_set_obj((void **)&elt->elt_stack);
 
   return TRUE;
 }
 
+bool ustack_elt_serialize(FILE *f, void *obj)
+{
+  ustack_elt elt = (ustack_elt)obj;
+  
+  assert(f);
+  assert(elt);
+
+  fwrite((void *)&elt->nonroot, sizeof(uf_element), 1, f);
+  fwrite((void *)&elt->old_info, sizeof(void *), 1, f);
+  fwrite((void *)&elt->persist_kind, sizeof(int), 1, f);
+
+  serialize_banshee_object(elt->nonroot, uf_element);
+  serialize_object(elt->old_info, elt->persist_kind);
+
+  return TRUE;
+}
+
+void *ustack_elt_deserialize(FILE *f)
+{
+  ustack_elt elt = ralloc(uf_region, struct ustack_elt_);
+  
+  fread((void *)&elt->nonroot, sizeof(uf_element), 1, f);
+  fread((void *)&elt->old_info, sizeof(void *), 1, f);
+  fread((void *)&elt->persist_kind, sizeof(int), 1, f);
+  
+  return elt;
+}
+
+bool ustack_elt_set_fields(void *obj)
+{
+  ustack_elt elt = (ustack_elt)obj;
+  deserialize_set_obj((void **)&elt->nonroot);
+  deserialize_set_obj((void **)&elt->old_info);
+
+  return TRUE;
+}
+
+void uf_serialize(FILE *f)
+{
+  assert(f);
+  fwrite((void *)&ustack, sizeof(union_stack), 1, f);
+  serialize_banshee_object(ustack, list);
+}
+
+void uf_deserialize(FILE *f)
+{
+  assert(f);
+  fread((void *)&ustack, sizeof(union_stack), 1, f);
+}
+
+void uf_set_fields()
+{
+  deserialize_set_obj((void **)&ustack);
+}

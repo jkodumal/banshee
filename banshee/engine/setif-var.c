@@ -66,19 +66,6 @@ struct setif_var /* extends gen_e */
   sv_elt elt;
 };
 
-static region sv_region = NULL;
-
-void sv_init(void)
-{
-  sv_region = newregion();
-}
-
-void sv_reset(void)
-{
-  deleteregion(sv_region);
-  sv_region = newregion();
-}
-    
 bool sv_lt(setif_var v1, setif_var v2)
 {
   return ( sv_get_stamp(v1) < sv_get_stamp(v2) );
@@ -100,7 +87,7 @@ static setif_var make_var(region r, const char *name, stamp st)
   info->tlb_cache = NULL;
   info->ub_projs = new_gen_e_list(r);
   info->name = name ? rstrdup(r,name) : "fv";
-  info->component = new_uf_element(r, NULL, BANSHEE_PERSIST_KIND_none);
+  info->component = new_uf_element(r, NULL, BANSHEE_PERSIST_KIND_nonptr);
 
   result->type = VAR_TYPE;
   result->elt = new_sv_elt(r,info); 
@@ -237,17 +224,13 @@ void sv_clear_tlb_cache(setif_var v)
 }
 
 /* Persistence support for setif_var */
-bool sv_serialize(FILE *f, void *obj)
+bool setif_var_serialize(FILE *f, void *obj)
 {
   setif_var var;
   assert(f);
   assert(obj);
 
   var = (setif_var)obj;
-
-#ifdef NONSPEC
-  fwrite((void *)&var->sort, sizeof(int), 1, f);
-#endif /* NONSPEC */
 
   /* No need to serialize the type, since it must be VAR_TYPE */
   
@@ -260,29 +243,25 @@ bool sv_serialize(FILE *f, void *obj)
   return TRUE;
 }
 
-void *sv_deserialize(FILE *f)
+void *setif_var_deserialize(FILE *f)
 {
   setif_var var;
   assert(f);
 
-  var = ralloc(sv_region, struct setif_var);
+  var = ralloc(permanent, struct setif_var);
 
-#ifdef NONSPEC
-  fread((void*)&var->sort, sizeof(int), 1, f);
-#endif /* NONSPEC */
-  
   var->type = VAR_TYPE;
   fread((void*)&var->elt, sizeof(void *), 1, f);
 
   return var;
 }
 
-bool sv_set_fields(void *obj)
+bool setif_var_set_fields(void *obj)
 {
   setif_var var = (setif_var)obj;
   assert(obj);
 
-  var->elt = deserialize_get_obj(var->elt);
+  deserialize_set_obj((void **)&var->elt);
 
   assert(var->elt);
 
@@ -302,7 +281,7 @@ bool sv_info_serialize(FILE *f, void *obj)
   fwrite((void *)&info->ubs, sizeof(bounds), 1, f);
   fwrite((void *)&info->ub_projs, sizeof(gen_e_list), 1, f);
   fwrite((void *)&info->component, sizeof(uf_element), 1, f);
-  fprintf(f, "%s",info->name);
+  string_data_serialize(f,info->name);
 
   serialize_banshee_object(info->lbs, bounds);
   serialize_banshee_object(info->ubs, bounds);
@@ -314,20 +293,18 @@ bool sv_info_serialize(FILE *f, void *obj)
 
 void *sv_info_deserialize(FILE *f)
 {
-  char buf[512];
   assert(f);
-  assert(sv_region);
+  assert(permanent);
 
-  sv_info info = ralloc(sv_region, struct sv_info);
+  sv_info info = ralloc(permanent, struct sv_info);
   
   fread((void *)&info->st, sizeof(stamp), 1, f);
   fread((void *)&info->lbs, sizeof(bounds), 1, f);
   fread((void *)&info->ubs, sizeof(bounds), 1, f);
   fread((void *)&info->ub_projs, sizeof(gen_e_list), 1, f);
   fread((void *)&info->component, sizeof(uf_element), 1, f);
-  fscanf(f,"%s",buf);
+  info->name = string_data_deserialize(f);
 
-  info->name = rstrdup(sv_region,buf);
   info->tlb_cache = NULL;
 
   return info;  
@@ -337,10 +314,10 @@ bool sv_info_set_fields(void *obj)
 {
   sv_info info = (sv_info) obj;
 
-  info->lbs = deserialize_get_obj(info->lbs);
-  info->ubs = deserialize_get_obj(info->ubs);
-  info->ub_projs = deserialize_get_obj(info->ub_projs);
-  info->component = deserialize_get_obj(info->component);
+  deserialize_set_obj((void **)&info->lbs);
+  deserialize_set_obj((void **)&info->ubs);
+  deserialize_set_obj((void **)&info->ub_projs);
+  deserialize_set_obj((void **)&info->component);
 
   return TRUE;
 }

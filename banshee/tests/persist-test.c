@@ -36,10 +36,13 @@
 #include <unistd.h>
 #include "regions.h"
 #include "persist.h"
+#include "hash.h"
 #include "utils.h"
 
-
 #define DEFAULT_FILENAME "persist-test.out"
+
+#define NODE_PERSIST_KIND 3
+#define HASH_PERSIST_KIND 4
 
 /* Types */
 struct node_ {
@@ -65,8 +68,8 @@ bool node_serialize(FILE *f, void *obj)
   fwrite((void *)&n->left, sizeof(void *), 1, f);
   fwrite((void *)&n->right, sizeof(void *), 1, f);
 
-  serialize_object(0, n->left);
-  serialize_object(0, n->right);
+  serialize_object(n->left, NODE_PERSIST_KIND);
+  serialize_object(n->right, NODE_PERSIST_KIND);
 
 
   return TRUE;
@@ -86,8 +89,9 @@ void *node_deserialize(FILE *f)
 bool node_set_fields(void *obj)
 {
   node n = (node) obj;
-  n->left = (node) deserialize_get_obj( (void *) n->left);
-  n->right = (node) deserialize_get_obj( (void *) n->right);
+
+  deserialize_set_obj((void **)&n->left);
+  deserialize_set_obj((void **)&n->right);
 
   return TRUE;
 }
@@ -102,9 +106,15 @@ static void show_usage(char *progname)
 static void serialize()
 {
   node n1;
-  /* Build a small graph */
+  hash_table table;
+  /* Build a small graph and a hash table */
   { 				
     node n2,n3,n4;
+    
+    table = make_persistent_hash_table(test_rgn, 4, ptr_hash, ptr_eq,
+				       NODE_PERSIST_KIND, 
+				       NONPTR_PERSIST_KIND);
+
     n1 = ralloc(test_rgn, struct node_);
     n2 = ralloc(test_rgn, struct node_);
     n3 = ralloc(test_rgn, struct node_);
@@ -126,20 +136,33 @@ static void serialize()
     
     n4->left = n1;
     n4->right = n1;
+
+    hash_table_insert(table, (hash_key)n1, (hash_data)n1->data);
+    hash_table_insert(table, (hash_key)n2, (hash_data)n2->data);
+    hash_table_insert(table, (hash_key)n3, (hash_data)n3->data);
+    hash_table_insert(table, (hash_key)n4, (hash_data)n4->data);
   }
 
   /* Serialize it */
   {  
     FILE *outfile;
-    serialize_fn_ptr serialize_fns[1] = {node_serialize};
+    serialize_fn_ptr serialize_fns[5] = {nonptr_data_serialize, 
+					 funptr_data_serialize, 
+					 string_data_serialize,
+					 node_serialize,
+					 hash_table_serialize};
 
     outfile = fopen(DEFAULT_FILENAME, "wb");
 
     /* Write down the old address of n1 */
     fwrite((void *)&n1, sizeof(void *), 1, outfile);
     
-    serialize_start(outfile, serialize_fns, 1);
-    serialize_object(0, n1);
+    /* Write down the old address of table */
+    fwrite((void *)&table, sizeof(void *), 1, outfile);
+    
+    serialize_start(outfile, serialize_fns, 5);
+    serialize_object(n1, NODE_PERSIST_KIND);
+    serialize_object(table,HASH_PERSIST_KIND);
     serialize_end();
 
     fclose(outfile);
@@ -148,10 +171,19 @@ static void serialize()
 
 static void deserialize()
 {
-  node n;
+  node n = NULL;
   FILE *infile = NULL;
-  deserialize_fn_ptr deserialize_fns[1] = {node_deserialize};
-  set_fields_fn_ptr set_fields_fns[1] = {node_set_fields};
+  hash_table table = NULL;
+  deserialize_fn_ptr deserialize_fns[5] = {nonptr_data_deserialize,
+					   funptr_data_deserialize,
+					   string_data_deserialize,
+					   node_deserialize,
+					   hash_table_deserialize};
+  set_fields_fn_ptr set_fields_fns[5] = {nonptr_data_set_fields,
+					 funptr_data_set_fields,
+					 string_data_set_fields,
+					 node_set_fields,
+					 hash_table_set_fields};
 
   infile = fopen(DEFAULT_FILENAME, "rb");
   
@@ -163,12 +195,21 @@ static void deserialize()
   /* Read in the old address of n1 and store it as n */
   fread((void *)&n, sizeof(void *), 1, infile);
 
-  deserialize_all(infile, deserialize_fns, set_fields_fns, 1);
+  /* Read in the old address of table and store it as table */
+  fread((void *)&table, sizeof(void *), 1, infile);
+
+  deserialize_all(infile, deserialize_fns, set_fields_fns, 5);
   
   /* Now update n with its new address */
-  n = deserialize_get_obj(n);
-  
-  /* And check well-formedness */
+  deserialize_set_obj((void **)&n);
+
+  /* Update table with its new address */
+  deserialize_set_obj((void **)&table);
+
+  /* Close the infile */
+  fclose(infile);
+
+  /* Check well-formedness of the graph */
   if (n->data != 1) {
     fail("n1's data was not deserialized correctly: %d\n",n->data);
   }
@@ -193,7 +234,42 @@ static void deserialize()
   if (n->left->left->left != n || n->left->left->right != n) {
     fail("n4's children were not deserialized correctly.\n");
   }
-  fclose(infile);
+  
+  /* Check well-formedness of the hash table */
+  {
+    hash_table_scanner scan;
+    hash_key next_key;
+    hash_data next_data;
+
+    hash_table_scan(table,&scan);
+
+    while(hash_table_next(&scan, &next_key, &next_data)) {
+      if ((int)next_data == 1) {
+	if ((node)next_key != n) {
+	  fail("hash table doesn't map n1 correctly.\n");
+	}
+      }
+      else if ((int)next_data == 2) {
+	if ((node)next_key != n->left) {
+	  fail("hash table doesn't map n2 correctly.\n");
+	}
+      }
+      else if ((int)next_data == 3) {
+	if ((node)next_key != n->right) {
+	  fail("hash table doesn't map n3 correctly.\n");
+	}
+      }
+      else if ((int)next_data == 4) {
+	if ((node)next_key != n->left->left) {
+	  fail("hash toble doesn't map n4 correctly.\n");
+	}
+      }
+      else {
+	fail("There is an unknown mapping in the hash table.\n");
+      }
+    }
+    
+  }
 }
 
 int main(int argc, char **argv)

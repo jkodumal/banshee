@@ -32,15 +32,18 @@ endif
 
 EXTRA_OBJS =  
 
-all: parser.exe parser_st.exe
+all: parser.exe parser_st.exe parser_ns.exe
 
 include Makefile.base
 
 parser.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
-	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o -lm $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine
+	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine
 
 parser_st.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
-	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o -lm $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine
+	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine -lm
+
+parser_ns.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
+	$(CC) $(CFLAGS) -DNONSPEC -o parser_ns.exe $(LDFLAGS) $(OBJS)  ../andersen/andersen_terms_nonspec.o ../andersen/andersen.o $(EXTRALIBS) -L../libcompat -L../engine -lregions -lnsengine
 
 
 clean:

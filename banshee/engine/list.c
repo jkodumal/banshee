@@ -516,7 +516,7 @@ bool list_member(struct list *l,void *data)
 struct list *list_from_array(region r, void **data, int length)
 {
   /* TODO -- unhack the nonpersistence */
-  struct list *result = new_list(r, BANSHEE_PERSIST_KIND_none);
+  struct list *result = new_list(r, BANSHEE_PERSIST_KIND_nonptr);
   int i;
   
   for (i = length - 1; i >= 0; i--)
@@ -532,38 +532,73 @@ void **array_from_list(region r, struct list *l)
   void **result = rarrayalloc(r,list_length(l),void *);
   list_node n = NULL;
 
-  scan_node(l->head,n)
-    {
-      result[i] = n->data;
-      i++;
-    }
+  scan_node(l->head,n) {
+    result[i] = n->data;
+    i++;
+  }
   return result;
 }
 
 /* Persistence */
+bool list_serialize(FILE *f, void *obj)
+{
+  struct list *l = (struct list *)obj;
+  list_node n = NULL;
 
-/* TODO -- need a region */
-/* bool list_serialize(FILE *f, void *obj) */
-/* { */
-/*   struct list *l = (struct list *)obj; */
+  assert(f);
+  assert(obj);
 
-/*   assert(f); */
-/*   assert(obj); */
+  fwrite((void *)&l->length, sizeof(int), 1, f);
+  fwrite((void *)&l->persist_kind, sizeof(int), 1, f);
 
-/*   fwrite((void *)l->length */
+  scan_node(l->head, n) {
+    fwrite((void *)&n->data, sizeof(void *), 1, f);
+    serialize_object(n->data, l->persist_kind);
+  }
+
+  return TRUE;
+}
+
+/* TODO -- this is hacky-- all the lists will be deserialized in the permanent
+   region for now
+*/
+void *list_deserialize(FILE *f)
+{
+  struct list *result = NULL;
+  int length, persist_kind, i;
+  assert(f);
+
+  /* Read in the length */
+  fread((void *)&length, sizeof(int), 1, f);
   
-/*   return TRUE; */
-/* } */
-
-/* void *list_deserialize(FILE *f) */
-/* { */
-/*   assert(f); */
-/* } */
-
-/* bool list_set_fields(void *obj) */
-/* { */
+  /* Read in the persist kind */
+  fread((void *)&persist_kind, sizeof(int), 1, f);
   
-/* } */
+  result = new_list(permanent, persist_kind);
+  
+  for (i = 0; i < length; i++) {
+    void *data = NULL;
+    fread((void *)&data, sizeof(void *), 1, f);
+    list_cons(data, result);
+  }
+  
+  assert(result->length == length);
+
+  return result;
+}
+
+bool list_set_fields(void *obj)
+{
+  list_node n = NULL;
+  struct list *l = (struct list *)obj;
+
+  scan_node(l->head,n)
+    {
+      deserialize_set_obj((void **)&n->data);
+    }
+  
+  return TRUE;
+}
 
 
 

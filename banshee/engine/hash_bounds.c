@@ -35,12 +35,13 @@
 #include "hash.h"
 #include "bounds.h"
 #include "stamp.h"
+#include "banshee_persist_kinds.h"
 
 struct bounds_ {
   hash_table table;
 };
 
-/* From here: http://www.concentric.net/~Ttwang/tech/inthash.htm  */
+/* Taken from here: http://www.concentric.net/~Ttwang/tech/inthash.htm  */
 unsigned long stamp_hash(hash_key key)
 {
   unsigned long keyval = (unsigned long)key;
@@ -55,7 +56,7 @@ unsigned long stamp_hash(hash_key key)
   return keyval;
 }
 
-static bool stamp_eq(hash_key s1, hash_key s2)
+bool stamp_eq(hash_key s1, hash_key s2)
 {
   return s1 == s2;
 }
@@ -64,7 +65,10 @@ bounds bounds_create(region r)
 {
   bounds result;
   result = ralloc(r, struct bounds_);
-  result->table = make_hash_table(r, 8, stamp_hash, stamp_eq);
+  
+  result->table = make_persistent_hash_table(r, 8, stamp_hash, stamp_eq,
+					     BANSHEE_PERSIST_KIND_nonptr,
+					     BANSHEE_PERSIST_KIND_gen_e);
   
   return result;
 }
@@ -117,9 +121,45 @@ void bounds_delete(bounds b)
 void bounds_set(bounds b, gen_e_list el)
 {
   assert(0);
+  fail("bounds_set not implemented\n");
 }
 
 int bounds_size(bounds b)
 {
   return hash_table_size(b->table);
+}
+
+
+/* Persistence */
+bool bounds_serialize(FILE *f, void *obj)
+{
+  bounds b = (bounds)obj;
+  assert(f);
+  assert(obj);
+
+  fwrite((void *)&b->table, sizeof (hash_table), 1, f);
+  
+  serialize_banshee_object(b->table, hash_table);
+  
+  return TRUE;
+}
+
+void *bounds_deserialize(FILE *f)
+{
+  bounds b = ralloc(permanent, struct bounds_);
+
+  assert(f);
+  fread((void *)&b->table, sizeof(hash_table), 1, f);
+
+  return b;
+}
+
+bool bounds_set_fields(void *obj)
+{
+  bounds b = (bounds)obj;
+  assert(b);
+
+  deserialize_set_obj((void **)&b->table);
+
+  return TRUE;
 }

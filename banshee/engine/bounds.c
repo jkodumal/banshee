@@ -115,4 +115,23 @@ void bounds_delete(bounds b)
   gen_e_list_clear(b->elems);
 }
 
+/* Persistence */
+bool bounds_serialize(FILE *f, void *obj)
+{
+  fail("bounds persistence not implemented\n");
+  return FALSE;
+}
 
+/* TODO */
+void *bounds_deserialize(FILE *f)
+{
+  fail("bounds persistence not implemented\n");
+  return NULL;
+}
+
+/* TODO */
+bool bounds_set_fields(void *obj)
+{
+  fail("bounds persistence not implemented\n");
+  return FALSE;
+}

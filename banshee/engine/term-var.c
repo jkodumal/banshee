@@ -118,12 +118,6 @@ void tv_unify(term_var v, gen_e e)
 
 static gen_e tv_combine(const gen_e e1,const gen_e e2)
 {
-/*   term_var v1 = (term_var)e1, */
-/*     v2 = (term_var)e2; */
-  
-/*   if (! (v1 == v2) ) */
-/*     gen_e_list_append(tv_get_pending(v1), tv_get_pending(v2)); */
-  
   return e1;
 }
 
@@ -135,4 +129,51 @@ void tv_unify_vars(term_var v1, term_var v2)
 gen_e tv_get_ecr(term_var v)
 {
   return tv_elt_get_info(v->elt);
+}
+
+/* Persistence */
+
+bool term_var_serialize(FILE *f, void *obj)
+{
+  term_var var = (term_var)obj;
+
+  assert(f);
+  assert(var);
+
+  fwrite((void *)&var->st, sizeof(stamp), 1, f);
+  fwrite((void *)&var->pending, sizeof(bounds), 1, f);
+  string_data_serialize(f, var->name);
+  fwrite((void *)&var->elt, sizeof(tv_elt), 1, f);
+
+  serialize_banshee_object(var->pending, bounds);
+  serialize_banshee_object(var->elt, uf_element);
+
+  return TRUE;
+}
+
+void *term_var_deserialize(FILE *f)
+{
+  term_var var = NULL;
+
+  assert(f);
+  assert(permanent);
+  
+  var = ralloc(permanent, struct term_var);
+
+  fread((void *)&var->st, sizeof(stamp), 1, f);
+  fread((void *)&var->pending, sizeof(bounds), 1, f);
+  var->name = (char *)string_data_deserialize(f);
+  fread((void *)&var->elt, sizeof(tv_elt), 1, f);
+  
+  return var;
+}
+
+bool term_var_set_fields(void *obj)
+{
+  term_var var = (term_var)obj;
+  
+  deserialize_set_obj((void **)&var->pending);
+  deserialize_set_obj((void **)&var->elt);
+
+  return TRUE;
 }

@@ -66,7 +66,7 @@ bool fv_is_ub(flow_var v, stamp st);
 bool fv_is_lb(flow_var v, stamp st);
 
 void *fv_get_extra_info(flow_var v);
-void fv_set_extra_info(flow_var v, void *extra_info);
+void fv_set_extra_info(flow_var v, void *extra_info, int persist_kind);
 
 void fv_set_alias(flow_var v, gen_e e);
 void fv_unset_alias(flow_var v);
@@ -75,6 +75,11 @@ void fv_set_contour(flow_var v, contour c);
 bool fv_has_contour(flow_var v);
 void fv_unify_contour(flow_var v1, flow_var v2);
 gen_e fv_instantiate_contour(flow_var v) deletes;
+
+/* Persistence */
+bool flow_var_serialize(FILE *f, void *obj);
+void *flow_var_deserialize(FILE *f);
+bool flow_var_set_fields(void *obj);
 
 EXTERN_C_END
 

@@ -88,8 +88,16 @@ void setst_print_stats(FILE *f);
 
 void setst_rollback(banshee_rollback_info info);
 
-extern struct setst_stats setst_stats;
+/* Persistence */
+bool setst_rollback_serialize(FILE *F, banshee_rollback_info info);
+banshee_rollback_info setst_rollback_deserialize(FILE *f);
+bool setst_rollback_set_fields(banshee_rollback_info info);
+void setst_serialize(FILE *f);
+void setst_deserialize(FILE *f);
+void setst_set_fields(void);
 
+/* Stats */
+extern struct setst_stats setst_stats;
 struct setst_stats
 {
   int fresh;

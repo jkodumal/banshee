@@ -57,6 +57,10 @@ void tv_unify_vars(term_var v1, term_var v2);
 
 gen_e tv_get_ecr(term_var v);
 
+/* Persistence */
+bool term_var_serialize(FILE *f, void *obj);
+void *term_var_deserialize(FILE *f);
+bool term_var_set_fields(void *obj);
 
 EXTERN_C_END
 

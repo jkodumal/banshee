@@ -37,9 +37,6 @@
 #include "list.h"
 #include "utils.h"
 
-/* Define to enable support for rollback in sorts */
-/* #define BANSHEE_ROLLBACK */
-
 #define ALIAS_TYPE -2
 #define VAR_TYPE -1
 #define ZERO_TYPE 0
@@ -142,6 +139,12 @@ typedef gen_e (*get_proj_fn_ptr) (gen_e_list);
 void engine_init(void);
 void engine_reset(void) deletes;
 void engine_stats(FILE *f);
+
+/* Persistence */
+void engine_serialize(FILE *f);
+void engine_deserialize(FILE *f);
+void engine_set_fields(void);
+
 
 void print_constraint_graphs(FILE *f);
 

@@ -34,6 +34,7 @@
 #include "bool.h"
 #include "linkage.h"
 #include "utils.h"
+#include "persist.h"
 
 EXTERN_C_BEGIN
 
@@ -60,18 +61,26 @@ typedef hash_key (*keyread_fn)(FILE *f);
 typedef struct Hash_table *hash_table;
 
 /* Writes a key k interpreted as a string to f */
-void string_keywrite_fn(FILE *f, hash_key k);
+/* void string_keywrite_fn(FILE *f, hash_key k); */
 
 /* Given that the next thing to read from f is a string, fetch it */
-hash_key string_keyread_fn(FILE *f);
+/* hash_key string_keyread_fn(FILE *f); */
 
 /* Make a new hash table, with size buckets initially.  Hash table
    elements are allocated in region rhash. */
 hash_table make_hash_table(region rhash, unsigned long size, hash_fn hash,
 			   keyeq_fn cmp);
 
+hash_table make_persistent_hash_table(region rhash, unsigned long size, 
+				      hash_fn hash, keyeq_fn cmp,
+				      int key_persist_kind,
+				      int data_persist_kind);
+
 /* Make a hash table for strings. */
 hash_table make_string_hash_table(region rhash, unsigned long size);
+
+hash_table make_persistent_string_hash_table(region rhash, unsigned long size,
+					     int data_persist_kind);
 
 /* Zero out ht.  Doesn't reclaim bucket space. */
 void hash_table_reset(hash_table ht);
@@ -142,6 +151,11 @@ void hash_table_scan_sorted(hash_table ht, keycmp_fn f,
 bool hash_table_next_sorted(hash_table_scanner_sorted *htss, hash_key *k,
 			    hash_data *d);
 
+
+/* Persistence */
+bool hash_table_set_fields(void *obj);
+void *hash_table_deserialize(FILE *f);
+bool hash_table_serialize(FILE *f, void *obj);
 
 EXTERN_C_END
 

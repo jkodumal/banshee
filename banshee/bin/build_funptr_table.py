@@ -5,31 +5,37 @@ import string
 
 def used_fn(name):
     used_fns = ["_hash_table_insert","hash_table_insert", "_make_hash_table",
-		"make_hash_table"]
+		"make_hash_table","seed_fn_ptr_table","_seed_fn_ptr_table"]
     return (name in used_fns)
 
-def get_table(lib):
+def get_table(libraries):
+    result = []
     nm = "nm"
     nmargs = ""
-    result = []
-    output = os.popen("%s %s %s" % (nm, nmargs, lib) )
-    for line in output.readlines():
-	entry = string.split(line);
-	if len(entry) == 3 and ("T" in entry[1]) and not "." in entry[2] and not used_fn(entry[2]):
-	    if (entry[2][0] == "_"):
-		result.append(entry[2][1:])
-	    else:
-		result.append(entry[2])
+    for lib in libraries:
+	output = os.popen("%s %s %s" % (nm, nmargs, lib) )
+	for line in output.readlines():
+	    entry = string.split(line);
+	    if len(entry) == 3 and ("T" in entry[1]) and not "." in entry[2] and not used_fn(entry[2]):
+		if (entry[2][0] == "_"):
+		    result.append(entry[2][1:])
+		else:
+		    result.append(entry[2])
     result.sort()
     return result
 
-def print_decls():
+def print_preamble():
+    print "#include \"linkage.h\""
+    print "EXTERN_C_BEGIN"
     print "typedef void *region;"
     print "typedef void *hash_table;"
     print "typedef void (*fn_ptr)(void);"
     print "hash_table make_hash_table(region r, unsigned long, void *, void *);"
     print "int hash_table_insert(hash_table,void *,void *);"
     print "hash_table fn_ptr_table;"
+
+def print_postamble():
+    print "EXTERN_C_END"
 
 def print_protos(table):
     for entry in table:
@@ -51,7 +57,7 @@ def print_hash(table):
     print "}"
 
 def print_usage_and_exit():
-    print "Usage: %s <archive-name>" % sys.argv[0]
+    print "Usage: %s [file...]" % sys.argv[0]
     sys.exit(0)
 
 # get all the header files in the current directory
@@ -60,13 +66,13 @@ def print_usage_and_exit():
 #    return map((lambda x: x[:-1]), output.readlines())
 
 def print_c_file():
-    if (not (len(sys.argv) == 2)):
+    if (len(sys.argv) <= 1):
 	print_usage_and_exit()
-    table = get_table(sys.argv[1])
-    print_decls()
+    table = get_table(sys.argv[1:])
+    print_preamble()
     print_protos(table)
     print_array(table)
     print_hash(table)
-    
+    print_postamble()
 
 print_c_file()

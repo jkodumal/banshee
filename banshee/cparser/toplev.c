@@ -287,6 +287,7 @@ int flag_print_graph = 0;
 int flag_model_strings = 1;
 int flag_print_memusage = 0;
 int flag_debug_backtrack = 0;
+int flag_serialize_constraints = 0;
 int debug_backtrack_prefix = 0;
 static int backtrack_time = 0;
 
@@ -309,6 +310,7 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"print-results",&flag_print_results,1},
   {"print-stats",&flag_print_stats,1},
   {"points-to",&flag_points_to,1},
+  {"serialize-constraints",&flag_serialize_constraints,1},
 #ifndef ANDERSEN_ST
   {"cycle_elim",(int*)&flag_eliminate_cycles,1},
   {"proj-merge",(int*)&flag_merge_projections,1},
@@ -1106,6 +1108,11 @@ int main(int argc, char **argv) deletes
 	analysis_print_graph();
       }
     
+    if(flag_serialize_constraints)
+      {
+	analysis_serialize("andersen.out");
+      }
+
 /*     if (flag_print_memusage) */
 /*       { */
 /* 	print_memory_usage(); */

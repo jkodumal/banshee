@@ -33,12 +33,14 @@ else
 FILTERBOUNDS = bounds.o
 endif
 
+NONSPEC_OBJ = nonspec.o
+
 region_dir = ../libcompat
 
 CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -Wall -Werror -fno-strict-aliasing
+	 -Dparentptr= -Wall -Werror -fno-strict-aliasing 
 
 ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}
@@ -48,9 +50,11 @@ HDRS = $(wildcard *.h)
 
 NFOBJS = $(patsubst %.c,%.o,$(wildcard *.c))
 
-OBJS = $(filter-out $(FILTERBOUNDS), $(NFOBJS))
+AOBJS = $(filter-out $(FILTERBOUNDS), $(NFOBJS))
 
-NSOBJS = $(patsubst %.o,%.ns.o,$(OBJS))
+OBJS = $(filter-out $(NONSPEC_OBJ), $(AOBJS))
+
+NSOBJS = $(patsubst %.o,%.ns.o,$(AOBJS))
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
@@ -66,11 +70,21 @@ all: $(TARGETS) TAGS
 
 libengine.a: $(OBJS)
 	@echo $(OBJS)
-	$(AR) rcs $@ $^
+	../bin/build_funptr_table.py $(OBJS) > fn_ptrs.c
+	$(CC) -c $(CFLAGS) fn_ptrs.c
+	$(AR) rcs $@ $^ fn_ptrs.o
+#	../bin/build_funptr_table.py $@ > fn_ptrs.c
+#	$(CC) -c fn_ptrs.c
+#	$(AR) rvs $@ fn_ptrs.o
 
 libnsengine.a: $(NSOBJS) 
 	@echo $(NSOBJS)
-	$(AR) rcs $@ $^
+	../bin/build_funptr_table.py $(NSOBJS) > fn_ptrs.ns.c
+	$(CC) -c $(CFLAGS) fn_ptrs.ns.c
+	$(AR) rcs $@ $^ fn_ptrs.o
+#	../bin/build_funptr_table.py $@ > fn_ptrs.ns.c
+#	$(CC) -c fn_ptrs.ns.c
+#	$(AR) rs $@ fn_ptrs.ns.o
 
 nonspec.o: nonspec.c nonspec.h
 	$(CC) -c $(CFLAGS) -DNONSPEC $(CPPFLAGS) $< -o $@
@@ -86,7 +100,7 @@ nonspec.o: nonspec.c nonspec.h
 TAGS: $(TAGFILES)
 	etags ${TAGFILES}
 clean:
-	-rm -f *.o $(TARGETS) *~ 
+	-rm -f *.o $(TARGETS) *~ fn_ptrs.ns.c fn_ptrs.c
 
 
 

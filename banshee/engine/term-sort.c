@@ -34,7 +34,6 @@
 #include "hash.h"
 #include "banshee_persist_kinds.h"
 
-
 struct term_constant_ /* extends gen_e */
 {
 #ifdef NONSPEC
@@ -106,7 +105,6 @@ gen_e term_one(void)
   return (gen_e)&one;
 }
 
-
 gen_e term_constant(const char *str)
 {
   stamp st[2];
@@ -156,6 +154,11 @@ bool term_is_one(gen_e e)
 bool term_is_var(gen_e e)
 {
   return ( ((gen_term)term_get_ecr(e))->type == VAR_TYPE);
+}
+
+bool term_is_initial_var(gen_e e)
+{
+  return ((gen_term)e)->type == VAR_TYPE;
 }
 
 bool term_is_constant(gen_e e)
@@ -212,8 +215,10 @@ static void term_register_rollback(void)
   banshee_set_time((banshee_rollback_info)term_current_rollback_info);
   term_current_rollback_info->kind = term_sort;
   term_current_rollback_info->added_edges = 
-    make_hash_table(banshee_rollback_region,
-		    4, ptr_hash, ptr_eq);
+    make_persistent_hash_table(banshee_rollback_region,
+			       4, ptr_hash, ptr_eq,
+			       BANSHEE_PERSIST_KIND_bounds,
+			       BANSHEE_PERSIST_KIND_list);
   
   banshee_register_rollback((banshee_rollback_info)term_current_rollback_info);
 #endif /* BANSHEE_ROLLBACK */
@@ -400,4 +405,77 @@ void term_rollback(banshee_rollback_info info)
 						     
 }
 
+bool term_rollback_serialize(FILE *f, banshee_rollback_info i)
+{
+  term_rollback_info info = (term_rollback_info)i;
 
+  fwrite((void *)&info->added_edges, sizeof(hash_table), 1, f);
+  serialize_banshee_object(info->added_edges, hash_table);
+
+  return TRUE;
+}
+
+banshee_rollback_info term_rollback_deserialize(FILE *f)
+{
+  term_rollback_info info = ralloc(permanent, struct term_rollback_info_);
+  assert(f);
+
+  fread((void *)&info->added_edges, sizeof(void *), 1, f);
+
+  return (banshee_rollback_info)info;
+}
+
+bool term_rollback_set_fields(banshee_rollback_info i)
+{
+  term_rollback_info info = (term_rollback_info)i;
+
+  deserialize_set_obj((void **)&info->added_edges);
+
+  return TRUE;
+}
+
+bool term_constant_serialize(FILE *f, gen_e e)
+{
+  term_constant_ c = (term_constant_)e;
+  assert(f);
+  assert(e);
+
+  fwrite((void *)&c->st, sizeof(stamp), 1, f);
+  string_data_serialize(f,  c->name);
+  
+  return TRUE;
+}
+
+void *term_constant_deserialize(FILE *f)
+{
+  term_constant_ c = ralloc(permanent, struct term_constant_);
+  assert(f);
+
+  fread((void *)&c->st, sizeof(stamp), 1, f);
+  c->name = (char *)string_data_deserialize(f);
+  
+  return c;
+}
+
+void term_serialize(FILE *f)
+{
+  assert(f);
+  fwrite((void *)&flag_occurs_check, sizeof(bool), 1, f);
+  fwrite((void *)&term_current_rollback_info, sizeof(term_rollback_info), 1, f);
+  
+  serialize_banshee_object(term_current_rollback_info, banshee_rollback_info);
+}
+
+void term_deserialize(FILE *f)
+{
+  assert(f);
+  fread((void *)&flag_occurs_check, sizeof(bool), 1, f);
+  fread((void *)&term_current_rollback_info, sizeof(term_rollback_info), 1, f);
+
+}
+
+
+void term_set_fields(void)
+{
+  deserialize_set_obj((void **)&term_current_rollback_info);
+}

@@ -43,8 +43,8 @@ struct setif_term /* extends gen_e */
 #ifdef NONSPEC
   const sort_kind sort;
 #endif
-  const int type;
-  const stamp st;
+  int type;
+  stamp st;
 };
 
 typedef struct setif_term *setif_term;
@@ -101,6 +101,24 @@ void setif_register_ub_proj(gen_e_list ubprojs,gen_e e);
 void setif_rollback(banshee_rollback_info);
 void setif_register_rollback();
 
+/* Persistence  */
+bool setif_rollback_serialize(FILE *f, banshee_rollback_info);
+banshee_rollback_info setif_rollback_deserialize(FILE *f);
+bool setif_rollback_set_fields(banshee_rollback_info i);
+bool setif_union_serialize(FILE *f, gen_e e);
+bool setif_inter_serialize(FILE *f, gen_e e);
+bool setif_constant_serialize(FILE *f, gen_e e);
+void *setif_union_deserialize(FILE *f);
+void *setif_inter_deserialize(FILE *f);
+void *setif_constant_deserialize(FILE *f);
+bool setif_union_set_fields(gen_e e);
+bool setif_inter_set_fields(gen_e e);
+bool setif_constant_set_fields(gen_e e);
+void setif_serialize(FILE *F);
+void setif_deserialize(FILE *f);
+void setif_set_fields(void);
+
+/* Stats */
 extern struct setif_stats setif_stats;
 struct setif_stats
 {

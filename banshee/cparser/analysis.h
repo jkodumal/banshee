@@ -31,5 +31,6 @@ void analysis_reset(void) deletes;
 void print_analysis_results(void) deletes;
 void print_points_to_sets(void);
 void analysis_print_graph(void);
+void analysis_serialize(const char *filename);
 
 #endif /* ANALYSIS_H */

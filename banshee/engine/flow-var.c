@@ -50,6 +50,7 @@ struct flow_var /* extends gen_e */
   contour_elt elt; 
   char *name;
   void *extra_info;
+  int extra_persist_kind;
 };
 
 DEFINE_UFIND(contour_elt,contour);
@@ -68,9 +69,11 @@ static flow_var make_var(region r,const char *name, stamp st)
   result->lbs = bounds_create(r);
   result->elt = new_contour_elt(r,NULL);
   result->name = name ? rstrdup(r,name) : "fv";
+  result->extra_info = NULL;
+  result->extra_persist_kind = NULL;
 
 #ifdef NONSPEC
-  result->sort = flowrow_sort; /* FIX : this is a hack, sort may not be flowrow */
+  result->sort = flowrow_sort; /* TODO: remove hack, sort may not be flowrow */
 #endif
 
   return result;
@@ -194,7 +197,112 @@ void *fv_get_extra_info(flow_var v)
   return v->extra_info;
 }
 
-void fv_set_extra_info(flow_var v, void *extra_info)
+void fv_set_extra_info(flow_var v, void *extra_info, int persist_kind)
 {
   v->extra_info = extra_info;
+  v->extra_persist_kind = persist_kind;
+}
+
+
+/* Persistence */
+
+bool flow_var_serialize(FILE *f, void *obj)
+{
+  flow_var var = (flow_var)obj;
+
+  assert(f);
+  assert(obj);
+
+  fwrite((void *)&var->st, sizeof(stamp), 1, f);
+  fwrite((void *)&var->alias, sizeof(gen_e), 1, f);
+  fwrite((void *)&var->ubs, sizeof(bounds), 1, f);
+  fwrite((void *)&var->lbs, sizeof(bounds), 1, f);
+  fwrite((void *)&var->elt, sizeof(contour_elt), 1, f);
+  fwrite((void *)&var->extra_info, sizeof(void *), 1, f);
+  string_data_serialize(f,var->name);
+  
+  serialize_banshee_object(var->ubs, bounds);
+  serialize_banshee_object(var->lbs, bounds);
+  serialize_banshee_object(var->elt, uf_element);
+  serialize_object(var->extra_info, var->extra_persist_kind);
+  
+  return TRUE;
+}
+
+void *flow_var_deserialize(FILE *f)
+{
+  flow_var var = NULL;
+
+  var = ralloc(permanent, struct flow_var);
+
+  fread((void *)&var->st, sizeof(stamp), 1, f);
+  fread((void *)&var->alias, sizeof(gen_e), 1, f);
+  fread((void *)&var->ubs, sizeof(bounds), 1, f);
+  fread((void *)&var->lbs, sizeof(bounds), 1, f);
+  fread((void *)&var->elt, sizeof(contour_elt), 1, f);
+  fread((void *)&var->extra_info, sizeof(void *), 1, f);
+  
+  var->name = (char *)string_data_deserialize(f);
+
+  return var;
+}
+
+bool flow_var_set_fields(void *obj)
+{
+  flow_var var = (flow_var)obj;
+  assert(var);
+
+  deserialize_set_obj((void **)&var->ubs);
+  deserialize_set_obj((void **)&var->lbs);
+  deserialize_set_obj((void **)&var->elt);
+  if (var->extra_persist_kind != BANSHEE_PERSIST_KIND_nonptr) {
+    deserialize_set_obj((void **)&var->extra_info);
+  }
+  
+  return TRUE;
+}
+
+bool contour_serialize(FILE *f, void *obj)
+{
+  contour c = (contour)obj;
+
+  assert(f);
+  assert(c);
+
+  fwrite((void *)&c->shape, sizeof(gen_e), 1, f);
+  fwrite((void *)&c->fresh, sizeof(fresh_fn_ptr), 1, f);
+  fwrite((void *)&c->get_stamp, sizeof(get_stamp_fn_ptr), 1, f);
+  fwrite((void *)&c->instantiate, sizeof(contour_inst_fn_ptr), 1, f);
+
+  serialize_banshee_object(c->shape, gen_e);
+  serialize_banshee_object(c->fresh, funptr);
+  serialize_banshee_object(c->get_stamp, funptr);
+  serialize_banshee_object(c->instantiate, funptr);
+
+  return TRUE;
+}
+
+void *contour_deserialize(FILE *f)
+{
+  contour c = ralloc(permanent, struct contour);
+
+  assert(f);
+
+  fread((void *)&c->shape, sizeof(gen_e), 1, f);
+  fread((void *)&c->fresh, sizeof(fresh_fn_ptr), 1, f);
+  fread((void *)&c->get_stamp, sizeof(get_stamp_fn_ptr), 1, f);
+  fread((void *)&c->instantiate, sizeof(contour_inst_fn_ptr), 1, f);
+
+  return c;
+}
+
+bool contour_set_fields(void *obj)
+{
+  contour c = (contour)obj;
+  deserialize_set_obj((void **)&c->shape);
+  deserialize_set_obj((void **)&c->fresh);
+  deserialize_set_obj((void **)&c->get_stamp);
+  deserialize_set_obj((void **)&c->instantiate);
+
+  return TRUE;
 }

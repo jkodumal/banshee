@@ -36,37 +36,55 @@
 #ifndef BANSHEE_PERSIST_KINDS_H
 #define BANSHEE_PERSIST_KINDS_H
 
+#include "linkage.h"
 #include "persist.h"
 
+EXTERN_C_BEGIN
+
+/* This should be kept in sync with the enum below it */
+#ifdef NONSPEC
+#define NUM_PERSIST_KINDS 21
+#else
+#define NUM_PERSIST_KINDS 19
+#endif 
 /* Take each type that should support serialization and prefix it with
    BANSHEE_PERSIST_KIND. Then serialize_banshee_object(object, type)
    will take care of choosing the right kind.
 */
 typedef enum banshee_persist_kind_ {
-  BANSHEE_PERSIST_KIND_none = 0,  /* for non-persistent data: KEEP THIS 0 */
+  BANSHEE_PERSIST_KIND_nonptr = 0,  /* for non-pointer data: KEEP THIS 0 */
+  BANSHEE_PERSIST_KIND_funptr = 1,
+  BANSHEE_PERSIST_KIND_string = 2,
   BANSHEE_PERSIST_KIND_uf_element, 
-  BANSHEE_PERSIST_KIND_hash_bounds, /* TODO */
   BANSHEE_PERSIST_KIND_setif_var,  
   BANSHEE_PERSIST_KIND_sv_info,	 
-  BANSHEE_PERSIST_KIND_list,	/* TODO */
-  BANSHEE_PERSIST_KIND_bounds,	/* TODO */
-  BANSHEE_PERSIST_KIND_contour,	/* TODO */
-  BANSHEE_PERSIST_KIND_st_info,	/* TODO */
-  BANSHEE_PERSIST_KIND_gen_e,	/* TODO */
-  BANSHEE_PERSIST_KIND_banshee_rollback_info, /* TODO */
-  BANSHEE_PERSIST_KIND_flow_var,	      /* TODO */
-  BANSHEE_PERSIST_KIND_flowrow_field,	      /* TODO */
-  BANSHEE_PERSIST_KIND_cons_group,	      /* TODO */
-  BANSHEE_PERSIST_KIND_sig_elt_ptr,	      /* TODO */
-  BANSHEE_PERSIST_KIND_setst_var,	      /* TODO */
-  BANSHEE_PERSIST_KIND_term_var,	      /* TODO */
-  BANSHEE_PERSIST_KIND_ustack_elt,	      /* TODO */
+  BANSHEE_PERSIST_KIND_list,	
+  BANSHEE_PERSIST_KIND_bounds,
+  BANSHEE_PERSIST_KIND_contour,	
+  BANSHEE_PERSIST_KIND_banshee_rollback_info,
+  BANSHEE_PERSIST_KIND_flow_var,	      
+  BANSHEE_PERSIST_KIND_flowrow_field,
+  BANSHEE_PERSIST_KIND_setst_var,
+  BANSHEE_PERSIST_KIND_st_info,
+  BANSHEE_PERSIST_KIND_term_var,	
+  BANSHEE_PERSIST_KIND_ustack_elt,
+  BANSHEE_PERSIST_KIND_hash_table,
+  BANSHEE_PERSIST_KIND_term_hash,
+  BANSHEE_PERSIST_KIND_gen_e,
+#ifdef NONSPEC
+  BANSHEE_PERSIST_KIND_cons_group,	
+  BANSHEE_PERSIST_KIND_constructor,
+#endif
 } banshee_persist_kind;
 
+void banshee_serialize_start(FILE *f);
+void banshee_serialize_end();
+void banshee_deserialize_all(FILE *f);
+
+/* TODO -- for consistency, rename to banshee_serialize_object */
 #define serialize_banshee_object(object, type)			\
-  serialize_object(BANSHEE_PERSIST_KIND_ ## type, object)
+  serialize_object(object, BANSHEE_PERSIST_KIND_ ## type)
 
-
-
+EXTERN_C_END
 
 #endif /* BANSHEE_PERSIST_KINDS_H */

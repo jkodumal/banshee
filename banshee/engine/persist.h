@@ -46,9 +46,10 @@
    object. Clients of the persistence manager must provide a mapping
    from kinds to serialization function pointers (for serialization)
    or from kinds to deserialization function pointers (for
-   deserialization).
+   deserialization). three kinds are reserved: 0 for non-pointer, 1
+   for function pointer data, and 2 for string data
 
-   2. id -- this is simply the address of the object. It is needed to
+   2. id -- this is the address of the object. It is needed to
    reconstruct the object graph during deserialization.
    
    3. data -- the contents of the object. It is expected that
@@ -74,17 +75,17 @@
       set_fields has been called on them. This function should return
       the constructed object
 
-   c) bool set_fields(void *obj)
+   c) bool deserialize_set_obj(void **objptr)
 
       This function should fill in all the pointer valued fields of
       the struct.  Essentially it should just do this:
 
-      obj->f1 = deserialize_get_obj(obj->f1)
+      deserialize_set_obj(&obj->f1)
       ...
-      obj->fn = deserialize_get_obj(obj->fn)
+      deserialize_set_obj(&obj->fn)
 
       This works because deserialize(...) is expected to store the
-      object id's in the fields temporarily. deserialize_get_obj(...)
+      object id's in the fields temporarily. deserialize_set_obj(...)
       has a mapping from these object id's to valid object pointers
 */
 
@@ -93,6 +94,14 @@
 
 #include <stdio.h>
 #include "bool.h"
+#include "linkage.h"
+
+#define NONPTR_PERSIST_KIND 0
+#define FUNPTR_PERSIST_KIND 1
+#define STRING_PERSIST_KIND 2
+
+
+EXTERN_C_BEGIN
 
 /* Serialize an object, returning success (TRUE-- success) */
 typedef bool (*serialize_fn_ptr) (FILE *f,void *obj);
@@ -106,12 +115,26 @@ typedef bool (*set_fields_fn_ptr) (void *obj);
 
 /* Serialization */
 void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length);
-bool serialize_object(int kind, void *obj);
+bool serialize_object(void *obj, int kind); 
 void serialize_end(void);
 
 /* Deserialization */
 bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[], 
 		set_fields_fn_ptr set_fields[], int length);
-void *deserialize_get_obj(void *old_field);
+void *deserialize_get_obj(void *old_obj);
+bool deserialize_set_obj(void **old_obj);
+
+/* Support for special data kinds (non pointer, function pointer, string) */
+bool nonptr_data_serialize(FILE *f, void *obj);
+void *nonptr_data_deserialize(FILE *f);
+bool nonptr_data_set_fields(void *obj);
+bool funptr_data_serialize(FILE *f, void *obj);
+void *funptr_data_deserialize(FILE *f);
+bool funptr_data_set_fields(void *obj);
+bool string_data_serialize(FILE *f, void *obj);
+void *string_data_deserialize(FILE *f);
+bool string_data_set_fields(void *obj);
+
+EXTERN_C_END
 
 #endif /* PERSIST_H */

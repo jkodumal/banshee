@@ -87,6 +87,11 @@ void uf_backtrack();
 /* Backtrack to the last tick */
 void uf_rollback(); 		
 
+/* Persistence */
+void uf_serialize(FILE *f);
+void uf_deserialize(FILE *f);
+void uf_set_fields(void);
+
 #define DECLARE_UFIND(name,type) \
 typedef struct name *name; \
 typedef type (* name ## _combine_fn_ptr)(const type info1, const type info2); \

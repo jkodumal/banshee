@@ -35,6 +35,7 @@
 #include "bool.h"
 #include "list.h"
 #include "hash.h"
+#include "banshee_persist_kinds.h"
 
 EXTERN_C_BEGIN
 
@@ -56,6 +57,7 @@ typedef enum
   vnc_neg,
   vnc_non
 } vnc_kind;
+
 
 struct sig_elt_
 {
@@ -85,9 +87,9 @@ typedef struct {
   gen_e e;
 } pattern;
 
-// Fully expanded sort kinds. Translate to sort_kinds as needed
-// These are needed when we have row(base) and need to know the base
-// which occurs when we have 0,1, or _ row expressions (for ibanshee)
+/* Fully expanded sort kinds. Translate to sort_kinds as needed */
+/* These are needed when we have row(base) and need to know the base */
+/* which occurs when we have 0,1, or _ row expressions (for ibanshee) */
 typedef enum {
   e_setif_sort,
   e_term_sort,
@@ -274,11 +276,11 @@ void cons_group_add(cons_group g, constructor c);
 /* Create a group projection pattern */
 gen_e setif_group_proj_pat(cons_group g, int i, gen_e e);
 
+/* Persistence */
 void serialize_cs(const char *filename, hash_table *entry_points, 
-		  keywrite_fn *write_keys, unsigned long sz);
+		  unsigned long sz);
 
-void deserialize_cs(const char *filename, hash_table *entry_points,
-		    keyread_fn *read_keys, unsigned long sz);
+hash_table *deserialize_cs(const char *filename);
 
 EXTERN_C_END
 

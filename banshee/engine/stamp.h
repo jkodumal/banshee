@@ -55,6 +55,7 @@ void stamp_init(void);
 
 void stamp_serialize(FILE *f);
 void stamp_deserialize(FILE *f);
+void stamp_set_fields(void);
 
 EXTERN_C_END
 

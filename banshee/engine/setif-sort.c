@@ -35,9 +35,7 @@
 #include "jcollection.h"
 #include "setif-sort.h"
 #include "utils.h"
-
-bool flag_eliminate_cycles = TRUE;
-bool flag_merge_projections = TRUE;
+#include "banshee_persist_kinds.h"
 
 struct setif_union_ /* extends gen_e */
 {
@@ -81,8 +79,9 @@ typedef struct setif_inter_ *setif_inter_;
 typedef struct setif_union_ *setif_union_;
 typedef struct setif_constant_ *setif_constant_;
 
+bool flag_eliminate_cycles = TRUE;
+bool flag_merge_projections = TRUE;
 static bool tlb_cache_valid = FALSE;
-static setif_var_list setif_vars;
 static region tlb_cache_region;
 static setif_var_list tlb_var_cache;
 static jcoll_dict tlb_dict;
@@ -335,12 +334,16 @@ void setif_register_rollback(void)
   banshee_set_time((banshee_rollback_info)setif_current_rollback_info);
   setif_current_rollback_info->kind = setif_sort;
   setif_current_rollback_info->added_edges = 
-    make_hash_table(banshee_rollback_region,
-		    4, ptr_hash, ptr_eq);
+    make_persistent_hash_table(banshee_rollback_region,
+			       4, ptr_hash, ptr_eq,
+			       BANSHEE_PERSIST_KIND_bounds,
+			       BANSHEE_PERSIST_KIND_list);
 
   setif_current_rollback_info->added_ub_projs = 
-    make_hash_table(banshee_rollback_region,
-		    4, ptr_hash, ptr_eq);
+    make_persistent_hash_table(banshee_rollback_region,
+			       4, ptr_hash, ptr_eq,
+			       BANSHEE_PERSIST_KIND_list,
+			       BANSHEE_PERSIST_KIND_list);
   
   banshee_register_rollback((banshee_rollback_info)setif_current_rollback_info);
 #endif /* BANSHEE_ROLLBACK */
@@ -688,7 +691,6 @@ gen_e setif_one(void)
 gen_e setif_fresh(const char *name)
 {
   setif_var result = sv_fresh(setif_region,name);
-  setif_var_list_cons(result,setif_vars);
 
   setif_stats.fresh++;
   return (gen_e)result;
@@ -697,7 +699,6 @@ gen_e setif_fresh(const char *name)
 gen_e setif_fresh_large(const char *name)
 {
   setif_var result = sv_fresh_large(setif_region,name);
-  setif_var_list_cons(result,setif_vars);
 
   setif_stats.fresh_large++;
   return (gen_e)result;
@@ -706,7 +707,6 @@ gen_e setif_fresh_large(const char *name)
 gen_e setif_fresh_small(const char *name)
 {
   setif_var result = sv_fresh_small(setif_region,name);
-  setif_var_list_cons(result,setif_vars);
 
   setif_stats.fresh_small++;
   return (gen_e)result;
@@ -799,6 +799,9 @@ gen_e setif_union(gen_e_list exprs) deletes
 	  u->st = stamp_fresh();
 	  u->proj_cache = new_gen_e_list(setif_region);
 	  u->exprs = filtered;
+#ifdef NONSPEC
+	  u->sort = setif_sort;
+#endif
 	 
 	  result = (gen_e)u;
 	  term_hash_insert(setif_hash,result,st,gen_e_list_length(filtered)+1);
@@ -853,7 +856,10 @@ gen_e setif_inter(gen_e_list exprs) deletes
 	  u->type = UNION_TYPE;
 	  u->st = stamp_fresh();
 	  u->exprs = filtered;
-	 
+#ifdef NONSPEC
+	  u->sort = setif_sort;
+#endif	 
+
 	  result = (gen_e)u;
 	  term_hash_insert(setif_hash,result,st,gen_e_list_length(filtered)+1);
 	  
@@ -908,10 +914,8 @@ char *setif_get_constant_name(gen_e e)
 
 void setif_init(void)
 {
-  sv_init();
   setif_region = newregion();
   tlb_cache_region = newregion(); 
-  setif_vars = new_setif_var_list(setif_region);
   tlb_var_cache = new_setif_var_list(tlb_cache_region);
   setif_hash = make_term_hash(setif_region);
   tlb_dict = jcoll_create_dict(tlb_cache_region,setif_get_stamp);
@@ -967,11 +971,9 @@ void setif_reset(void) deletes
 
   setif_region = newregion();
   tlb_cache_region = newregion();
-  setif_vars = new_setif_var_list(setif_region);
   tlb_var_cache = new_setif_var_list(tlb_cache_region);
   setif_hash = make_term_hash(setif_region);
 
-  sv_reset();
 }
 
 static jcoll tlb_aux(gen_e e)
@@ -1288,5 +1290,160 @@ void setif_rollback(banshee_rollback_info info)
 
 }
 
+/* Persistence */
+bool setif_rollback_serialize(FILE *f, banshee_rollback_info i)
+{
+  setif_rollback_info info = (setif_rollback_info)i;
+  assert(f);
+  assert(info);
 
+  fwrite((void *)&info->added_edges, sizeof(hash_table), 1, f);
+  fwrite((void *)&info->added_ub_projs, sizeof(hash_table), 1, f);
 
+  serialize_banshee_object(info->added_edges, hash_table);
+  serialize_banshee_object(info->added_ub_projs, hash_table);
+  
+  return TRUE;
+}
+
+banshee_rollback_info setif_rollback_deserialize(FILE *f)
+{
+  setif_rollback_info info = ralloc(permanent, struct setif_rollback_info_);
+  assert(f);
+
+  fread((void *)&info->added_edges, sizeof(hash_table), 1, f);
+  fread((void *)&info->added_ub_projs, sizeof(hash_table), 1, f);
+
+  return (banshee_rollback_info) info;
+}
+
+bool setif_rollback_set_fields(banshee_rollback_info i)
+{
+  setif_rollback_info info = (setif_rollback_info)i;
+
+  deserialize_set_obj((void **)&info->added_edges);
+  deserialize_set_obj((void **)&info->added_ub_projs);
+  
+  return TRUE;
+}
+
+bool setif_union_serialize(FILE *f, gen_e e)
+{
+  setif_union_ expr = (setif_union_)e;
+  assert(f);
+  assert(expr);
+
+  fwrite((void *)&expr->st, sizeof(stamp), 1, f);
+  fwrite((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
+  fwrite((void *)&expr->proj_cache, sizeof(gen_e_list), 1, f);
+  serialize_banshee_object(expr->exprs, list);
+  serialize_banshee_object(expr->proj_cache, list);
+  
+  return TRUE;
+}
+
+bool setif_inter_serialize(FILE *f, gen_e e)
+{
+  setif_inter_ expr = (setif_inter_)e;
+  assert(f);
+  assert(expr);
+
+  fwrite((void *)&expr->st, sizeof(stamp), 1, f);
+  fwrite((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
+  serialize_banshee_object(expr->exprs, list);
+
+  return TRUE;
+}
+
+bool setif_constant_serialize(FILE *f, gen_e e)
+{
+  setif_constant_ c = (setif_constant_)e;
+  assert(f);
+  assert(c);
+
+  fwrite((void *)&c->st, sizeof(stamp), 1, f);
+  string_data_serialize(f, c->name);
+
+  return TRUE;
+}
+
+void *setif_union_deserialize(FILE *f)
+{
+  setif_union_ expr = ralloc(permanent, struct setif_union_);
+  
+  fread((void *)&expr->st, sizeof(stamp), 1, f);
+  fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
+  fread((void *)&expr->proj_cache, sizeof(gen_e_list), 1, f);
+
+  return expr;
+}
+
+void *setif_inter_deserialize(FILE *f)
+{
+  setif_inter_ expr = ralloc(permanent, struct setif_inter_);
+  fread((void *)&expr->st, sizeof(stamp), 1, f);
+  fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f);
+
+  return expr;
+}
+
+void *setif_constant_deserialize(FILE *f)
+{
+  setif_constant_ c = ralloc(permanent, struct setif_constant_);
+
+  fread((void *)&c->st, sizeof(stamp), 1, f);
+  c->name = string_data_deserialize(f);
+
+  return c;
+}
+
+bool setif_union_set_fields(gen_e e)
+{
+  deserialize_set_obj((void **)&((setif_union_)e)->exprs);
+  deserialize_set_obj((void **)&((setif_union_)e)->proj_cache);
+  return TRUE;
+}
+
+bool setif_inter_set_fields(gen_e e)
+{
+  deserialize_set_obj((void **)&((setif_inter_)e)->exprs);
+  return TRUE;
+}
+
+bool setif_constant_set_fields(gen_e e)
+{
+  return TRUE;
+}
+
+/* Invalidates any TLB's as well as stats */
+void setif_serialize(FILE *f)
+{
+  assert(f);
+
+  fwrite((void *)&flag_eliminate_cycles, sizeof(bool), 1, f);
+  fwrite((void *)&flag_merge_projections, sizeof(bool), 1, f);
+  fwrite((void *)&setif_current_rollback_info,
+	 sizeof(setif_rollback_info), 1, f);
+  fwrite((void *)&setif_hash, sizeof(term_hash), 1, f);
+
+  serialize_banshee_object(setif_current_rollback_info, banshee_rollback_info);
+  serialize_banshee_object(setif_hash, term_hash);
+}
+
+void setif_deserialize(FILE *f)
+{
+  assert(f);
+  
+  lazy_invalidate_tlb_cache();
+  fread((void *)&flag_eliminate_cycles, sizeof(bool), 1, f);
+  fread((void *)&flag_merge_projections, sizeof(bool), 1, f);
+  fread((void *)&setif_current_rollback_info,
+	 sizeof(setif_rollback_info), 1, f);
+  fread((void *)&setif_hash, sizeof(term_hash), 1, f);
+}
+
+void setif_set_fields(void)
+{
+  deserialize_set_obj((void **)&setif_current_rollback_info);
+  deserialize_set_obj((void **)&setif_hash);
+}

@@ -28,6 +28,8 @@
  *
  */
 
+#include <string.h>
+
 #include "persist.h"
 #include "regions.h"
 #include "hash.h"
@@ -60,6 +62,13 @@ static int num_kinds;
 static hash_table object_map;
 static hash_table serialized_objects;
 
+/* Handling function pointer serialization */
+/* A mapping from function pointers to ints (id's) for serialization  */
+extern hash_table fn_ptr_table;
+/* A mapping from ints (id's) to function pointers for deserialization */
+extern void *fn_ptr_array[];
+EXTERN_C void seed_fn_ptr_table(region r);
+
 /* Serialization */
 void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length)
 {
@@ -68,6 +77,9 @@ void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length)
 
   persist_rgn = newregion();
   current_state = persist_serializing;
+
+  seed_fn_ptr_table(persist_rgn);
+
   serialize_queue = new_persist_entry_queue(persist_rgn);
   serialized_objects = make_hash_table(persist_rgn, 128, ptr_hash, ptr_eq);
   
@@ -77,13 +89,14 @@ void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length)
   rarraycopy(serialize_fns, kind_map, length, serialize_fn_ptr);
 }
 
-static bool do_serialize_object(int kind, void *obj)
+static bool do_serialize_object(void *obj, int kind)
 {
   bool success = TRUE;
   assert(current_state == persist_serializing);
   assert(persist_rgn);
   assert(serialize_fns);
   assert(kind < num_kinds);
+  assert(current_file);
 
   success = fwrite((void *)&kind,sizeof(int),1,current_file);
   success &= fwrite((void*)&obj, sizeof(void *), 1, current_file);
@@ -93,11 +106,14 @@ static bool do_serialize_object(int kind, void *obj)
   return success;
 }
 
-bool serialize_object(int kind, void *obj)
+bool serialize_object(void *obj, int kind)
 {
   persist_entry entry;
 
   assert(current_state == persist_serializing);
+
+  /* Don't serialize null objects */
+  if (!obj) return TRUE;
 
   if ( hash_table_insert(serialized_objects, (hash_key)obj, (hash_data) NULL)) {
     entry = ralloc(persist_rgn, struct persist_entry_);
@@ -116,7 +132,7 @@ void serialize_end(void)
 
   while(!persist_entry_queue_empty(serialize_queue)) {
     next_entry = persist_entry_queue_head(serialize_queue);
-    do_serialize_object(next_entry->kind, next_entry->obj);
+    do_serialize_object(next_entry->obj, next_entry->kind);
     persist_entry_queue_tail(serialize_queue);
   }
 
@@ -131,9 +147,10 @@ void serialize_end(void)
 static bool create_objects(FILE *f, deserialize_fn_ptr deserialize_obj[], 
 			  int length)
 {
-  void *id;
-  void *obj;
+  void *id = NULL;
+  void *obj = NULL;
   int kind;
+  int num_objects = 0;
   bool success = TRUE;
   persist_entry entry;
 
@@ -143,15 +160,20 @@ static bool create_objects(FILE *f, deserialize_fn_ptr deserialize_obj[],
     assert(kind < length);
     
     success &= fread((void *)&id, sizeof(void *), 1, f);
-    assert(id);
-    obj = deserialize_obj[kind](f);
-    assert(obj);
 
-    assert(object_map);
-    entry = ralloc(persist_rgn, struct persist_entry_);
-    entry->kind = kind;
-    entry->obj = obj;
-    success &= hash_table_insert(object_map, (hash_key) id, (hash_data) entry);
+    obj = deserialize_obj[kind](f);
+
+    /* For any kind other than nonptr and string, add to an object map */
+    if (kind != 0 && obj) {
+      assert(id);
+      assert(object_map);
+      entry = ralloc(persist_rgn, struct persist_entry_);
+      entry->kind = kind;
+      entry->obj = obj;
+      success &= 
+	hash_table_insert(object_map, (hash_key) id, (hash_data) entry);
+    }
+    num_objects++;
   }
 
   assert(success);
@@ -184,7 +206,6 @@ bool deserialize_all(FILE *f, deserialize_fn_ptr deserialize_obj[],
   assert(length > 0);
   assert(persist_rgn == NULL);
   
-
   persist_rgn = newregion();
   current_state = persist_deserializing;
   
@@ -208,4 +229,91 @@ void *deserialize_get_obj(void *old_field)
     return NULL;
   }
   else return entry->obj;
+}
+
+bool deserialize_set_obj(void **old_obj_ptr)
+{
+  void *result = deserialize_get_obj(*old_obj_ptr);
+  
+  if (result) {
+    *old_obj_ptr = result;  
+    return TRUE;
+  }
+  else return FALSE;
+}
+
+bool nonptr_data_serialize(FILE *f, void *obj)
+{
+  return TRUE;
+}
+
+void *nonptr_data_deserialize(FILE *f)
+{
+  return NULL;
+}
+
+bool nonptr_data_set_fields(void *obj)
+{
+  return TRUE;
+}
+
+bool funptr_data_serialize(FILE *f, void *obj)
+{
+  int id = 0;
+  bool success;
+  assert(f);
+  assert(obj);
+
+  success = hash_table_lookup(fn_ptr_table,(hash_key)obj, (hash_data*)&id);
+  
+  success &= fwrite((void *)&id, sizeof(int), 1, f);
+
+  if (!success) {
+    fprintf(stderr, "Warning: failed to serialize a function pointer\n");
+  }
+
+  return success;  
+}
+
+void *funptr_data_deserialize(FILE *f)
+{
+  int id = 0;
+  assert(f);
+
+  fread((void *)&id, sizeof(int), 1, f);
+
+  return fn_ptr_array[id];
+}
+
+bool funptr_data_set_fields(void *obj)
+{
+  return TRUE;
+}
+
+bool string_data_serialize(FILE *f, void *obj)
+{
+  int length = strlen((char *)obj);
+  /* write the string length */
+  fwrite((void *)&length, sizeof(long), 1, f);
+  fwrite((void *)obj, sizeof(char),strlen((char *)obj), f);
+
+  return TRUE;
+}
+
+void *string_data_deserialize(FILE *f)
+{
+  long length;
+  char buf[512];
+
+  fread((void *)&length, sizeof(long), 1, f);
+  assert(length < 512);
+  fread((void *)buf, sizeof(char), length, f);
+  buf[length] = '\0';
+  
+  return (void *)strdup(buf);
+}
+
+bool string_data_set_fields(void *obj)
+{
+  return TRUE;
 }

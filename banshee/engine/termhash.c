@@ -33,6 +33,7 @@
 #include "hash.h"
 #include "termhash.h"
 #include "utils.h"
+#include "banshee_persist_kinds.h"
 
 #define UB(n) ((1<<n)-1)   
 #define CAP(n) (1<<n)      
@@ -255,7 +256,63 @@ static int hash(int ub, stamp stamps[], int len)
   return n;
 }
 
+bool term_hash_serialize(FILE *f, void *obj)
+{
+  int i;
+  term_hash h = (term_hash)obj;
+  term_bucket cur;
+  assert(f);
+  assert(obj);
 
+  fwrite((void *)&h->inserts, sizeof(int), 1, f);
+
+  for (i = 0; i < h->capacity; i++) {
+    scan_term_bucket(h->term_buckets[i], cur) {
+      fwrite((void *)&cur->entry->length, sizeof(int), 1, f);
+      fwrite((void *)cur->entry->stamps, sizeof(stamp), cur->entry->length, f);
+      fwrite((void *)&cur->entry->e, sizeof(gen_e), 1, f);
+      serialize_banshee_object(cur->entry->e, gen_e);
+    }
+  }
+  return TRUE;
+}
+
+void *term_hash_deserialize(FILE *f)
+{
+  int inserts,i;
+  term_hash result = make_term_hash(permanent);
+
+  fread((void *)&inserts, sizeof(int), 1, f);
+
+  for (i = 0; i < inserts; i++) {
+    int length;
+    fread((void *)&length, sizeof(int), 1, f);
+    {
+      gen_e e;
+      stamp sig[length];
+      fread((void *)sig, sizeof(stamp), length, f);
+      fread((void *)&e, sizeof(gen_e), 1, f);
+      term_hash_insert(result, e, sig, length);
+    }
+  }
+  return result;
+}
+
+bool term_hash_set_fields(void *obj)
+{
+  int i;
+  term_bucket cur;
+  term_hash h = (term_hash)obj;
+  
+
+  for (i = 0; i < h->inserts; i++) {
+    scan_term_bucket(h->term_buckets[i], cur) {
+      deserialize_set_obj((void **)&cur->entry->e);
+    }
+  }
+
+  return TRUE;
+}
 
 
 

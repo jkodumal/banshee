@@ -104,6 +104,19 @@ void flowrow_print_stats(FILE *f);
 
 void flowrow_rollback(banshee_rollback_info); 
 
+/* Persistence */
+bool flowrow_rollback_serialize(FILE *f, banshee_rollback_info info);
+banshee_rollback_info flowrow_rollback_deserialize(FILE *f);
+bool flowrow_rollback_set_fields(banshee_rollback_info info);
+bool flowrow_expr_serialize(FILE *f, void *obj);
+void *flowrow_expr_deserialize(FILE *f);
+bool flowrow_expr_set_fields(void *obj);
+
+void flowrow_serialize(FILE *f);
+void flowrow_deserialize(FILE *f);
+void flowrow_set_fields(void);
+
+/* Stats */
 extern struct flowrow_stats flowrow_stats;
 
 struct flowrow_stats
