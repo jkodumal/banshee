@@ -816,6 +816,8 @@ static void rcc_aborting(int s)
    33 if had nonfatal errors, else success.  */
 
 void *orig_brk;
+extern Updater extra_update_fn;
+int update_type(translation t, void *m);
 
 int main(int argc, char **argv) deletes
 {
@@ -830,6 +832,9 @@ int main(int argc, char **argv) deletes
   region_init();
   
   main_region = newregion();
+
+  extra_update_fn = update_type;
+
 
   signal(SIGABRT, rcc_aborting);
 

@@ -363,13 +363,13 @@ int update_type(translation tr, void *m)
   return (sizeof (struct type));
 }
 
+extern Updater extra_update_fn;
 
 void init_types(void)
 {
   types_region = newregion();
-  /* TODO -- somehow need to allow the update function to be stored in
-     banshee's fnptr table */
-/*   register_persistent_region(types_region, update_type); */
+    
+  register_persistent_region(types_region, update_type);
 
 
   float_type = make_primitive(tp_float, sizeof(float), __alignof__(float));

@@ -33,6 +33,8 @@
 #include "persist.h"
 #include "hash.h"
 
+#define UNKNOWN_ID -1
+
 /* A region containing pointers. The update function will call
    update_pointer on adjacent word values */
 region banshee_ptr_region = NULL;
@@ -46,6 +48,7 @@ region banshee_nonptr_region = NULL;
 hash_table extra_regions = NULL;
 
 extern hash_table fn_ptr_table;
+Updater extra_update_fn = NULL;
 
 void banshee_region_persistence_init()
 {
@@ -75,6 +78,7 @@ void write_extra_info(const char *filename, unsigned long num_regions)
   Updater next_updater = NULL;
   region next_region = NULL;
   FILE *f = fopen(filename, "wb");
+  int unknown_id = UNKNOWN_ID;
 
   assert(f);
 
@@ -87,8 +91,13 @@ void write_extra_info(const char *filename, unsigned long num_regions)
 			(hash_data *)&next_updater)) {
     int id = 0;
     bool success = hash_table_lookup(fn_ptr_table, (hash_key)next_updater, (hash_data *)&id);
-    if (!success) fail("Error: couldn't figure out what function %d corresponds to\n", id);
-    fwrite((void *)&id, sizeof(int), 1 , f);
+    if (!success) { 
+      fwrite((void *)&unknown_id, sizeof(int), 1, f);
+      // fail("Error: couldn't figure out what function %d corresponds to\n", id);
+    }
+    else {
+      fwrite((void *)&id, sizeof(int), 1 , f);
+    }
     count++;
   }
   assert(count == num_regions);
@@ -109,7 +118,13 @@ Updater *read_extra_info(const char *filename)
 
   for (i = NUM_REGIONS; i < NUM_REGIONS + num_extra_regions; i++) {
     fread((void *)&next_id, sizeof(int), 1, f); 
-    result[i] = update_funptr_data(next_id);
+    if (next_id == UNKNOWN_ID) {
+      assert(extra_update_fn);
+      result[i] = extra_update_fn;
+    }
+    else {
+      result[i] = update_funptr_data(next_id);
+    }
   }
 
   return result;
