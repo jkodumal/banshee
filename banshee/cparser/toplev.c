@@ -439,8 +439,8 @@ struct { char *string; int *variable; int on_value;} W_options[] =
 
 
 /* Timing stuff  */
-
-struct timeval parse_time, analyze_time,tlb_time;
+struct timeval parse_time, analyze_time, tlb_time, 
+  serialize_time, deserialize_time, rollback_time;
 
 static struct timeval start_time, finish_time;
 
@@ -1064,11 +1064,15 @@ int main(int argc, char **argv) deletes
 
   if (flag_points_to && flag_deserialize_constraints) 
     {
+      begin_time();
       analysis_deserialize("andersen.out");
-      
+      end_time(&deserialize_time);
+
       if (flag_backtrack_constraints) {
 	fprintf(stderr, "Backtracking...\n");
+	begin_time();
 	banshee_backtrack(backtrack_time);
+	end_time(&rollback_time);
       }
     } 
 
@@ -1089,6 +1093,13 @@ int main(int argc, char **argv) deletes
     fprintf(stderr, "Backtracking...\n");
     banshee_backtrack(debug_backtrack_time);
   }
+
+  if(flag_serialize_constraints)
+    {
+      begin_time();
+      analysis_serialize("andersen.out");
+      end_time(&serialize_time);
+    }
     
   printf("Andersen's Points to Analysis\n");
   printf("Files analyzed: %d\n",files_processed);
@@ -1112,14 +1123,29 @@ int main(int argc, char **argv) deletes
     print_time(stdout,&analyze_time);
     printf("\nTLB time: ");
     print_time(stdout,&tlb_time);
+
+    if (flag_serialize_constraints) {
+    printf("\nSerialize time: ");
+    print_time(stdout,&serialize_time);
+    }
     
+    if (flag_deserialize_constraints && flag_backtrack_constraints) {
+    printf("\nRollback time: ");
+    print_time(stdout,&rollback_time);
+    }
+
+    if (flag_deserialize_constraints) {
+      printf("\nDeserialize time: ");
+      print_time(stdout,&deserialize_time);
+    }
+
     getrusage(RUSAGE_SELF,&usage);
     
     printf("\nUser time:");
     print_time(stdout,&usage.ru_utime); 
     printf("\nSystem time:");
     print_time(stdout,&usage.ru_stime); 
-    
+    printf("\n");
   }
 
   
@@ -1135,10 +1161,6 @@ int main(int argc, char **argv) deletes
       analysis_print_graph();
     }
   
-  if(flag_serialize_constraints)
-    {
-      analysis_serialize("andersen.out");
-    }
   
   /*     if (flag_print_memusage) */
   /*       { */
