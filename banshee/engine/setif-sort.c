@@ -93,9 +93,12 @@ static setif_var_list tlb_var_cache;
 static jcoll_dict tlb_dict;
 region setif_var_region;
 region sv_info_region;
-region setif_term_region;
+region setif_union_region;
+region setif_inter_region;
+region setif_constant_region;
 region added_ub_proj_info_region;
 region setif_rollback_info_region;
+region setif_term_region; 	/* unused */
 
 setif_rollback_info setif_current_rollback_info = NULL;
 
@@ -743,7 +746,7 @@ gen_e setif_constant(const char *str) deletes
 
   if ( (result = term_hash_find(setif_hash,st,2)) == NULL)
     {
-      setif_constant_ c = ralloc(setif_term_region, struct setif_constant_);
+      setif_constant_ c = ralloc(setif_constant_region, struct setif_constant_);
 #ifdef NONSPEC
       c->sort = setif_sort;
 #endif
@@ -812,7 +815,7 @@ gen_e setif_union(gen_e_list exprs) deletes
 	   == NULL )
 	{
 	  struct setif_union_ *u = 
-	    ralloc(setif_term_region,struct setif_union_);
+	    ralloc(setif_union_region,struct setif_union_);
 	  
 	  u->type = UNION_TYPE;
 	  u->st = stamp_fresh();
@@ -871,7 +874,7 @@ gen_e setif_inter(gen_e_list exprs) deletes
 	   == NULL )
 	{
 	  struct setif_inter_ *u = 
-	    ralloc(setif_term_region,struct setif_inter_);
+	    ralloc(setif_inter_region,struct setif_inter_);
 	  
 	  u->type = UNION_TYPE;
 	  u->st = stamp_fresh();
@@ -934,9 +937,12 @@ char *setif_get_constant_name(gen_e e)
 
 void setif_init(void)
 {
+  setif_term_region = newregion();
   setif_var_region = newregion();
   sv_info_region = newregion();
-  setif_term_region = newregion();
+  setif_union_region = newregion();
+  setif_constant_region = newregion();
+  setif_inter_region = newregion();
   added_ub_proj_info_region = newregion();
   setif_rollback_info_region = newregion();
   tlb_cache_region = newregion(); 
@@ -1006,9 +1012,12 @@ void setif_reset(void) deletes
   deleteregion(tlb_cache_region);
   deleteregion(sv_info_region);
   deleteregion(setif_var_region);
-  deleteregion(setif_term_region);
+  deleteregion(setif_inter_region);
+  deleteregion(setif_union_region);
+  deleteregion(setif_constant_region);
   deleteregion(added_ub_proj_info_region);
   deleteregion(setif_rollback_info_region);
+  deleteregion(setif_term_region);
 
   setif_reset_stats();
   
@@ -1548,6 +1557,49 @@ bool added_ub_proj_info_set_fields(void *obj)
 
   return TRUE;
 }
+
+int update_setif_union(translation t, void *m)
+{
+  setif_union_ e = (setif_union_)m;
+
+  if (e->type == UNION_TYPE) {
+    update_pointer(t, (void **)&e->exprs);
+    update_pointer(t, (void **)&e->proj_cache);
+    return sizeof(struct setif_union_);
+  }
+  else {
+    assert(e->type == ZERO_TYPE);
+    return sizeof(struct setif_union_);
+  }
+}
+
+int update_setif_inter(translation t, void *m)
+{
+  setif_inter_ e = (setif_inter_)m;
+  if (e->type == INTER_TYPE) {
+    update_pointer(t, (void **)&e->exprs);
+    return sizeof(struct setif_inter_);
+  }
+  else {
+    assert(e->type == ZERO_TYPE);
+    return sizeof(struct setif_inter_);
+  }
+}
+
+int update_setif_constant(translation t, void *m)
+{
+  setif_constant_ e = (setif_constant_)m;
+
+  if (e->type == CONSTANT_TYPE) {
+    update_pointer(t, (void **)&e->name);
+    return sizeof(struct setif_constant_);
+  }
+  else {
+    assert(e->type == ZERO_TYPE);
+    return sizeof(struct setif_constant_);
+  }
+}
+
 
 int update_setif_term(translation t, void *m)
 {

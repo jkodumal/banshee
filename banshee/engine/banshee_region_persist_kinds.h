@@ -32,7 +32,7 @@
 
 EXTERN_C_BEGIN
 
-#define NUM_REGIONS 36
+#define NUM_REGIONS 39
 
 /*****************************************************************************
  *                                                                           *
@@ -108,6 +108,9 @@ extern region term_bucketptr_region;
 extern region setif_rollback_info_region;
 extern region added_ub_proj_info_region; 
 extern region setif_term_region;	
+extern region setif_union_region;
+extern region setif_inter_region;
+extern region setif_constant_region;
 
 /* Regions for term-var.c */
 extern region term_var_region;	
@@ -175,6 +178,9 @@ int update_term_bucketptr(translation t, void *m);
 int update_setif_term(translation t, void *m);
 int update_added_ub_proj_info(translation t, void *m);
 int update_setif_rollback_info(translation t, void *m);
+int update_setif_constant(translation t, void *m);
+int update_setif_union(translation t, void *m);
+int update_setif_inter(translation t, void *m);
 
 /* Update functions for term-var.c */
 int update_term_var(translation t, void *m);

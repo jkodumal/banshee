@@ -193,6 +193,9 @@ region *get_persistent_regions(const char *filename)
   result[33] = keystrbucket_region;
   result[34] = gen_e_ptr_region;
   result[0] = term_bucketptr_region;
+  result[36] = setif_constant_region;
+  result[37] = setif_inter_region;
+  result[38] = setif_union_region;
 
   {
     int count = 0;
@@ -270,6 +273,10 @@ Updater *get_updater_functions(const char *filename)
   result[33] = update_keystrbucket;
   result[34] = update_gen_e_ptr;
   result[0] = update_term_bucketptr;
+  result[36] = update_setif_constant;
+  result[37] = update_setif_inter;
+  result[38] = update_setif_union;
+
 
   return result;
 #endif  /* NONSPEC  */
