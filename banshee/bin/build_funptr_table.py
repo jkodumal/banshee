@@ -6,7 +6,7 @@ import string
 def used_fn(name):
     used_fns = ["_hash_table_insert","hash_table_insert", "_make_hash_table",
 		"make_hash_table","seed_fn_ptr_table","_seed_fn_ptr_table",
-	        "fail","_fail","__fail"]
+	        "fail","_fail","__fail","calloc","malloc"]
     return (name in used_fns)
 
 def get_table(libraries):
