@@ -35,19 +35,50 @@ http://cvs.sourceforge.net/cvstarballs/projectname-cvsroot.tar.bz2
 The cparser frontend requires source code to be
 preprocessed. Acquiring preprocessed source can be somewhat tricky,
 because some files may be generated (e.g. by flex, bison, or other
-tools). Here we outline some approaches.
+tools). Moreover, we require an approach that does not require ANY
+modifications whatsoever, because things like makefiles will be
+checked out on each commit, and any changes we make won't
+persist. Here we outline a few possible approaches...
 
-** gcc -save-temps
+** gcc -P -save-temps
 
 Compile the project as follows:
 
-make CC="gcc -save-temps"
+make CC="gcc -P -save-temps"
 
 This will leave the preprocessed files as .i files in the source
-directories. Unfortunately, it will also compile the files, which will
-be too slow.
+directories. The '-P' option will suppress line directives, which
+cause cparser to spit out warnings. 
+
+The drawback of this approach is that it will actually compile
+everything, instead of just stopping after the preprocessing
+phase. This will be far too slow for the larger projects...
 
 ** gcc -E
 
 This doesn't really drop into the build process as desired, as it
-dumps preprocessed files to stdout.
+dumps preprocessed files to stdout. Using in conjunction with -o
+should work, but some Makefiles use -c but don't explicitly specify an
+output file with -o. 
+
+** What files have been modified?
+
+We really need to produce .i files and md5 them to know for sure
+what's been modified. Here's a clean way to do this:
+
+diff <(md5 filename1) <(md5 filename2) >/dev/null
+
+Recall that diff returns 0 on identical files, 1 otherwise
+
+This uses a bash feature called process substitution, which may not be
+available on some platforms.
+
+Run 'find' recursively on two entire directory structures:
+
+find . -name "*.i"
+
+* The test harness
+
+The test harness must maintain some additional state-- namely the
+ordered list of files analyzed paired with a banshee time (this is the
+time after each file has been analyzed)
