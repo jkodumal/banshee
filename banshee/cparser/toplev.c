@@ -298,6 +298,7 @@ int flag_rdeserialize_constraints = 0;
 int debug_backtrack_prefix = 0;
 static int debug_backtrack_time = 0;
 static int backtrack_time = 0;
+static int analyze_to_time = 0;
 static int have_backtracked = 0;
 
 /* Table of language-independent -f options.
@@ -928,6 +929,13 @@ int main(int argc, char **argv) deletes
 	      fprintf(stderr,"Debugging backtrack code with %d files\n",
 		      debug_backtrack_prefix);
 	    }
+	  else if (str[0] == 'f' && str[1] =='t' && str[2] == 'o')
+	    {
+	      register char *p = &str[3];
+	      analyze_to_time = atoi(p);
+	      fprintf(stderr,"Will analyze files up to time %d\n",
+		      analyze_to_time);
+	    }
 	  else if (str[0] == 'f' && str[1] == 'b' && str[2] =='a' && str[3] == 'c' && str[4] == 'k' ) 
 	    {
 	      register char *p = &str[5];
@@ -1147,12 +1155,13 @@ int main(int argc, char **argv) deletes
     int time = 0;
 
     if (flag_backtrack_constraints && 
-	time > backtrack_time && !have_backtracked) {
-      fprintf(stderr, "Backtracking...\n");
+	time >= analyze_to_time && !have_backtracked) {
+      fprintf(stderr, "Backtracking and clearing analysis time...\n");
       begin_time();
       analysis_backtrack(backtrack_time);
       end_time(&rollback_time);
       have_backtracked = 1;
+      timerclear(&analyze_time);
     }
 
     dd_scan(cur, files)
@@ -1162,12 +1171,13 @@ int main(int argc, char **argv) deletes
 	fprintf(stderr, "Parsing %s...", file);
 	time = compile_file(file);
 	if (flag_backtrack_constraints && 
-	    time > backtrack_time && !have_backtracked) {
-	  fprintf(stderr, "Backtracking...\n");
+	    time >= analyze_to_time && !have_backtracked) {
+	  fprintf(stderr, "Backtracking and clearing analysis time...\n");
 	  begin_time();
 	  analysis_backtrack(backtrack_time);
 	  end_time(&rollback_time);
 	  have_backtracked = 1;
+	  timerclear(&analyze_time);
 	}
       }
   }
