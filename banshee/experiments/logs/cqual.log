@@ -1,7 +1,4 @@
 
-2002-10-27 13:47 -0700
-  added:    config-aux/depcomp (1.1)
-
 2002-10-27 14:40 -0700
   modified: src/Makefile.am (1.29)
   modified: src/cil-analyze.c (1.28)
