@@ -1645,7 +1645,7 @@ void analysis_region_deserialize(translation t, const char *filename)
   update_pointer(t, (void **)&state.collection_envs);
   //assert(hash_table_list_last(state.collection_envs) == collection_hash);
   collection_hash = hash_table_list_last(state.collection_envs);
-  update_pointer(t, (void **)global_var_hash);
+  update_pointer(t, (void **)&global_var_hash);
 
   andersen_terms_region_deserialize(t, f);
 }
