@@ -48,21 +48,24 @@ struct node_ {
 
 typedef struct node_ *node;
 
+hash_table table;
+
 int update_node(translation t, void *m) {
   update_pointer(t, (void **) &((struct node_ *) m)->next);
   return(sizeof(struct node_));
 }
 
-int verify()
-{
-  int j = 0;
-  char str[512];
-  node next_node;
-  Updater u[4];
-  translation t;
-  hash_table table; 
-  region temp = newregion();
+int update_string(translation t, void *m) {
+  return((1 + strlen((char *)m)) * sizeof(char));
+}
 
+void update()
+{
+  Updater u[5];
+  translation t;
+  region temp = newregion();
+  
+  u[4] = update_string;
   u[3] = update_bucket;
   u[2] = update_hash_table;
   u[1] = update_bucketptr;
@@ -70,6 +73,13 @@ int verify()
 
   t = deserialize("data", "offsets", u, temp);
   table = (hash_table) translate_pointer(t, (void *)table);
+}
+
+int verify()
+{
+  int j = 0;
+  char str[512];
+  node next_node;
   
   for (j = 0; j < NUM_NODES; j++) {
     snprintf(str, 512, "node(%d)", j);
@@ -86,19 +96,20 @@ void seed_fn_ptr_table(region r);
 
 int main(int argc, char *argv[])
 {
-  region r[5];
+  region r[6];
   int i = 0;
   node n = NULL;
-  hash_table table;
-  region node_region;
+  region node_region, string_region;
   
   region_init();
   hash_table_init();
   seed_fn_ptr_table(newregion());
 
   node_region = newregion();
+  string_region = newregion();
 
-  r[4] = NULL;
+  r[5] = NULL;
+  r[4] = string_region;
   r[3] = bucket_region;
   r[2] = table_region;
   r[1] = bucketptr_region;
@@ -115,11 +126,17 @@ int main(int argc, char *argv[])
 
     snprintf(str, 512,"node(%d)", i);
 
-    hash_table_insert(table, (hash_key)str, (hash_data)n);
+    hash_table_insert(table, (hash_key)rstrdup(string_region, str), (hash_data)n);
+  }
+
+  if (!verify()) {
+    printf("Failed region persist test before serialization\n");
+    exit(1);
   }
 
   serialize(r, "data", "offsets");
 
+  update();
   if (!verify()) {
     printf("Failed region persist test\n");
     exit(1);

@@ -162,8 +162,11 @@ of the old address as the index.  Note that this implementation
 requires that pages be aligned on boundaries that are powers of 2.
 */
 void *translate_pointer(translation map, void *old_address) {
-  return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + 
-    ((((unsigned int) old_address) & 0x00001FFF));
+  void *elem = *(map->map + (((unsigned int) old_address) >> SHIFT));
+  if (elem == NULL)
+    return old_address;
+  else
+    return elem + (((unsigned int) old_address) & 0x00001FFF);
 }
 
 void update_pointer(translation map, void **location) {
@@ -271,16 +274,25 @@ void update_allocator(translation map, struct allocator *a, struct allocator *b)
 
 /*
   Update all the pointers on a page to reflect the new locations after deserialization.
-The update function is type-dependent and supplied by the user.  The alignment to RALIGNMENT (a
-double word boundary) must be consistent with the way the allocator lays out data in the first
+The update function is type-dependent and supplied by the user.  
+
+The alignment to RALIGNMENT must be consistent with the way the allocator lays out data in the first
 place.  This implementation is a bit simpler than what the region allocator does and may not work
-for arrays.
+for arrays if RALIGNMENT is anything other than a word boundary (4).
+
+Also a bit of a hack here is that we get the size of the object being scanned from the update function,
+but in reality we need to know the size before we perform the update in case the object would extend
+past the end of the page (in which case it is not in fact an object to be updated).  However, every page
+must be large enough to hold at least its first object, so this implementation is in fact correct.
+
 */
 void update_page(char *current, char *end, translation map, Updater update) {
+  int size = 0;
   for(;; ) {
     current = PALIGN(current, RALIGNMENT);
-    if (current > end) break;
-    current += update(map, current);
+    if (current + size > end) break;
+    size = update(map, current);
+    current += size;
   }
 }
 
@@ -364,6 +376,7 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
 translation new_translation(region r) {
   struct translation *t = (struct translation *) rstralloc(r, sizeof(struct translation));
   t->reg = newregion();
+  /* We rely on this map be zeroed out by the memory allocator. */
   t->map = (void **) rstralloc(t->reg, sizeof(void *) * (1 << (32 - SHIFT)));
   return t;
 }
