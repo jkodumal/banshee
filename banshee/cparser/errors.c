@@ -35,8 +35,11 @@ int warningcount;
 /* Count an error or warning.  Return 1 if the message should be printed.  */
 int count_error(int warningp)
 {
-  if (warningp && inhibit_warnings)
+  if (/* warningp &&  */inhibit_warnings)
     return 0;
+
+/*   if (inhibit_errors) */
+/*     return 0; */
 
   if (warningp && !warnings_are_errors)
     warningcount++;
