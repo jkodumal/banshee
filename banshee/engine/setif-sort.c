@@ -74,7 +74,7 @@ typedef struct setif_rollback_info_ { /* extends banshee_rollback_info */
   banshee_time time;
   sort_kind kind;
   hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
-  hash_table added_ub_projs;     /* TODO : undo information for ub_proj */
+  hash_table added_ub_projs;    
 } *setif_rollback_info;
 
 typedef struct setif_inter_ *setif_inter_;

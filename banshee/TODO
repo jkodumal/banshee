@@ -183,6 +183,13 @@ Not really rollback support, but deletion support.
 
 * Add serialization support
 
+Things to serialize:
+
+- The backtracking stack
+- The ufind stack
+- Terms in the hashcons table (e.g. setif_hash)?
+- Extra state (e.g. stamp.c)
+
 * Modify Andersen's to support backtracking
 
 ** Write a backtracking test harness for Andersen's
