@@ -96,6 +96,8 @@ void setif_reset(void) deletes;
 void setif_print_stats(FILE *f);
 void setif_print_constraint_graph(FILE *f);
 
+void setif_rollback(banshee_rollback_info);
+
 extern struct setif_stats setif_stats;
 struct setif_stats
 {

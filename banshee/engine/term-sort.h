@@ -86,6 +86,8 @@ void term_print_constraint_graph(FILE *f);
 void term_init(void);
 void term_reset(void);
 
+void term_rollback(banshee_rollback_info);
+
 extern struct term_stats term_stats;
 
 struct term_stats

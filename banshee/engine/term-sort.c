@@ -291,5 +291,9 @@ void term_reset(void)
   term_sort_hash = make_term_hash(term_sort_region);
 }
 
+void term_rollback(banshee_rollback_info info)
+{
+  assert(0);
+}
 
 

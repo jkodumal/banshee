@@ -102,6 +102,8 @@ void flowrow_print(FILE *f,get_stamp_fn_ptr get_stamp,
 		   field_print_fn_ptr field_print,gen_e e) deletes;
 void flowrow_print_stats(FILE *f);
 
+void flowrow_rollback(banshee_rollback_info); 
+
 extern struct flowrow_stats flowrow_stats;
 
 struct flowrow_stats

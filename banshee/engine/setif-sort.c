@@ -1148,3 +1148,8 @@ void setif_print_constraint_graph(FILE *f)
   dot_end();
   */
 }
+
+void setif_rollback(banshee_rollback_info info)
+{
+  assert(0);
+}

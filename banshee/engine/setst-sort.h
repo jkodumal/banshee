@@ -84,6 +84,8 @@ void setst_init(void);
 void setst_reset(void) deletes;
 void setst_print_stats(FILE *f);
 
+void setst_rollback(banshee_rollback_info info);
+
 extern struct setst_stats setst_stats;
 
 struct setst_stats

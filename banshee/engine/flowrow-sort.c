@@ -1254,3 +1254,8 @@ void flowrow_print_stats(FILE *f)
 }
 
 DEFINE_LIST(flowrow_map,flowrow_field);
+
+void flowrow_rollback(banshee_rollback_info info)
+{
+  assert(0);
+}

@@ -84,6 +84,7 @@ void bounds_set(bounds b,gen_e_list l)
 void bounds_delete(bounds b)
 {
   hs_delete(b->set);
+  gen_e_list_clear(b->elems);
 }
 
 

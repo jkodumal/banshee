@@ -50,7 +50,6 @@
 
 EXTERN_C_BEGIN
 
-#ifdef NONSPEC
 typedef enum sort_kind
 {
   flowrow_sort, 
@@ -60,6 +59,7 @@ typedef enum sort_kind
   term_sort
 } sort_kind;
 
+#ifdef NONSPEC
 typedef struct gen_e_
 {
   sort_kind sort;
@@ -70,8 +70,6 @@ typedef struct gen_e_ *gen_e;
 #endif
 
 DECLARE_LIST(gen_e_list,gen_e);
-// DECLARE_LIST(int_list,int);
-// DECLARE_LIST(string_list,char*);
 
 // Keep these in sync with nonspec.h
 typedef enum banshee_error_kind
@@ -81,9 +79,28 @@ typedef enum banshee_error_kind
 } banshee_error_kind;
 
 /* type for error callbacks */
-typedef void (*banshee_error_handler_fn) (gen_e e1, gen_e e2, banshee_error_kind kind);
+typedef void (*banshee_error_handler_fn) 
+     (gen_e e1, gen_e e2, banshee_error_kind kind);
 
 extern banshee_error_handler_fn handle_error;
+
+/* Time structure. Don't use. Intended to be opaque. */
+typedef struct banshee_time_ {
+  int time;
+} banshee_time;
+
+/* Generic rollback info structure */
+typedef struct banshee_rollback_info_ {
+  banshee_time time;
+  sort_kind kind;
+} * banshee_rollback_info;
+
+/* The global banshee clock */
+void banshee_clock_tick();
+banshee_time banshee_clock_read();
+bool banshee_check_rollback(sort_kind k);
+void banshee_register_rollback(banshee_rollback_info);
+void banshee_backtrack(banshee_time t);
 
 
 /* 
@@ -109,7 +126,6 @@ typedef gen_e (*get_proj_fn_ptr) (gen_e_list);
 
 void engine_init(void);
 void engine_reset(void) deletes;
-void engine_update(void);
 void engine_stats(FILE *f);
 
 void print_constraint_graphs(FILE *f);

@@ -29,34 +29,41 @@
  */
 
 #include <stdio.h>
-#include <regions.h>
+#include "regions.h"
 #include "banshee.h"
 #include "setif-sort.h"
 #include "setst-sort.h"
 #include "flowrow-sort.h"
 #include "setif-var.h"
+#include "term-sort.h"
 #include "ufind.h"
+#include "list.h"
 
+DECLARE_LIST(banshee_rollback_stack, banshee_rollback_info);
+DEFINE_LIST(banshee_rollback_stack, banshee_rollback_info);
+DEFINE_LIST(gen_e_list ,gen_e);
 
-DEFINE_LIST(gen_e_list,gen_e);
-// DEFINE_LIST(int_list,int);
-// DEFINE_LIST(string_list,char*);
+static int banshee_clock = 0;
+static banshee_rollback_stack rb_stack;
+static region engineregion;
 
 void engine_init(void)
 {
   region_init(); 
   stamp_init();
   uf_init();
+
+  engineregion = newregion();
+  rb_stack = new_banshee_rollback_stack(engineregion);
 }
 
 void engine_reset(void) deletes
 {
   stamp_reset();
-}
-
-/* TODO */
-void engine_update(void)
-{
+  banshee_clock = 0;
+  deleteregion(engineregion);
+  engineregion = newregion();
+  rb_stack = new_banshee_rollback_stack(engineregion);
 }
 
 void engine_stats(FILE *f)
@@ -76,4 +83,75 @@ static void default_error_handler(gen_e e1, gen_e e2,banshee_error_kind k)
   fail("Unhandled banshee error: code %d\n",k);
 }
 
+void banshee_clock_tick()
+{
+  banshee_clock++;
+}
+
+banshee_time banshee_clock_read()
+{
+  return (banshee_time){banshee_clock};
+}
+
+/* Return TRUE if there is already a rollback entry for this sort at
+   the current time */
+bool banshee_check_rollback(sort_kind k)
+{
+  banshee_rollback_stack_scanner scan;
+  banshee_rollback_info info;
+
+  banshee_rollback_stack_scan(rb_stack,&scan);
+
+  while(banshee_rollback_stack_next(&scan,&info)) {
+    if (info->time.time < banshee_clock) return FALSE;
+    else if (info->kind == k) return TRUE;
+  }
+  return FALSE;
+}
+
+void banshee_register_rollback(banshee_rollback_info info)
+{
+  /* This rollback must not be present already */
+  assert(!banshee_check_rollback(info->kind));
+  
+  banshee_rollback_stack_cons(info, rb_stack);
+}
+
+static void banshee_rollback_dispatch(banshee_rollback_info info) {
+  switch(info->kind) {
+  case flowrow_sort:
+    flowrow_rollback(info);
+    break;
+  case setif_sort:
+    setif_rollback(info);
+    break;
+  case setst_sort:
+    setst_rollback(info);
+    break;
+  case flowterm_sort:
+    assert(0);
+    break;
+  case term_sort:
+    term_rollback(info);
+    break;
+  default:
+    fail("Unknown sort in banshee_rollback_dispatch.\n");
+  }
+}
+
+void banshee_backtrack(banshee_time t)
+{
+  banshee_rollback_stack_scanner scan;
+  banshee_rollback_info info;
+  
+  banshee_rollback_stack_scan(rb_stack,&scan);
+  
+  while(banshee_rollback_stack_next(&scan,&info)) {
+    if (info->time.time < t.time) break;
+    banshee_rollback_dispatch(info);
+  }
+  banshee_clock = t.time;
+}
+
 banshee_error_handler_fn handle_error = default_error_handler;
+

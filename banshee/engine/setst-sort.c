@@ -912,3 +912,7 @@ void setst_print_stats(FILE *f)
   fprintf(f,"=====================================\n");
 }
 
+void setst_rollback(banshee_rollback_info info)
+{
+  assert(0);
+}

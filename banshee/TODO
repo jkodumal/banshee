@@ -74,15 +74,39 @@ system-wide property. You cannot backtrack an individual sort.
 so, here are the tasks:
    -x- Implement backtracking in union-find
        
-       DONE: The implementation of backtracking is based on a
+       DONE.
+ 
+       The implementation of backtracking is based on a
        stack-based algorithm due to Westbrook and Tarjan. There is
        a more general algorithm that allows one to do arbitrary
        deunions (see Mannila and Ukkonen "Time Parameter and Arbitrary
        Deunions in the Set Union Problem" or Galil and Italiano 
        "Data Structures and Algorithms for Disjoint Set Union
        Problems").
+
+   -x- Add rollback control structure
+
+       DONE.	
+
+       Control flow for rollback proceeds in the following manner--
+  
+         1) Each toplevel constraint calls banshee_clock_tick()
+         2) Each internal constraint calls banshee_check_rollback() to
+            see if there is a rollback control structure associated 
+            with the current banshee time. If not, this is the first
+            constraint of this sort induced from the current toplevel
+            constraint, so build a rollback structure and call 
+            banshee_register_rollback. As changes are made to the 
+            constraint graph, store them in the registered rollback 
+            structure.
+         3) When banshee_backtrack is called, the current time is popped
+            off the clock stack, and we dispatch on the sort kinds, calling
+            sort_kind_rollback(banshee_rollback_info) which executes the
+            rollback code for each sort
  
    --- Add rollback support to bounds
+
+   --- Rollback support for each sort
   
    --- Make cycle elimination support rollback
 
