@@ -21,6 +21,7 @@ Here are some possible projects that meet these criteria:
 -- Cqual
 -- Gaim: instant messenger client 13k+ commits
 -- Gift: file sharing protocol, 8k+ cvs commits
+-- OpenVPN: tunnelling application, 1334 commits
 
 ** Getting local copies of CVS repositories from SourceForge
 
@@ -29,6 +30,10 @@ complete copies of the CVS repositories. Replace projectname with the
 appropriate string:
 
 http://cvs.sourceforge.net/cvstarballs/projectname-cvsroot.tar.bz2
+
+** Generating logs
+
+./my-cvs-history -d /path/to/cvs/repository -p projectname > logname
 
 * Preprocessing Source
 
