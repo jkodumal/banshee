@@ -86,7 +86,7 @@ static struct uf_element *find(struct uf_element *e)
       e->link = temp->link;
       
       assert(temp->elt_stack);
-      elt_stack_cons(temp,temp->elt_stack);
+      elt_stack_cons(e,temp->elt_stack);
 
       return find(temp);
     }

@@ -90,10 +90,11 @@ so, here are the tasks:
  
        Union and unify are similar operations, except that unify takes
        a user-defined function pointer (the combine_fn_ptr) and uses this
-       to select the info stored in the ecr. Undoing either of these involves
-       storing in the union stack the new ecr's old info, as well as a pointer 
-       to the former root. Find operations store old pointers in the
-       former root's node stack, following Westbrook and Tarjan. 
+       to select/create the info stored in the ecr. Undoing either of
+       these involves storing in the union stack the new ecr's old
+       info, as well as a pointer to the former root. Find operations
+       store old pointers in the former root's node stack, following
+       Westbrook and Tarjan.
 
        Update is a slightly different operation. To rollback an update,
        we store in the union stack the root (it remains a root after 
@@ -129,6 +130,13 @@ so, here are the tasks:
        to unroll all unifications first? This is probably the solution we 
        have to adopt.
 
+       What about identity? Suppose the user asserts e1 == e2,
+       followed by e2 == e3. If after the first union operation, e1 is
+       chosen as the equivalence class representative, then the second
+       constraint may appear as e1 == e3. Really, whether or not the
+       constraints are solved online should be transparent to the
+       interface, and operations should all be fixed to maintain this
+       illusion.   
 
        General list of things to keep track of:
         
