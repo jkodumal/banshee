@@ -39,9 +39,9 @@ def already_added(appendline, filename):
 # Add a string variable declaration to the end of a file. If the file
 # already ends with such a declaration, this won't add another
 def modify_file(filename):
-    appendline = "const char *CANON_IDENT_%s = \"CANON_IDENT_%s\";" % (get_canon_ident(filename), filename)
+    appendline = "const char CANON_IDENT_%s[] = \"CANON_IDENT_%s\";" % (get_canon_ident(filename), filename)
     if (not already_added(appendline,filename)):
-	os.system("echo \"const char *CANON_IDENT_%s = \\\"CANON_IDENT_%s\\\";\" >> %s" % (get_canon_ident(filename), filename, filename))
+	os.system("echo \"const char CANON_IDENT_%s[] = \\\"CANON_IDENT_%s\\\";\" >> %s" % (get_canon_ident(filename), filename, filename))
 
 def main():
     for arg in sys.argv[1:]:
