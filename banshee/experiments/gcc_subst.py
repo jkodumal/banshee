@@ -2,6 +2,7 @@
 import sys
 import os
 import string
+import random
 
 def is_c_file(nextarg):
     return (os.path.isfile(nextarg) and nextarg[-2:] == '.c' and not nextarg[0] == '-')
@@ -17,7 +18,7 @@ def list_to_string_nolf(list):
 def modify_file(filename):
 #    os.system("echo \"#ifndef CANON_IDENT\" >> %s" %filename)
 #    os.system("echo \"#define CANON_IDENT\" >> %s" %filename)
-    os.system("echo \"const char *CANON_IDENT = \\\"CANON_IDENT_%s\\\";\" >> %s" % (filename, filename))
+    os.system("echo \"const char *CANON_IDENT_%d = \\\"CANON_IDENT_%s\\\";\" >> %s" % (random.randint(0,200000), filename, filename))
 #    os.system("echo \"#endif\" >> %s" %filename)
 
 def main():
