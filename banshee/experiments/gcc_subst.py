@@ -23,9 +23,9 @@ def modify_file(filename):
 def main():
     for arg in sys.argv[1:]:
 	if (is_c_file(arg)):
-	    print ("%s is probably an input file... modifying" % arg)
+	    #print ("%s is probably an input file... modifying" % arg)
 	    modify_file(arg)
-    print ("Invoking gcc as: gcc %s" % list_to_string_nolf(sys.argv[1:]))
+	    #print ("Invoking gcc as: gcc %s" % list_to_string_nolf(sys.argv[1:]))
     os.system("gcc %s" % list_to_string_nolf(sys.argv[1:]))
 
 if __name__ == "__main__":

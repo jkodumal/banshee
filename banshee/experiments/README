@@ -46,6 +46,10 @@ Compile the project as follows:
 
 make CC="gcc -P -save-temps"
 
+NOTE: now use
+
+make CC="./gcc_subst.py -P -save-temps"
+
 This will leave the preprocessed files as .i files in the source
 directories. The '-P' option will suppress line directives, which
 cause cparser to spit out warnings. 
