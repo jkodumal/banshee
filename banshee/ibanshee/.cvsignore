@@ -1,3 +1,4 @@
+parser.tab.c
 parser.tab.h
-lexer.yy.c
+lex.yy.c
 gmon.out
