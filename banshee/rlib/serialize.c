@@ -174,6 +174,10 @@ of the old address as the index.  Note that this implementation
 requires that pages be aligned at addresses where the last SHIFT bits are 0's.
 */
 inline void *translate_pointer(translation map, void *old_address) {
+#ifdef TRANSLATE_DEBUG
+  if (*(map->map + (((unsigned int) old_address) >> SHIFT)) == 0) 
+    fprintf(stderr,"Warning: The pointer %x has no translation.", (unsigned int) (map->map + (((unsigned int) old_address) >> SHIFT)));
+#endif
   return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + (((unsigned int) old_address) & 0x00001FFF);
 }
 
