@@ -26,14 +26,17 @@
 # SUCH DAMAGE.
 
 .PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
-        docs points-to install perf ibanshee
+        docs points-to install perf ibanshee rlib
 
 all: banshee ibanshee tests points-to 
 
-banshee: libcompat codegen engine
+banshee: libcompat codegen engine rlib
 
 libcompat: 
 	$(MAKE) -C libcompat
+
+rlib:
+	$(MAKE) -C rlib
 
 codegen: 
 	$(MAKE) -C codegen
@@ -82,6 +85,7 @@ install:
 
 clean:
 	$(MAKE) -C libcompat clean
+	$(MAKE) -C rlib clean
 	$(MAKE) -C codegen clean
 	$(MAKE) -C engine clean
 	$(MAKE) -C rca clean

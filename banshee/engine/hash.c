@@ -55,13 +55,20 @@ struct Hash_table
 
   int key_persist_kind; 	/* Kind for persistent keys */
   int data_persist_kind;	/* Kind for persistent data */
+  int hash_fn_id;		
+  int keyeq_fn_id; 
 
   bucket *table;		/* Array of (size) buckets */
 };
 
+region bucket_region = NULL;
+region table_region = NULL;
+region bucketptr_region = NULL;
+region strbucket_region = NULL;
+
 static void rehash(hash_table ht);
 
-
+extern hash_table fn_ptr_table;
 hash_table make_persistent_hash_table(region r, unsigned long size, 
 				      hash_fn hash, keyeq_fn cmp,
 				      int key_persist_kind,
@@ -70,12 +77,22 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
   hash_table result;
 
   assert(size > 0);
-  result = ralloc(r, struct Hash_table);
+  assert(table_region);
+  assert(bucket_region);
+
+  result = ralloc(table_region, struct Hash_table);
   result->r = r;
   result->hash = hash;
   result->cmp = cmp;
   result->size = 1;
   result->log2size = 0;
+
+  if (fn_ptr_table) {
+    hash_table_lookup(fn_ptr_table, (hash_key)hash, 
+		      (hash_data*)&result->hash_fn_id);
+    hash_table_lookup(fn_ptr_table, (hash_key)hash,
+		      (hash_data*)&result->keyeq_fn_id);
+  }
 
   result->key_persist_kind = key_persist_kind;
   result->data_persist_kind = data_persist_kind;
@@ -87,7 +104,7 @@ hash_table make_persistent_hash_table(region r, unsigned long size,
       result->log2size++;
     }
   result->used = 0;
-  result->table = rarrayalloc(result->r, result->size, bucket);
+  result->table = rarrayalloc(bucketptr_region, result->size, bucket);
 
   return result;
 
@@ -199,7 +216,8 @@ bool hash_table_insert(hash_table ht, hash_key k, hash_data d)
 	}
       cur = &(*cur)->next;
     }
-  *cur = ralloc(ht->r, struct bucket_);
+  *cur = ralloc(ht->data_persist_kind? bucket_region : strbucket_region, 
+		struct bucket_);
   (*cur)->key = k;
   (*cur)->data = d;
   (*cur)->next = NULL;
@@ -248,7 +266,7 @@ hash_table hash_table_copy(region r, hash_table ht)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(result->r, struct bucket_);
+	  newbucket = ralloc(ht->data_persist_kind? bucket_region : strbucket_region, struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = cur->data;
 	  newbucket->next = NULL;
@@ -276,7 +294,7 @@ static void rehash(hash_table ht)
   ht->size = ht->size*2;
   ht->log2size = ht->log2size + 1;
   ht->used = 0;
-  ht->table = rarrayalloc(ht->r, ht->size, bucket);
+  ht->table = rarrayalloc(bucketptr_region, ht->size, bucket);
 
   for (i = 0; i < old_table_size; i++)
     scan_bucket(old_table[i], cur)
@@ -348,7 +366,7 @@ hash_table hash_table_map(region r, hash_table ht, hash_map_fn f, void *arg)
       prev = &result->table[i];
       scan_bucket(ht->table[i], cur)
 	{
-	  newbucket = ralloc(result->r, struct bucket_);
+	  newbucket = ralloc(ht->data_persist_kind? bucket_region : strbucket_region, struct bucket_);
 	  newbucket->key = cur->key;
 	  newbucket->data = f(cur->key, cur->data, arg);
 	  newbucket->next = NULL;
@@ -432,16 +450,8 @@ bool hash_table_serialize(FILE *f, void *obj)
   assert(f);
   assert(obj);
 
-/*   fwrite((void *)&ht->hash, sizeof(void *), 1, f); */
-/*   fwrite((void *)&ht->cmp, sizeof(void *), 1, f); */
-/*   fwrite((void *)&ht->size, sizeof(unsigned long), 1, f); */
-/*   fwrite((void *)&ht->log2size, sizeof(unsigned long), 1, f); */
-/*   fwrite((void *)&ht->used, sizeof(unsigned long), 1, f); */
-  
-/*   fwrite((void *)&ht->key_persist_kind, sizeof(int), 1, f); */
-/*   fwrite((void *)&ht->data_persist_kind, sizeof(int), 1, f); */
   fwrite(&ht->hash, sizeof(void *) * 2 + sizeof(unsigned long) * 3 + 
-	 sizeof(int) *2, 1, f);
+	 sizeof(int) *4, 1, f);
   
   serialize_object(ht->hash, 1);
   serialize_object(ht->cmp, 1);
@@ -451,8 +461,6 @@ bool hash_table_serialize(FILE *f, void *obj)
     unsigned long num_buckets = get_num_buckets(ht->table[i]);
     fwrite(&num_buckets, sizeof(unsigned long), 1, f); 
     scan_bucket(ht->table[i], cur) {
-      /* fwrite((void *)&cur->key, sizeof(hash_key), 1, f); */
-      /* fwrite((void *)&cur->data, sizeof(hash_data), 1, f); */
       fwrite(&cur->key, sizeof(hash_key) + sizeof(hash_data), 1, f);
       serialize_object(cur->key,ht->key_persist_kind);
       serialize_object(cur->data, ht->data_persist_kind);
@@ -472,12 +480,11 @@ void *hash_table_deserialize(FILE *f)
   assert(f);
 
   ht = ralloc(permanent, struct Hash_table);
-  /* ht->r = persist_rgn; */
   ht->r = permanent;
   ht->hash = NULL;
   ht->cmp = NULL;
 
-  fread(&ht->hash, sizeof(void *) * 2 + sizeof(unsigned long) * 3 + 2 *sizeof(int), 1, f);
+  fread(&ht->hash, sizeof(void *) * 2 + sizeof(unsigned long) * 3 + 4 * sizeof(int), 1, f);
 
   /* Read all the key/value pairs into the temporary region */
   ht->table = rarrayalloc(ht->r, ht->size, bucket);
@@ -517,13 +524,71 @@ bool hash_table_set_fields(void *obj)
 /*   ht->table = rarrayalloc(ht->r, ht->size, bucket); */
   
    /* Reinsert all the key/value pairs after they have been remapped */
-  for (i = 0; i < ht->size; i++) {
-    scan_bucket(ht->table[i], cur) {
-      //deserialize_set_obj((void **)&cur->key);
-      deserialize_set_obj((void **)&cur->data);
-      //hash_table_insert(ht, cur->key, cur->data);
+  if (ht->data_persist_kind) {
+    for (i = 0; i < ht->size; i++) {
+      scan_bucket(ht->table[i], cur) {
+	//deserialize_set_obj((void **)&cur->key);
+	deserialize_set_obj((void **)&cur->data);
+	//hash_table_insert(ht, cur->key, cur->data);
+      }
     }
   }
 
   return TRUE;
 }
+
+/* Update function pointers and all other pointers */
+int update_hash_table(translation t, void *m)
+{
+  hash_table tab = (hash_table)m;
+
+  tab->hash = update_funptr_data(tab->hash_fn_id);
+  tab->cmp = update_funptr_data(tab->keyeq_fn_id);
+  
+  assert(fn_ptr_table);
+  hash_table_lookup(fn_ptr_table, (hash_key)tab->hash, 
+		    (hash_data*)&tab->hash_fn_id);
+  hash_table_lookup(fn_ptr_table, (hash_key)tab->hash,
+		    (hash_data*)&tab->keyeq_fn_id);
+  
+  update_pointer(t, (void **) &tab->table);
+
+  return (sizeof(struct Hash_table));
+}
+
+int update_bucket(translation t, void *m)
+{
+  update_pointer(t, (void **) &((struct bucket_ *) m)->data);
+  update_pointer(t, (void **) &((struct bucket_ *) m)->next);
+  return(sizeof(struct bucket_));
+}
+
+int update_strbucket(translation t, void *m)
+{
+  update_pointer(t, (void **) &((struct bucket_ *) m)->next);
+  return(sizeof(struct bucket_));
+}
+
+int update_bucketptr(translation t, void *m)
+{
+  update_pointer(t, &m);
+  return(sizeof(void *));
+}
+
+
+void hash_table_init()
+{
+  table_region = newregion();
+  bucket_region = newregion();
+  bucketptr_region = newregion();
+  strbucket_region = newregion();
+}
+
+/* void hash_table_reset() */
+/* { */
+/*   deleteregion(table_region); */
+/*   deleteregion(bucket_region); */
+/*   deleteregion(bucketptr_region); */
+  
+/*   hash_table_init(); */
+/* } */

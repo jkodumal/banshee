@@ -19,11 +19,16 @@
 O = mobj/
 CC = gcc
 
+ifdef RLIB
+region_dir = ../rlib
+else
+region_dir = ../libcompat
+endif
 
 ifdef DEBUG
-CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing
+CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing
 else
-CFLAGS = -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing 
+CFLAGS = -Wall -Wno-char-subscripts -I. -I$(region_dir) -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC -O3 $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original  -fno-strict-aliasing 
 endif
 
 #ifdef ANDERSEN_ST
@@ -36,14 +41,14 @@ all: parser.exe parser_st.exe parser_ns.exe
 
 include Makefile.base
 
-parser.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
-	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine -lm
+parser.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
+	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
 
-parser_st.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
-	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o $(EXTRALIBS) -L../libcompat -L../engine -lregions -lengine -lm
+parser_st.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
+	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
 
-parser_ns.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
-	$(CC) $(CFLAGS) -DNONSPEC -o parser_ns.exe $(LDFLAGS) $(OBJS)  ../andersen/andersen_terms_nonspec.o ../andersen/andersen.o $(EXTRALIBS) -L../libcompat -L../engine -lregions -lnsengine -lm
+parser_ns.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
+	$(CC) $(CFLAGS) -DNONSPEC -o parser_ns.exe $(LDFLAGS) $(OBJS)  ../andersen/andersen_terms_nonspec.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lnsengine -lm
 
 
 clean:

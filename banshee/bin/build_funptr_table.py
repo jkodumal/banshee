@@ -33,7 +33,7 @@ def print_preamble():
     print "typedef void (*fn_ptr)(void);"
     print "hash_table make_hash_table(region r, unsigned long, void *, void *);"
     print "int hash_table_insert(hash_table,void *,void *);"
-    print "hash_table fn_ptr_table;"
+    print "hash_table fn_ptr_table = (void *)0;"
 
 def print_postamble():
     print "EXTERN_C_END"

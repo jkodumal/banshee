@@ -60,6 +60,9 @@ typedef hash_key (*keyread_fn)(FILE *f);
 
 typedef struct Hash_table *hash_table;
 
+/* Initialize this module */
+void hash_table_init();
+
 /* Writes a key k interpreted as a string to f */
 /* void string_keywrite_fn(FILE *f, hash_key k); */
 
@@ -156,6 +159,15 @@ bool hash_table_next_sorted(hash_table_scanner_sorted *htss, hash_key *k,
 bool hash_table_set_fields(void *obj);
 void *hash_table_deserialize(FILE *f);
 bool hash_table_serialize(FILE *f, void *obj);
+
+/* Region-based persistence */
+extern region bucket_region;
+extern region table_region;
+extern region bucketptr_region;
+int update_hash_table(translation t, void *m);
+int update_bucket(translation t, void *m);
+int update_strbucket(translation t, void *m);
+int update_bucketptr(translation t, void *m);
 
 EXTERN_C_END
 

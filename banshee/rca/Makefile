@@ -25,7 +25,12 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+ifdef RLIB
+region_dir = ../rlib
+else
 region_dir = ../libcompat
+endif
+
 engine_dir = ../engine
 banshee_bindir = ../bin
 

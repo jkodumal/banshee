@@ -43,6 +43,7 @@ DECLARE_LIST(banshee_rollback_stack, banshee_rollback_info);
 DEFINE_LIST(banshee_rollback_stack, banshee_rollback_info);
 DEFINE_LIST(gen_e_list ,gen_e);
 
+EXTERN_C void seed_fn_ptr_table(region r);
 static int banshee_clock = 0;
 static banshee_rollback_stack rb_stack;
 static region engine_region;
@@ -57,6 +58,7 @@ static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
 void engine_init(void)
 {
   region_init(); 
+  hash_table_init();
   stamp_init();
   uf_init();
 
@@ -64,12 +66,15 @@ void engine_init(void)
   banshee_rollback_region = newregion();
   rb_stack = new_banshee_rollback_stack(engine_region);
   handle_error = default_error_handler;
+
+  seed_fn_ptr_table(engine_region);
 }
 
 void engine_reset(void) deletes
 {
   stamp_reset();
   uf_reset();
+/*   hash_table_reset(); */
 
   banshee_clock = 0;
   deleteregion(engine_region);

@@ -413,3 +413,26 @@ void findrrefs(region r, region from)
   for (p = r->normal.bigpages; p; p = p->next)
     findrefs(r, (char *)&p->previous, (char *)p + p->pagecount * RPAGESIZE);
 }
+
+void delete_translation(translation d)
+{
+}
+
+int serialize(region *r, char *datafile, char *statefile)
+{
+  return 0;
+}
+
+translation deserialize(char *a, char *b, Updater *c, region d)
+{
+  return NULL;
+}
+
+void update_pointer(translation t, void **obj)
+{
+}
+
+void *translate_pointer(translation t, void *obj)
+{
+  return NULL;
+}

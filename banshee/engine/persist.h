@@ -137,6 +137,8 @@ bool string_data_serialize(FILE *f, void *obj);
 void *string_data_deserialize(FILE *f);
 bool string_data_set_fields(void *obj);
 
+void *update_funptr_data(int id);
+
 EXTERN_C_END
 
 #endif /* PERSIST_H */

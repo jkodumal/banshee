@@ -25,13 +25,19 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+ifdef RLIB
+region_dir = ../rlib
+else
 region_dir = ../libcompat
+endif
+
 engine_dir = ../engine
 dyckcfl_dir = ../dyckcfl
 lambda_dir = ../lambda
 
 DYCKCFL_EXTRA_OBJS = $(dyckcfl_dir)/dyckcfl.o $(dyckcfl_dir)/mr_dyckcfl.o
 LAMBDA_EXTRA_OBJS = $(lambda_dir)/lambda.o
+
 
 REGION_LIB = $(region_dir)/libregions.a
 NSENGINE_LIB = $(engine_dir)/libnsengine.a
@@ -49,7 +55,7 @@ endif
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 EXES = lambda-test.exe dyckcfl-test.exe dyckcfl-random-test.exe \
-          uf-bt-test.exe persist-test.exe
+          uf-bt-test.exe persist-test.exe #region-persist-test.exe
 
 TARGETS =  $(EXES) 
 
@@ -72,6 +78,9 @@ uf-bt-test.exe: uf-bt-test.c $(ENGINE_LIB) $(REGION_LIB)
 persist-test.exe: persist-test.c $(ENGINE_LIB) $(REGION_LIB)
 	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lengine -lregions -lm
 
+region-persist-test.exe: region-persist-test.c $(ENGINE_LIB) $(PERSISTENT_REGION_OBJ)
+	$(CC) $(CFLAGS) -o $@ $< -L$(region_dir) -L$(engine_dir) -lengine -lregions 
+
 .PHONY: clean check 
 
 $(LAMBDA_EXTRA_OBJS): 
@@ -81,13 +90,16 @@ $(DYCKCFL_EXTRA_OBJS):
 	$(MAKE) -C ../dyckcfl
 
 $(REGION_LIB):
-	$(MAKE) -C ../libcompat 
+	$(MAKE) -C $(region_dir)
 
 $(NSENGINE_LIB):
 	$(MAKE) -C ../engine libnsengine.a
 
 $(ENGINE_LIB):
 	$(MAKE) -C ../engine libengine.a
+
+$(PERSISTENT_REGION_OBJ):
+	$(MAKE) -C ../rlib
 
 TAGS: 
 	etags $(TAGFILES)

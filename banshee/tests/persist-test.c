@@ -103,7 +103,7 @@ static void show_usage(char *progname)
   printf("Usage: %s [--out --in]\n", progname);
 }
 
-static void serialize()
+static void pt_serialize()
 {
   node n1;
   hash_table table;
@@ -113,7 +113,6 @@ static void serialize()
     
     table = make_persistent_string_hash_table(test_rgn, 4, 
 					      0);
-
 
     n1 = ralloc(test_rgn, struct node_);
     n2 = ralloc(test_rgn, struct node_);
@@ -169,7 +168,7 @@ static void serialize()
   }
 }
 
-static void deserialize()
+static void pt_deserialize()
 {
   node n = NULL;
   FILE *infile = NULL;
@@ -274,27 +273,31 @@ static void deserialize()
   }
 }
 
+void seed_fn_ptr_table(region r);
+
 int main(int argc, char **argv)
 { 
   assert(argc > 0);
 
   region_init();
+  hash_table_init();
+  seed_fn_ptr_table(permanent);
 
   test_rgn = newregion();
 
   if (argc == 1) {
-    serialize();
-    deserialize();
+    pt_serialize();
+    pt_deserialize();
     unlink(DEFAULT_FILENAME);
   }
   else if (argc == 2) {
     /* Serialize */
     if (!strcmp(argv[1], "--out")) {
-      serialize();
+      pt_serialize();
     }
     /* Deserialize */
     else if (!strcmp(argv[1], "--in")) {
-      deserialize();
+      pt_deserialize();
     }
     else {
       show_usage(argv[0]);

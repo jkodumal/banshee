@@ -114,6 +114,17 @@ extern char *__rc_file;
 #include "profile.h"
 #endif
 
+/*
+  The (dummy) interface for serialization/deserialization.
+*/
+typedef void *translation;
+typedef int (*Updater)(translation, void *);
+void delete_translation(translation);
+extern int serialize(region *r, char *datafile, char *statefile); 
+extern translation deserialize(char *, char *, Updater *, region);
+extern void update_pointer(translation, void **);
+extern void *translate_pointer(translation, void *);
+
 EXTERN_C_END
 
 #endif

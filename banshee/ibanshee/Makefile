@@ -24,10 +24,18 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
+
+ifdef RLIB
+region_dir = ../rlib
+else
+region_dir = ../libcompat
+endif
+
 all: ibanshee.exe
 
 ibanshee.exe: parser.tab.c lex.yy.c
-	gcc -DNONSPEC -o ibanshee.exe lex.yy.c parser.tab.c -I../engine -I../libcompat -L../engine -L../libcompat -lnsengine -lregions -lfl -g -pg
+	gcc -DNONSPEC -Ddeletes= -Dtraditional= -Dsameregion= \
+	 -Dparentptr=  -o ibanshee.exe lex.yy.c parser.tab.c -I../engine -I$(region_dir) -L../engine -L$(region_dir) -lnsengine -lregions -lfl -g -pg
 	cp ibanshee.exe ../bin
 
 parser.tab.c: parser.y

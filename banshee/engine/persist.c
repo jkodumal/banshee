@@ -67,7 +67,6 @@ static hash_table serialized_objects;
 extern hash_table fn_ptr_table;
 /* A mapping from ints (id's) to function pointers for deserialization */
 extern void *fn_ptr_array[];
-EXTERN_C void seed_fn_ptr_table(region r);
 
 /* Serialization */
 void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length)
@@ -77,8 +76,6 @@ void serialize_start(FILE *f, serialize_fn_ptr kind_map[], int length)
 
   persist_rgn = newregion();
   current_state = persist_serializing;
-
-  seed_fn_ptr_table(persist_rgn);
 
   serialize_queue = new_persist_entry_queue(persist_rgn);
   serialized_objects = make_hash_table(persist_rgn, 128, ptr_hash, ptr_eq);
@@ -289,6 +286,11 @@ void *funptr_data_deserialize(FILE *f)
 
   fread((void *)&id, sizeof(int), 1, f);
 
+  return fn_ptr_array[id];
+}
+
+void *update_funptr_data(int id) 
+{
   return fn_ptr_array[id];
 }
 

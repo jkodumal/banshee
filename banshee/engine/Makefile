@@ -37,7 +37,12 @@ FILTEREDOBJS += malloc.o
 
 NONSPEC_OBJ = nonspec.o
 
+
+ifdef RLIB
+region_dir = ../rlib
+else
 region_dir = ../libcompat
+endif
 
 CC = gcc
 
