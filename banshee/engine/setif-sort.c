@@ -539,10 +539,11 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       
     }
 
-  // pr(stdout,e1);
-  //   fprintf(stdout,"<=");
-  //   pr(stdout,e2);
-  //   fprintf(stdout,"\n");
+/*    pr(stdout,e1); */
+/*    fprintf(stdout,"<="); */
+/*    pr(stdout,e2); */
+/*    fprintf(stdout,"\n"); */
+  
   if (!banshee_check_rollback(setif_sort)) {
     setif_register_rollback();
   }

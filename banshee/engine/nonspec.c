@@ -463,6 +463,7 @@ constructor make_constructor_from_list(const char*name, sort_kind sort,
   c->arity = arity;
   c->name = rstrdup(get_sort_region(sort),name);
   c->sig = sig;
+  c->type = new_type();
 
   if (sort == setif_sort) { 
     c->groups = new_cons_group_list(get_sort_region(sort));
@@ -765,11 +766,11 @@ static void setif_con_match(gen_e e1, gen_e e2)
 	  for (i = 0; i < c1->arity; i++)
 	    {
 	      if (c1->sig[i].variance == vnc_pos)
-		call_inclusion_ind(e1,e2);
+		call_inclusion_ind(c1->exps[i],c2->exps[i]);
 	      else if (c1->sig[i].variance == vnc_neg)
-		call_inclusion_ind(e2,e1);
+		call_inclusion_ind(c2->exps[i],c1->exps[i]);
 	      else
-		call_unify_ind(e1,e2);
+		call_unify_ind(c1->exps[i],c2->exps[i]);
 	    }
 	  
 	}
