@@ -52,7 +52,7 @@ endif
 
 .PHONY: clean
 
-all: $(TARGETS) TAGS
+all: $(TARGETS) #TAGS
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)

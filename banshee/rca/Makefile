@@ -55,7 +55,7 @@ endif
 
 .PHONY: clean
 
-all: $(TARGETS) TAGS
+all: $(TARGETS) #TAGS
 
 $(RCA).c: $(RCA).bsp $(BANSHEE)
 	$(BANSHEE) $(RCA).bsp $(RCA)
