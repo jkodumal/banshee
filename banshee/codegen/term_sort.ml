@@ -303,11 +303,11 @@ class termsort_gen =
 		   [(gen_con_case c consig)],
 		   Expr "fail(\"Inconsistent system of constraints\\n\");") )
       |	None -> (String.uppercase c ^ "_",
-		 Expr "if (((gen_term)arg1)->type != ((gen_term)arg2)->type) fail(\"Inconsistent system of constraints\\n\");")
+		 Expr "if (((gen_term)arg1)->type != ((gen_term)arg2)->type) handle_error(arg1,arg2,bek_cons_mismatch);")
       in
       let body conids = 
       	(Switch("((gen_term)arg1)->type",List.map gen_inner_switch conids, 
-		Expr "fail(\"Inconsistent system of constraints\\n\");"))
+		Expr "handle_error(arg1,arg2,bek_cons_mismatch);"))
       in
       let conids' = (foldl 
 		       (function ((c,sig_opt),acc) -> 
