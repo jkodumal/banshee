@@ -43,7 +43,7 @@ def convert_extension(filename):
 def parse_options():
     global project, repository, logfilename, outfilename,statefilename
     global start_with_entry, end_with_entry, analysis 
-    global enhanced_mod_check
+    global enhanced_mod_check, compilescript
     try:
 	opts, args = getopt.getopt(sys.argv[1:],options,long_options)
     except getopt.GetoptError:
