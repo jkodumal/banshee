@@ -1,4 +1,4 @@
-Task 1: Revising the directory structure 
+Task 1: Revising the directory structure
 
 the goal is to realize the following layout:
 
@@ -41,7 +41,7 @@ other tasks (a wishlist)
   --- RELEASE
   --- dependencies aren't quite right: autogenerate header dependencies
 
-Task 2: Supporting backtrack
+Task 2: Supporting backtracking
 
 Backtracking adds limited incremental support to the system. The idea
 is that you can "pop" off some number of constraints, effectively
@@ -62,10 +62,28 @@ bounds with each counter n. When a backtrack is requested, any bound
 whose counter is greater than n is deleted.
 
 This scheme is complicated by some of the optimizations. For instance,
-undoing cycle elimination may force us to undo a union-find
-operation. With projection merging we need to deal with ubprojs. I
-don't think cons hashing will cause a problem, but definitely think
-about this.
+cycle elimination unifies variables, and undoing a discovered cycle
+may force us to undo a union-find operation. With projection merging
+we also need to deal with ubprojs. I don't think cons hashing will
+cause a problem, but some thought should be invested here.
 
-so tasks:
-   --- Implement backtracking in union-find
+For mixed constraints, there must be a global "clock" that advances
+with each constraint added for ANY sort. So backtracking is a
+system-wide property. You cannot backtrack an individual sort.
+
+so, here are the tasks:
+   -x- Implement backtracking in union-find
+       
+       DONE: The implementation of backtracking is based on a
+       stack-based algorithm due to Westbrook and Tarjan. There is
+       a more general algorithm that allows one to do arbitrary
+       deunions (see Mannila and Ukkonen "Time Parameter and Arbitrary
+       Deunions in the Set Union Problem" or Galil and Italiano 
+       "Data Structures and Algorithms for Disjoint Set Union
+       Problems").
+ 
+   --- Add rollback support to bounds
+  
+   --- Make cycle elimination support rollback
+
+   --- Make projection merging support rollback
