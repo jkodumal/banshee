@@ -367,7 +367,9 @@ int update_type(translation tr, void *m)
 void init_types(void)
 {
   types_region = newregion();
-  register_persistent_region(types_region, update_type);
+  /* TODO -- somehow need to allow the update function to be stored in
+     banshee's fnptr table */
+/*   register_persistent_region(types_region, update_type); */
 
 
   float_type = make_primitive(tp_float, sizeof(float), __alignof__(float));

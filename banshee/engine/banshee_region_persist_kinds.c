@@ -70,6 +70,7 @@ int update_ptr_data(translation t, void *m)
 
 void write_extra_info(const char *filename, unsigned long num_regions)
 {
+  int count = 0;
   hash_table_scanner scan;
   Updater next_updater = NULL;
   region next_region = NULL;
@@ -85,9 +86,12 @@ void write_extra_info(const char *filename, unsigned long num_regions)
   while(hash_table_next(&scan, (hash_key *)&next_region, 
 			(hash_data *)&next_updater)) {
     int id = 0;
-    hash_table_lookup(fn_ptr_table, (hash_key)next_updater, (hash_data *)&id);
+    bool success = hash_table_lookup(fn_ptr_table, (hash_key)next_updater, (hash_data *)&id);
+    assert(success);
     fwrite((void *)&id, sizeof(int), 1 , f);
+    count++;
   }
+  assert(count == num_regions);
 }
 
 Updater *read_extra_info(const char *filename)
@@ -103,9 +107,9 @@ Updater *read_extra_info(const char *filename)
   result = rarrayalloc(permanent,num_extra_regions + NUM_REGIONS, 
 		       Updater);
 
-  for (i = 0; i < num_extra_regions; i++) {
+  for (i = NUM_REGIONS; i < NUM_REGIONS + num_extra_regions; i++) {
     fread((void *)&next_id, sizeof(int), 1, f); 
-    result[NUM_REGIONS + i] = update_funptr_data(next_id);
+    result[i] = update_funptr_data(next_id);
   }
 
   return result;
@@ -161,6 +165,7 @@ region *get_persistent_regions(const char *filename)
   result[31] = term_constant_region; 
 
   {
+    int count = 0;
     int i = NUM_REGIONS;
     region next_region;
     hash_table_scanner scan;
@@ -169,7 +174,9 @@ region *get_persistent_regions(const char *filename)
     while(hash_table_next(&scan, (hash_key *)&next_region, 
 			  NULL)) {
       result[i++] = next_region;
+      count++;
     }
+    assert(count == num_extra_regions);
   }
 
   result[num_extra_regions + NUM_REGIONS] = NULL;
@@ -236,10 +243,14 @@ Updater *get_updater_functions(const char *filename)
 
 void register_persistent_region(region r, Updater u)
 {
-  hash_table_insert(extra_regions, r, u);
+  bool success = hash_table_insert(extra_regions, r, u);
+
+  assert(success);
 }
 
 void unregister_persistent_region(region r)
 {
-  hash_table_remove(extra_regions, r);
+  bool success = hash_table_remove(extra_regions, r);
+
+  assert(success);
 }
