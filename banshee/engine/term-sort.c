@@ -372,6 +372,25 @@ void term_reset(void)
    rollback will undo any actual unifications */
 void term_rollback(banshee_rollback_info info)
 {
+  hash_table_scanner hash_scan;
+  stamp_list_scanner stamp_scan;
+  bounds next_bounds;
+  stamp_list next_edges;
+  stamp next_stamp;
+
+  term_rollback_info tinfo = (term_rollback_info)info;
+  
+  assert(tinfo->kind = term_sort);
+  
+  hash_table_scan(tinfo->added_edges, &hash_scan);
+  while(hash_table_next(&hash_scan,(hash_key *)&next_bounds,
+			(hash_data *) &next_edges)) {
+    stamp_list_scan(next_edges, &stamp_scan);
+    while(stamp_list_next(&stamp_scan,&next_stamp)) {
+      bounds_remove(next_bounds,next_stamp);
+    }
+  }
+						     
 }
 
 
