@@ -82,7 +82,8 @@ def next_log_entry(logfile):
     return (date,result)
 
 # Get a list of the files with a given extension that have been
-# modified in dir_b as compared to dir_a
+# modified in dir_b as compared to dir_a. The directory name will be
+# the project name originally checked out, w/o _odd or _even
 def get_modified_files(dir_a, dir_b, extension):
     result = []
     b_files = os.popen("find %s -name *%s" % (dir_b,extension))
@@ -90,8 +91,7 @@ def get_modified_files(dir_a, dir_b, extension):
 	file = filewline[:-1]
 	if (os.system("bash -c \"diff %s %s >/dev/null\"" 
 		      % (file, dir_a + file[len(dir_b):]))):
-	    #		  % (file[:len(dir_b)],dir_a + file) )):
-	    result.append(file)
+	    result.append(project + file[len(dir_b):])
     return result
 
 # Read the list of banshee times 
@@ -104,14 +104,6 @@ def get_banshee_state(statefile):
 	temp = string.split(line)
 	result.append((temp[1],int(temp[3])))
     return result
-
-# Get the name of the directory to store the checkout in
-def get_dirname(current):
-    if ( (current % 2) == 1):
-	dirname = project + "_odd"
-    else:
-	dirname = project + "_even"
-    return dirname
 
 def get_filelist(dirname,extension):
     files = os.popen("find %s -name *%s" % (dirname, extension))
@@ -141,30 +133,63 @@ def process_andersen_output(current, output):
 	else:
 	    statefile.write(line)
 
+# Compute the rollback time from the previous analysis state, given
+# that we are rolling back to file
+def compute_time(file, state):
+    time = 0
+    for (nextfile,next_time) in state:
+	if (file == nextfile) return time
+	time = next_time
+    return time
+
+# Compute the new list of files to analyze, given that we are rolling
+# back to file
+def compute_stack(modified, file, filelist):
+    # First, take the prefix of the list up to file
+    prefix = filelist[:filelist.index(file)]
+    # Next, take the suffix of filelist starting with file, but filtering out
+    # any modifieds
+    suffix = [elem for elem in filelist[filelist.index(file):] if (not elem in modified)]
+    return prefix + suffix + modified    
+
+# Given the list of modified files, the new file list, and the old
+# analysis state, compute a new filelist (stack) and the rollback time
+# TODO
+def get_new_stack_and_time(modified, filelist, state):
+    for file in filelist:
+	if file in modified:
+	    time = compute_time(file, state)
+	    stack = compute_stack(modified, file, filelist)
+	    return (time,stack)
+    print "Failed to compute rollback time and new stack!"
+    sys.exit(1)
+
 # Entry point 
 def main():
     parse_options()
     logfile = open(logfilename, "r")
     #skip the initial blank
     logfile.readline()
+    project_prev = project + "_prev" 
     # skip the specified entries
     for _ in range(0,start_with_entry):
 	next_log_entry(logfile)
     # run one entry to prime the pump
+    os.system("rm -rf %s" % project)
     date,_ = next_log_entry(logfile)
-    dirname = get_dirname(start_with_entry)
-    os.system("rm -rf %s" % dirname) 
     os.system("cvs -d %s co -D \"%s\" %s >/dev/null" % (repository, date, project))
     build_error = os.system("%s %s" % (compilescript, project))
     if (build_error):
 	print "Build error"
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
-    os.system("mv %s %s" % (project, dirname))
-    files = list_to_string(get_filelist(dirname,".i"))
+    files = list_to_string(get_filelist(project,".i"))
     cmd = "%s -fserialize-constraints %s 2>/dev/null" % (parser_ns,files)
     output = os.popen(cmd).readlines()
     process_andersen_output(start_with_entry,output)
+    # move the analysis to the _prev directory
+    os.system("rm -rf %s" % project_prev) 
+    os.system("mv %s %s" % (project, project_prev))
 
     # for each entry, do the following:
     # 1. run cvs co -d -D date
@@ -177,19 +202,27 @@ def main():
     # 7. run the alias analysis, rolling back to the specified time 
     # 8. save the new statefile and analysis output
     for current in range(start_with_entry+1,end_with_entry+1):
+	os.system("rm -rf %s" % project)
 	statefile = open(statefilename + str(current-1), "r")
 	banshee_state = get_banshee_state(statefile)
  	date,_ = next_log_entry(logfile)
-	dirname = get_dirname(current)
-	os.system("rm -rf %s" % dirname)
 	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, date, project))
 	build_error = os.system("%s %s" % (compilescript, project))
 	if (build_error):
 	    print "Build error"
 	    sys.exit(1)
-	os.system("mv %s %s" % (project, dirname))
-	modified = get_modified_files(get_dirname(current-1),get_dirname(current),".i")
+	modified = get_modified_files(project_prev,project,".i")
+	filelist = get_filelist(project,".i")
+	os.system("rm -rf %s" % project_prev)
+	os.system("mv %s %s" % (project, project_prev))
 	print modified
+	time,files = get_new_stack_and_time(modified,filelist,banshee_state)
+	cmd = "%s -fserialize-constraints -fback%s %s 2>/dev/null" % (parser_ns, time, files)
+	output = os.popen(cmd).readlines()
+	process_andersen_output(current,output)
+
+	
+    os.system("rm -rf %s" % project)
 
 if __name__ == "__main__":
     main()
