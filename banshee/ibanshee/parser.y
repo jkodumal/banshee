@@ -80,7 +80,6 @@ static void save_cs(const char *filename)
 static void load_cs(const char *filename)
 {
   FILE *f = fopen(filename, "rb");
-  assert(f);
   hash_table *entry_points = deserialize_cs(f);
   constructor_env = entry_points[0];
   named_env = entry_points[1];
