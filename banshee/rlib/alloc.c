@@ -62,9 +62,13 @@ void alloc_block(region r, struct allocator *a, struct ablock *blk,
 	  a->pages = newp;
 	  blk->allocfrom = (char *)newp + offsetof(struct page, previous);
 	  set_region(newp, 1, r);
+	  /* Have to clear the entire page to ensure that serialization/deserialization work. */
+	  clear((char *) blk->allocfrom, ((char *)newp + blksize) - (char *)blk->allocfrom);
 	}
       else
 	{
+	  fprintf(stderr,"Allocating a big page where we should not!\n");
+	  exit(1);
 	  newp = alloc_pages(blksize >> RPAGELOG, a->bigpages);
 	  a->bigpages = newp;
 	  blk->allocfrom = (char *)newp + offsetof(struct page, previous);
@@ -112,7 +116,10 @@ void qalloc(region r, struct allocator *a, void **p1, int s1, int a1,
   mem = (char *)p + offsetof(struct page, previous);
   *p1 = PALIGN(mem, a1);
   *p2 = PALIGN(*p1 + s1, a2);
-  clear(*p2, s2);
+  /*  clear(*p2, s2); */
+  /* For big pages, we have to ensure that the entire page is cleared, even if that involves clearing memory beyond the
+     number of bytes requested.  Otherwise, deserialization might fail. */
+  clear(*p2, ((char *)p + npages * RPAGESIZE) - (char *) *p2); 
 }
 
 void free_all_pages(region r, struct allocator *a)
