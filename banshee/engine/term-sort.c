@@ -198,7 +198,7 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
   gen_e e1 = term_get_ecr(a),
     e2 = term_get_ecr(b);
 
-  if ( eq(e1,e2) )
+  if ( term_eq(e1,e2) )
     {
       return;
     }
@@ -249,7 +249,7 @@ void term_unify(con_match_fn_ptr con_match, occurs_check_fn_ptr occurs,
 	fire_pending(v,e1,con_match,occurs);
       
       /* v = e1, e1 is not a var */
-      if (occurs(v,e1))
+      if (flag_occurs_check && occurs(v,e1))
 	handle_error(e1,e2,bek_occurs_check);
       tv_unify(v,e1); 
       
