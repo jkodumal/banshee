@@ -117,9 +117,9 @@ def get_modified_files_enhanced(dir_a, dir_b, extension):
 
 def get_modified_files(dir_a, dir_b, extension):
     if (enhanced_mod_check):
-	get_modified_files_enhanced(dir_a, dir_b, extension)
+	return get_modified_files_enhanced(dir_a, dir_b, extension)
     else:
-	get_modified_files_simple(dir_a, dir_b, extension)
+	return get_modified_files_simple(dir_a, dir_b, extension)
 
 def get_removed_files(modified, candidates):
     result = []
