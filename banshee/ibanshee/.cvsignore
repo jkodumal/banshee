@@ -2,3 +2,8 @@ parser.tab.c
 parser.tab.h
 lex.yy.c
 gmon.out
+data
+extras
+offsets
+statics
+.gdb_history

@@ -78,6 +78,7 @@ static function_decl current_fun_decl = NULL;
 
 /* TODO -- must serialize this!!! */
 static env global_var_env;
+
 static env file_env;
 static env local_env;
 static env struct_env;

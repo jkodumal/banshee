@@ -415,5 +415,9 @@ int update_term_hash(translation t, void *m)
 {
   /* TODO -- check! */
   update_pointer(t, (void **)&((term_hash)m)->term_buckets);
+  update_pointer(t, (void **)&((term_hash)m)->tb_rgn);
+  update_pointer(t, (void **)&((term_hash)m)->he_rgn);
+  update_pointer(t, (void **)&((term_hash)m)->tba_rgn);
+  update_pointer(t, (void **)&((term_hash)m)->st_rgn);
   return sizeof(struct term_hash_);
 }
