@@ -102,6 +102,12 @@ extern region banshee_rollback_region;
 /* Read the global banshee clock */
 banshee_time banshee_get_time(void);
 
+/* Backtrack 1 constraint */
+void banshee_rollback(void);
+
+/* Backtrack to time t. If t is >= the current time, this has no effect */
+void banshee_backtrack(banshee_time t);
+
 /* Set a rollback info structure's time */
 void banshee_set_time(banshee_rollback_info);
 
@@ -113,12 +119,6 @@ bool banshee_check_rollback(sort_kind k);
 
 /* Register a rollback info structure */
 void banshee_register_rollback(banshee_rollback_info);
-
-/* Backtrack 1 constraint */
-void banshee_rollback(void);
-
-/* Backtrack to time t. If t is >= the current time, this has no effect */
-void banshee_backtrack(banshee_time t);
 
 /* 
    Function pointers that are common to all sorts

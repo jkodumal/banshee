@@ -1392,7 +1392,7 @@ void expr_print(FILE *f,gen_e e)
 	if (setif_is_var(e))
 	  {
 	    //   fprintf(f,"%s[%d]", sv_get_name((setif_var)e),setif_get_stamp(e));
-	    fprintf(f,"%s::%d", sv_get_name((setif_var)e),sv_get_stamp((setif_var)e));
+	    fprintf(f,"%s", sv_get_name((setif_var)e));
 	  }
 	else if (setif_is_zero(e))
 	  {
@@ -1420,7 +1420,7 @@ void expr_print(FILE *f,gen_e e)
 	  }
 	else if (setif_is_constant(e))
 	  {
-	    fprintf(f,"%s()::%d",setif_get_constant_name(e),setif_get_stamp(e));
+	    fprintf(f,"%s",setif_get_constant_name(e));
 	  }
 	else 
 	  {

@@ -25,7 +25,7 @@ static void ibanshee_error_handler(gen_e e1, gen_e e2,banshee_error_kind bek)
   }
   fprintf(stderr,"between expressions: ");
   expr_print(stderr,e1);
-  fprintf(stderr,", ");
+  fprintf(stderr," and ");
   expr_print(stderr,e2);
   fprintf(stderr,"\n");
 }
@@ -35,7 +35,7 @@ static void print_tlb(gen_e e)
   gen_e_list sol = setif_tlb(e);
 	       
   if (gen_e_list_length(sol) == 0) {
-    printf("{}");
+    printf("{}\n");
   }
   else {
     gen_e next;
@@ -51,7 +51,7 @@ static void print_tlb(gen_e e)
       printf(", ");
       expr_print(stdout,next);
     }
-    printf("}");
+    printf("}\n");
   }
 }
 
@@ -91,6 +91,7 @@ static void ibanshee_init(void) {
 %left TOK_UNION "||"
 %token TOK_LEQ "<="
 %token TOK_DEQ "=="
+%token TOK_CARET "^"
 %token TOK_LINE
 %token TOK_ERROR
 %token TOK_EOF
@@ -158,19 +159,23 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	     if (hash_table_lookup(var_env,$2,NULL)) {
 	       yyerror("Attempted to redefine existing variable");
 	     }
-
-	     switch($4) {
-	     case setif_sort:
-	       fresh_var = setif_fresh($2);
-	       break;
-	     case term_sort:
-	       fresh_var = term_fresh($2);
-	       break;
-	     case flowrow_sort:
-	       fresh_var = flowrow_fresh($2);
-	       break;
-	     }	     
-	     hash_table_insert(var_env,$2,fresh_var);
+	     else {
+	       switch($4) {
+	       case setif_sort:
+		 fresh_var = setif_fresh($2);
+		 break;
+	       case term_sort:
+		 fresh_var = term_fresh($2);
+		 break;
+	       case flowrow_sort:
+		 fresh_var = flowrow_fresh($2);
+		 break;
+	       }	     
+	       hash_table_insert(var_env,$2,fresh_var);
+	       printf("var: ");
+	       expr_print(stdout, fresh_var);
+	       printf("\n");
+	     }
 	   }
          | TOK_DECL TOK_IDENT TOK_EQ expr
            {
@@ -179,6 +184,9 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	     }
 	     else {
 	       hash_table_insert(named_env,$2,(hash_data)$4);
+	       printf("%s: ");
+	       expr_print(stdout,$4);
+	       printf("\n");
 	     }
            }
          | TOK_DECL TOK_IDENT TOK_COLON basesort
@@ -192,6 +200,7 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	     else {
                constructor c = make_constructor($2,$4,NULL,0);
 	       hash_table_insert(constructor_env,$2,(hash_data)c);
+	       printf("constructor: %s\n", $2);
 	     }
            }
          | TOK_DECL TOK_IDENT TOK_LPAREN signature TOK_RPAREN TOK_COLON basesort
@@ -205,6 +214,7 @@ decl:      TOK_DECL TOK_VAR TOK_COLON sort
 	     else {
                constructor c = make_constructor_from_list($2,$7,sig_elt_list_reverse($4));
 	       hash_table_insert(constructor_env,$2,c);
+	       printf("constructor: %s\n", $2);
 	     }
            }
 ;
@@ -378,7 +388,18 @@ expr:    TOK_VAR
          | TOK_PROJ pattern	/* a projection */
            { 
              $$ = setif_proj($2.c,$2.i,$2.e); 
-           }	  
+           }
+				/* another spelling for projection */
+         | TOK_IDENT TOK_CARET TOK_NEG TOK_INTEGER TOK_LPAREN expr TOK_RPAREN
+           {
+	     constructor c = NULL;
+
+	     if (!hash_table_lookup(constructor_env,$1,(hash_data *)&c)) {
+	       yyerror("Could not find constructor\n");
+	     }
+             assert(c);
+             $$ = setif_proj(c,$4,$6);
+           }
          | TOK_LPAREN expr TOK_RPAREN /* parenthesized expression */
            { $$ = $2; }
 ;
@@ -440,12 +461,19 @@ cmd:       TOK_CMD TOK_IDENT
 	     if (!strcmp($2,"quit")) {
 	       exit(0);
 	     }
-	     if (!strcmp($2,"exit")) {
+	     else if (!strcmp($2,"exit")) {
                exit(0);
+	     }
+	     else if (!strcmp($2,"undo")) {
+	       banshee_rollback();
 	     }
 	   }
         |  TOK_CMD TOK_IDENT TOK_INTEGER
-           { }  
+           {
+	     if (!strcmp($2,"undo")) {
+	       banshee_backtrack((banshee_time){$3});
+	     }
+	   }  
         |  TOK_CMD TOK_IDENT expr
            { 
 	         if (!strcmp($2,"tlb")) {
@@ -461,9 +489,10 @@ cmd:       TOK_CMD TOK_IDENT
 %%
 int main() {
   ibanshee_init();
-  printf("iBanshee version 0.1");
+  printf("iBanshee version 0.1\n");
   do {
-    printf("\n>");
+    int time = banshee_get_time().time;
+    printf("[%d] > ",time);
     fflush(stdout);
     yyparse();
   }
