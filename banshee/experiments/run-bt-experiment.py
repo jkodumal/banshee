@@ -4,7 +4,7 @@ import os
 import string
 import getopt
 
-options='c:d:p:l:o:s:h'
+options='c:d:p:l:o:s:he'
 long_options=['start-with=','end-with=','analysis=',"help"]
 
 # Default values for command line options
@@ -20,6 +20,7 @@ compilescript = "./default_compile.sh"
 analysis = "../cparser/parser_ns.exe"
 simfilename = "simulations/" + project + ".sim"
 modfilename = "simulations/" + project + ".mod"
+enhanced_mod_check = False
 
 # Print a usage message and exit
 def usage():
@@ -31,7 +32,8 @@ options:\n\
   -l <logfile>:   read the CVS log from logfile\n\
   -o <outfile>:   save output as outfile\n\
   -s <statefile>: read/write the analysis state from/to statefile\n\
-  -h              show this message\n"
+  -e:             used enhanced check to find modified files\n\
+  -h:             show this message\n"
 	  % sys.argv[0])
 
 def convert_extension(filename):
@@ -41,6 +43,7 @@ def convert_extension(filename):
 def parse_options():
     global project, repository, logfilename, outfilename,statefilename
     global start_with_entry, end_with_entry, analysis 
+    global enhanced_mod_check
     try:
 	opts, args = getopt.getopt(sys.argv[1:],options,long_options)
     except getopt.GetoptError:
@@ -59,6 +62,8 @@ def parse_options():
 	    outfilename = a
 	if (o == 's'):
 	    statefilename = a
+	if (o == 'e'):
+	    enhanced_mod_check = a
 	if (o == '--start-with'):
 	    start_with_entry = int(a)
 	if (o == '--end-with'):
@@ -88,7 +93,7 @@ def next_log_entry(logfile):
 # Get a list of the files with a given extension that have been
 # modified in dir_b as compared to dir_a. The directory name will be
 # the project name originally checked out, w/o _odd or _even
-def get_modified_files(dir_a, dir_b, extension):
+def get_modified_files_simple(dir_a, dir_b, extension):
     result = []
     b_files = os.popen("find %s -name *%s" % (dir_b,extension))
     for filewline in b_files.readlines():
@@ -97,6 +102,24 @@ def get_modified_files(dir_a, dir_b, extension):
 		      % (file, dir_a + file[len(dir_b):]))):
 	    result.append(project + file[len(dir_b):])
     return result
+
+def get_modified_files_enhanced(dir_a, dir_b, extension):
+    result = []
+    b_files = os.popen("find %s -name *.o" % dir_b)
+    for filewline in b_files.readlines():
+	file = filewline[:-1]
+	if (os.system("bash -c \"diff %s %s >/dev/null\""
+		      % (file, dir_a + file[len(dir_b):]))):
+	    srcfile = os.popen("strings %s | grep CANON_IDENT").readlines()[0][len("CANON_IDENT_"):-2] + extension
+	    srcfound = os.popen("find %s -name %s" % (dir_b, srcfile)).readlines()[0]
+	    result.append(project + srcfound[len(dir_b):])
+    return result
+
+def get_modified_files(dir_a, dir_b, extension):
+    if (enhanced_mod_check):
+	get_modified_files_enhanced(dir_a, dir_b, extension)
+    else:
+	get_modified_files_simple(dir_a, dir_b, extension)
 
 def get_removed_files(modified, candidates):
     result = []
