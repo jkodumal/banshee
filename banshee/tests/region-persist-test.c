@@ -63,10 +63,11 @@ int update_node(translation t, void *m) {
 
 void update()
 {
-  Updater u[9];
+  Updater u[10];
   translation t;
   region temp = newregion();
-  
+
+  u[9] = update_strbucket;
   u[8] = update_ptr_data;
   u[7] = update_list_strnode;
   u[6] = update_list_node;
@@ -115,7 +116,7 @@ void seed_fn_ptr_table(region r);
 
 int main(int argc, char *argv[])
 {
-  region r[10];
+  region r[11];
   int i = 0;
   node n = NULL;
   region node_region;
@@ -128,7 +129,8 @@ int main(int argc, char *argv[])
 
   node_region = newregion();
 
-  r[9] = NULL;
+  r[10] = NULL;
+  r[9] = strbucket_region;
   r[8] = banshee_ptr_region;
   r[7] = list_strnode_region;
   r[6] = list_node_region;

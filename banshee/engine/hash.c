@@ -326,7 +326,7 @@ static void rehash(hash_table ht)
   ht->size = ht->size*2;
   ht->log2size = ht->log2size + 1;
   ht->used = 0;
-  ht->table = rarrayalloc(BUCKETPTR_REGION, ht->size, bucket);
+  ht->table = rarrayalloc(ht->r ? ht->r : BUCKETPTR_REGION, ht->size, bucket);
 
   for (i = 0; i < old_table_size; i++)
     scan_bucket(old_table[i], cur)

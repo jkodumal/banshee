@@ -157,6 +157,7 @@ bool hash_table_serialize(FILE *f, void *obj);
 /* Region-based persistence */
 extern region bucket_region;
 extern region table_region;
+extern region strbucket_region;
 int update_hash_table(translation t, void *m);
 int update_bucket(translation t, void *m);
 int update_strbucket(translation t, void *m);

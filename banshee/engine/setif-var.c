@@ -89,7 +89,7 @@ static setif_var make_var(region r, const char *name, stamp st)
   info->ubs = bounds_persistent_create();
   info->tlb_cache = NULL;
   info->ub_projs = new_gen_e_list(r);
-  info->name = name ? rstrdup(banshee_nonptr_region,name) : "fv";
+  info->name = name ? rstrdup(banshee_nonptr_region,name) : rstrdup(banshee_nonptr_region, "fv");
   info->component = new_uf_element(NULL, NULL, BANSHEE_PERSIST_KIND_nonptr);
 
   result->type = VAR_TYPE;

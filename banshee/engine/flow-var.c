@@ -71,7 +71,7 @@ static flow_var make_var(region r,const char *name, stamp st)
   result->ubs = bounds_persistent_create();
   result->lbs = bounds_persistent_create();
   result->elt = new_contour_elt(NULL,NULL);
-  result->name = name ? rstrdup(banshee_nonptr_region,name) : "fv";
+  result->name = name ? rstrdup(banshee_nonptr_region,name) : rstrdup(banshee_nonptr_region, "fv");
   result->extra_info = NULL;
   result->extra_persist_kind = 0;
 

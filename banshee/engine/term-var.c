@@ -63,7 +63,7 @@ static term_var make_var(region r, const char *name, stamp st)
   result->type = VAR_TYPE;
   result->st = st;
   result->pending = bounds_persistent_create();
-  result->name = name ? rstrdup(banshee_nonptr_region,name) : "fv";
+  result->name = name ? rstrdup(banshee_nonptr_region,name) : rstrdup(banshee_nonptr_region, "fv");
   result->elt = new_tv_elt(r,info);
 #ifdef NONSPEC
   result->sort = term_sort;
