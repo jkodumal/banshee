@@ -89,8 +89,8 @@ TAGS:
 check: $(TARGETS) $(TARGETCHECK)
 
 check/%: 
-	$*
-	@echo $* passed
+	./$*
+	@echo ./$* passed
 
 
 clean:

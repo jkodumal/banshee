@@ -37,6 +37,7 @@ other tasks (a wishlist)
   -x- fix etags dependencies
   -x- tests/Makefile dependencies are not right (they seem correct now)
   -x- update website, move to sourceforge
+  --- fix code generator so that error callbacks are called instead of fail(..)
   --- update manual
   --- RELEASE
   --- dependencies aren't quite right: autogenerate header dependencies
