@@ -63,7 +63,7 @@ struct cluster_cons_ {
 
 typedef struct cluster_cons_ *cluster_cons;
 
-DEFINE_LIST(dyck_node_list,dyck_node);
+DEFINE_NONPERSISTENT_LIST(dyck_node_list,dyck_node);
 
 /*****************************************************************************
  *                                                                           *

@@ -34,6 +34,8 @@
 #include "utils.h"
 #include "hash.h"
 #include "list.h"
+#include "banshee_persist_kinds.h"
+
 #define INITIAL_SIZE 32
 #define INITIAL1 0
 #define INITIAL2 2000
@@ -47,7 +49,7 @@ static region str_hash_rgn;
 static int count1 = INITIAL1, count2 = INITIAL2, count3 = INITIAL3;
 static int bounds1 = INT_MIN, bounds2 = 536870911, bounds3 = INT_MAX;
 
-DEFINE_LIST(stamp_list,stamp);
+DEFINE_NONPERSISTENT_LIST(stamp_list,stamp);
 
 static inline stamp check1(int i)
 {

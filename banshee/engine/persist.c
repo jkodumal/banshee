@@ -33,6 +33,7 @@
 #include "hash.h"
 #include "list.h"
 #include "utils.h"
+#include "banshee_persist_kinds.h"
 
 /* Types */
 typedef enum {
@@ -47,7 +48,7 @@ typedef struct persist_entry_ {
 } *persist_entry;
 
 DECLARE_LIST(persist_entry_queue, persist_entry);
-DEFINE_LIST(persist_entry_queue, persist_entry);
+DEFINE_NONPERSISTENT_LIST(persist_entry_queue, persist_entry);
 
 /* Globals */
 static persist_state current_state = persist_raw;
@@ -201,8 +202,9 @@ void *deserialize_get_obj(void *old_field)
 
   assert(current_state == persist_deserializing);
   assert(object_map); 
-  
-  if (! hash_table_lookup(object_map, old_field, (hash_data *)&entry)) {
+
+  if (old_field == NULL) return NULL;
+  else if (! hash_table_lookup(object_map, old_field, (hash_data *)&entry)) {
     return NULL;
   }
   else return entry->obj;

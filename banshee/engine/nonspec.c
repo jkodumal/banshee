@@ -57,6 +57,7 @@
 #include "term-var.h"
 #include "utils.h"
 #include "hash.h"
+#include "banshee_persist_kinds.h"
 
 /* Types defined here MUST be larger than LARGEST_BUILTIN_TYPE (banshee.h). */
 #define GROUP_PROJ_PAT_TYPE 11
@@ -79,6 +80,8 @@ struct sig_elt_
 
 typedef struct sig_elt_ sig_elt;
 
+typedef sig_elt* sig_elt_ptr;
+
 struct cons_group_ 
 {
   int arity;
@@ -91,8 +94,8 @@ typedef struct cons_group_ *cons_group;
 
 DECLARE_LIST(cons_group_list,cons_group);
 DEFINE_LIST(cons_group_list,cons_group);
-DECLARE_LIST(sig_elt_list,sig_elt*);
-DEFINE_LIST(sig_elt_list, sig_elt*);
+DECLARE_LIST(sig_elt_list,sig_elt_ptr);
+DEFINE_LIST(sig_elt_list, sig_elt_ptr);
 
 struct constructor_
 {

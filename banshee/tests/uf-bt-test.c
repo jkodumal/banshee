@@ -34,7 +34,7 @@
 #include "ufind.h"
 
 DECLARE_UFIND(elt,int);
-DEFINE_UFIND(elt,int);
+DEFINE_NONPERSISTENT_UFIND(elt,int);
 
 int main()
 {

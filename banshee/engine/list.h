@@ -52,7 +52,7 @@ struct list_scanner
 }; /* Opaque type. Do not modify fields */
 
 
-struct list *new_list(region r);
+struct list *new_list(region r, int persist_kind);
 int list_length(struct list *a);
 struct list *list_cons(void *data, struct list *a);
 struct list *list_append(struct list *a, struct list *b);
@@ -119,7 +119,7 @@ type *name ##_array_from_list(region r, name a);
 #define DEFINE_LIST(name,type) \
 name new_ ## name(region r) \
 { \
- return (name)new_list(r);  \
+  return (name)new_list(r,BANSHEE_PERSIST_KIND_ ## type);\
 } \
 int name ## _length(name a) \
 { \
@@ -217,6 +217,110 @@ type *name ##_array_from_list(region r, name a) \
 {\
  return (type *)array_from_list(r,(struct list *)a);\
 }
+
+#define DEFINE_NONPERSISTENT_LIST(name,type) \
+name new_ ## name(region r) \
+{ \
+  return (name)new_list(r,0);\
+} \
+int name ## _length(name a) \
+{ \
+ return list_length((struct list *)a); \
+} \
+name name ## _cons(type data, name a) \
+{ \
+ return (name)list_cons((void *)data,(struct list *) a ); \
+}\
+name name ## _append(name a, name b) \
+{ \
+ return (name)list_append((struct list *)a,(struct list *)b);  \
+} \
+name name ## _append_tail(type data, name a) \
+{\
+  return (name)list_append_tail((void *)data,(struct list *) a); \
+} \
+name name ## _app(name a, name ## _app_fn app) \
+{ \
+ return (name)list_app((struct list *) a, (app_fn) app); \
+} \
+type name ## _find(name a, name ## _eq_fn eq) \
+{ \
+ return (type)list_find((struct list *)a, (eq_fn) eq); \
+} \
+name name ## _tail(name a) \
+{\
+ return (name)list_tail((struct list *)a);\
+}\
+type name ## _head(name a) \
+{ \
+ return (type)list_head((struct list *)a); \
+} \
+type name ## _last(name a) \
+{\
+  return (type)list_last((struct list *)a);\
+}\
+void name ## _drop(name a, name ## _eq_fn eq) \
+{ \
+ list_drop((struct list *)a, (eq_fn) eq); \
+} \
+name name ## _filter(region r,name a, name ## _eq_fn eq) \
+{ \
+ return (name)list_filter(r,(struct list *)a, (eq_fn) eq); \
+} \
+name name ## _keep(name a, name ## _eq_fn eq) \
+{ \
+ return (name)list_keep((struct list *)a, (eq_fn) eq); \
+} \
+name name ## _filter2(name a, name ## _eq_fn eq) \
+{ \
+ return (name)list_filter2((struct list *)a, (eq_fn) eq); \
+} \
+name name ## _copy(region r, name a) \
+{ \
+ return (name)list_copy(r,(struct list *) a); \
+} \
+name name ## _sort(name a, name ## _comparator_fn cmp) \
+{ \
+ return (name)list_sort((struct list *)a,(comparator_fn) cmp); \
+} \
+name name ## _merge(name a,name b, name ## _comparator_fn cmp) \
+{ \
+ return (name)list_merge((struct list *)a,(struct list *)b,(comparator_fn)cmp); \
+} \
+void name ## _scan(name a, name ##_scanner *scan) \
+{ \
+ list_scan((struct list *)a,(struct list_scanner *)scan);\
+}\
+bool name ## _next(name ##_scanner *scan, type *data) \
+{ \
+ return list_next((struct list_scanner *)scan, (void **)data); \
+} \
+bool name ## _empty(name a) \
+{ \
+ return list_empty((struct list *)a); \
+} \
+void name ## _clear(name a) \
+{ \
+ return list_clear((struct list *)a); \
+} \
+bool name ## _member(name a, type data) \
+{ \
+ return list_member((struct list *)a,(void *)data); \
+} \
+name name ## _reverse(name a) \
+{\
+ return (name)list_reverse((struct list *)a);\
+}\
+name name ## _from_array(region r,type data[], int length) \
+{\
+ return (name)list_from_array(r,(void **)data,length); \
+}\
+type *name ##_array_from_list(region r, name a) \
+{\
+ return (type *)array_from_list(r,(struct list *)a);\
+}
+
+
 
 EXTERN_C_END
 

@@ -97,31 +97,57 @@ bool name ## _union(name e1, name e2); \
 bool name ## _eq(name e1, name e2); \
 void name ## _update(name e1, type info);
 
-#define DEFINE_UFIND(name,type) \
+#define DEFINE_NONPERSISTENT_UFIND(name,type) \
 name new_ ## name(region r, type info) \
-{ \
-  return (name)new_uf_element(r,(void *)info, BANSHEE_PERSIST_KIND_ ## type);\
+{\
+  return (name)new_uf_element(r,(void *)info, 0);\
 }\
 type name ## _get_info(name elem) \
-{ \
+{\
  return (type)uf_get_info((struct uf_element *)elem);\
-} \
+}\
 bool name ## _unify(name ## _combine_fn_ptr cmb,name e1, name e2) \
-{ \
+{\
  return uf_unify((combine_fn_ptr)cmb,(struct uf_element *)e1,(struct uf_element *)e2); \
-} \
+}\
 bool name ## _union(name e1, name e2) \
-{ \
+{\
  return uf_union((struct uf_element *)e1,(struct uf_element *)e2); \
 }\
 bool name ## _eq(name e1, name e2) \
-{ \
+{\
  return uf_eq((struct uf_element *)e1,(struct uf_element *)e2); \
-} \
+}\
 void name ##_update(name e1, type info) \
-{ \
+{\
  return uf_update((struct uf_element *)e1,(uf_info)info); \
-} \
+}\
+
+#define DEFINE_UFIND(name,type) \
+name new_ ## name(region r, type info) \
+{\
+  return (name)new_uf_element(r,(void *)info, BANSHEE_PERSIST_KIND_ ## type);\
+}\
+type name ## _get_info(name elem) \
+{\
+ return (type)uf_get_info((struct uf_element *)elem);\
+}\
+bool name ## _unify(name ## _combine_fn_ptr cmb,name e1, name e2) \
+{\
+ return uf_unify((combine_fn_ptr)cmb,(struct uf_element *)e1,(struct uf_element *)e2); \
+}\
+bool name ## _union(name e1, name e2) \
+{\
+ return uf_union((struct uf_element *)e1,(struct uf_element *)e2); \
+}\
+bool name ## _eq(name e1, name e2) \
+{\
+ return uf_eq((struct uf_element *)e1,(struct uf_element *)e2); \
+}\
+void name ##_update(name e1, type info) \
+{\
+ return uf_update((struct uf_element *)e1,(uf_info)info); \
+}\
 
 EXTERN_C_END
 

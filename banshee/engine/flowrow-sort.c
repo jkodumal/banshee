@@ -35,8 +35,8 @@
 #include "flowrow-sort.h"
 #include "termhash.h"
 #include "bounds.h"
-
 #include "setif-sort.h"
+#include "banshee_persist_kinds.h"
 
 #define ABS_TYPE 2
 #define WILD_TYPE 3

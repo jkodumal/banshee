@@ -100,7 +100,7 @@ static setif_var make_var(region r, const char *name, stamp st)
   info->tlb_cache = NULL;
   info->ub_projs = new_gen_e_list(r);
   info->name = name ? rstrdup(r,name) : "fv";
-  info->component = new_uf_element(r, NULL, BANSHEE_PERSIST_KIND_null);
+  info->component = new_uf_element(r, NULL, BANSHEE_PERSIST_KIND_none);
 
   result->type = VAR_TYPE;
   result->elt = new_sv_elt(r,info); 
@@ -255,7 +255,7 @@ bool sv_serialize(FILE *f, void *obj)
   fwrite((void *)&var->elt, sizeof(void *), 1, f);
 
   /* Mark the uf element for serialization */
-  serialize_banshee_object(uf_element, var->elt);
+  serialize_banshee_object(var->elt, uf_element);
 
   return TRUE;
 }
@@ -300,16 +300,14 @@ bool sv_info_serialize(FILE *f, void *obj)
   fwrite((void *)&info->st, sizeof(stamp), 1, f);
   fwrite((void *)&info->lbs, sizeof(bounds), 1, f);
   fwrite((void *)&info->ubs, sizeof(bounds), 1, f);
-  fwrite((void *)&info->tlb_cache, sizeof(jcoll), 1, f);
   fwrite((void *)&info->ub_projs, sizeof(gen_e_list), 1, f);
   fwrite((void *)&info->component, sizeof(uf_element), 1, f);
   fprintf(f, "%s",info->name);
 
-  serialize_banshee_object(bounds, info->lbs);
-  serialize_banshee_object(bounds, info->ubs);
-  serialize_banshee_object(jcoll, info->tlb_cache);
-  serialize_banshee_object(list, info->ub_projs);
-  serialize_banshee_object(uf_element, info->component);
+  serialize_banshee_object(info->lbs, bounds);
+  serialize_banshee_object(info->ubs, bounds);
+  serialize_banshee_object(info->ub_projs, list);
+  serialize_banshee_object(info->component, uf_element);
 
   return TRUE;
 }
@@ -325,12 +323,24 @@ void *sv_info_deserialize(FILE *f)
   fread((void *)&info->st, sizeof(stamp), 1, f);
   fread((void *)&info->lbs, sizeof(bounds), 1, f);
   fread((void *)&info->ubs, sizeof(bounds), 1, f);
-  fread((void *)&info->tlb_cache, sizeof(jcoll), 1, f);
   fread((void *)&info->ub_projs, sizeof(gen_e_list), 1, f);
   fread((void *)&info->component, sizeof(uf_element), 1, f);
   fscanf(f,"%s",buf);
 
   info->name = rstrdup(sv_region,buf);
+  info->tlb_cache = NULL;
 
   return info;  
+}
+
+bool sv_info_set_fields(void *obj)
+{
+  sv_info info = (sv_info) obj;
+
+  info->lbs = deserialize_get_obj(info->lbs);
+  info->ubs = deserialize_get_obj(info->ubs);
+  info->ub_projs = deserialize_get_obj(info->ub_projs);
+  info->component = deserialize_get_obj(info->component);
+
+  return TRUE;
 }

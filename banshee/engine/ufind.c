@@ -32,6 +32,7 @@
 #include <assert.h>
 #include "ufind.h"
 #include "list.h"
+#include "persist.h"
 
 enum uf_kind {uf_ecr,uf_link};
 typedef enum uf_kind uf_kind;
@@ -56,7 +57,7 @@ struct uf_element {
   elt_stack elt_stack;
 };
 
-static region stackregion = NULL;
+static region uf_region = NULL;
 static union_stack ustack = NULL;
 
 struct uf_element *new_uf_element(region r, void *info, int persist_kind)
@@ -99,7 +100,7 @@ static struct uf_element *find(struct uf_element *e)
 
 static ustack_elt make_ustack_elt(uf_element e,void *info)
 {
-  ustack_elt result = ralloc(stackregion,struct ustack_elt_);
+  ustack_elt result = ralloc(uf_region,struct ustack_elt_);
   result->nonroot = e;
   result->old_info = info;
   
@@ -124,7 +125,7 @@ bool uf_union(struct uf_element *a, struct uf_element *b)
 
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(stackregion);
+      e1->elt_stack = new_elt_stack(uf_region);
 
       return TRUE;
     }
@@ -137,7 +138,7 @@ bool uf_union(struct uf_element *a, struct uf_element *b)
 
       union_stack_cons(ue, ustack);
       assert(e2->elt_stack == NULL);
-      e2->elt_stack = new_elt_stack(stackregion);
+      e2->elt_stack = new_elt_stack(uf_region);
 
       return TRUE;
     }
@@ -152,7 +153,7 @@ bool uf_union(struct uf_element *a, struct uf_element *b)
 
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(stackregion);
+      e1->elt_stack = new_elt_stack(uf_region);
 
       return TRUE;
     }
@@ -179,7 +180,7 @@ bool uf_unify(combine_fn_ptr combine,
      
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(stackregion);
+      e1->elt_stack = new_elt_stack(uf_region);
 
 
       return TRUE;
@@ -194,7 +195,7 @@ bool uf_unify(combine_fn_ptr combine,
 
       union_stack_cons(ue, ustack);
       assert(e2->elt_stack == NULL);
-      e2->elt_stack = new_elt_stack(stackregion);
+      e2->elt_stack = new_elt_stack(uf_region);
 
       return TRUE;
     }
@@ -210,7 +211,7 @@ bool uf_unify(combine_fn_ptr combine,
 
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(stackregion);
+      e1->elt_stack = new_elt_stack(uf_region);
 
       return TRUE;
     }
@@ -307,10 +308,54 @@ void uf_tick()
 
 void uf_init()
 {
-  stackregion = newregion();
-  ustack = new_union_stack(stackregion);
+  uf_region = newregion();
+  ustack = new_union_stack(uf_region);
 }
 
+/* Persistence */
+bool uf_element_serialize(FILE *f, void *obj)
+{
+  uf_element elt = (uf_element)obj;
 
+  assert(f);
+  assert(obj);
+  
+  fwrite((void *)&elt->kind, sizeof(int), 1, f);
+  fwrite((void *)&elt->rank, sizeof(int), 1, f);
+  fwrite((void *)&elt->persist_kind, sizeof(int), 1, f);
+  fwrite((void *)&elt->info, sizeof(void *), 1, f);
+  fwrite((void *)&elt->link, sizeof(void *), 1, f);
+  fwrite((void *)&elt->elt_stack, sizeof(void *), 1, f);
 
+  serialize_object(elt->persist_kind, elt->info);
+  serialize_banshee_object(elt->link, uf_element);
+  serialize_banshee_object(elt->elt_stack, list);
+
+  return TRUE;
+}
+
+void *uf_element_deserialize(FILE *f)
+{
+  uf_element elt = ralloc(uf_region, struct uf_element);
+
+  fread((void *)&elt->kind, sizeof(int), 1, f);
+  fread((void *)&elt->rank, sizeof(int), 1, f);
+  fread((void *)&elt->persist_kind, sizeof(int), 1, f);
+  fread((void *)&elt->info, sizeof(void *), 1, f);
+  fread((void *)&elt->link, sizeof(void *), 1, f);
+  fread((void *)&elt->elt_stack, sizeof(void *), 1, f);
+
+  return elt;
+}
+
+bool uf_element_set_fields(void *obj)
+{
+  uf_element elt = (uf_element)obj;
+
+  elt->info = deserialize_get_obj(elt->info);
+  elt->link = (uf_element)deserialize_get_obj(elt->link);
+  elt->elt_stack = (elt_stack)deserialize_get_obj(elt->elt_stack);
+
+  return TRUE;
+}
 

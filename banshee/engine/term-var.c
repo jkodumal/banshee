@@ -34,6 +34,7 @@
 #include "ufind.h"
 #include "term-var.h"
 #include "bounds.h"
+#include "banshee_persist_kinds.h"
 
 DECLARE_UFIND(tv_elt,gen_e);
  

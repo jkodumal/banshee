@@ -31,6 +31,7 @@
 #include <assert.h>
 #include "list.h"
 #include "utils.h"
+#include "banshee_persist_kinds.h"
 
 struct list_node_
 {  
@@ -44,11 +45,12 @@ struct list
 {
   region sameregion r;
   int length;
+  int persist_kind;
   list_node sameregion head;
   list_node sameregion tail;
 };
 
-struct list *new_list(region r)
+struct list *new_list(region r, int persist_kind)
 {
   struct list *result;
 
@@ -56,6 +58,7 @@ struct list *new_list(region r)
   
   result = ralloc(r,struct list);
   result->r = r;
+  result->persist_kind = persist_kind;
   result->length = 0;
   result->head = NULL;
   result->tail = NULL;
@@ -279,7 +282,7 @@ struct list *list_filter(region r,struct list *l,eq_fn eq)
   list_node n = NULL;
   assert(l);
 
-  result = new_list(r);
+  result = new_list(r,l->persist_kind);
   
   scan_node(l->head,n)
     {
@@ -336,7 +339,7 @@ struct list *list_copy(region r, struct list *l)
 #endif  
   assert(l);
 
-  result = new_list(r);
+  result = new_list(r, l->persist_kind);
   
   scan_node(l->head,n)
     {
@@ -512,7 +515,8 @@ bool list_member(struct list *l,void *data)
 
 struct list *list_from_array(region r, void **data, int length)
 {
-  struct list *result = new_list(r);
+  /* TODO -- unhack the nonpersistence */
+  struct list *result = new_list(r, BANSHEE_PERSIST_KIND_none);
   int i;
   
   for (i = length - 1; i >= 0; i--)
@@ -536,8 +540,30 @@ void **array_from_list(region r, struct list *l)
   return result;
 }
 
+/* Persistence */
 
+/* TODO -- need a region */
+/* bool list_serialize(FILE *f, void *obj) */
+/* { */
+/*   struct list *l = (struct list *)obj; */
 
+/*   assert(f); */
+/*   assert(obj); */
+
+/*   fwrite((void *)l->length */
+  
+/*   return TRUE; */
+/* } */
+
+/* void *list_deserialize(FILE *f) */
+/* { */
+/*   assert(f); */
+/* } */
+
+/* bool list_set_fields(void *obj) */
+/* { */
+  
+/* } */
 
 
 

@@ -33,7 +33,6 @@
 #include "hashset.h"
 #include "termhash.h"
 
-
 /* 
    static term_hash jcoll_hash;
  */
@@ -85,7 +84,7 @@ typedef struct jcoll_single *jcoll_single;
 typedef struct jcoll_chain *jcoll_chain;
 typedef struct jcoll_join *jcoll_join;
 
-DEFINE_LIST(jcoll_list,jcoll);
+DEFINE_NONPERSISTENT_LIST(jcoll_list,jcoll);
 
 jcoll jcoll_new(jcoll_dict d, gen_e e)
 {

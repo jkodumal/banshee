@@ -1446,7 +1446,7 @@ void print_analysis_results() deletes
     num_vars = 0;
   temp_region = newregion();
   ptset_list = new_T_list(temp_region);
-  visibles = new_list(temp_region);
+  visibles = new_list(temp_region,0);
  
   
   env_scan(collection_env,&es);

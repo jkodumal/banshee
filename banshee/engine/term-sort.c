@@ -32,6 +32,8 @@
 #include "regions.h"
 #include "term-sort.h"
 #include "hash.h"
+#include "banshee_persist_kinds.h"
+
 
 struct term_constant_ /* extends gen_e */
 {
