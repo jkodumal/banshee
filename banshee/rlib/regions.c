@@ -486,60 +486,16 @@ static void unscanregion(region r)
 #define rcabort() abort()
 #endif
 
-static void delregion(region r, int realrc)
+static void delregion(region r)
 {
-#if !(defined(NORC) || defined(NOCHECK))
-
-#ifdef RCPAIRS
-  int i, regionid = r->id;
-
-  /* Need to split this loop into two if we return a status rather
-     than aborting */
-  for (i = 0; i < MAXREGIONS; i++)
-    {
-#if defined(RCPAIRS_ARRAY)
-      if (__rcs[i][regionid] != 0)
-#elif defined(RCPAIRS_FROM)
-      if (__rcregions[i] && __rcregions[i]->rc[regionid] != 0)
-#else
-      if (r->rc[i] != 0)
-#endif
-	rcabort();
-    }
-#else
-  if (/*r->rc*/realrc != 0)
-    rcabort();
-#endif
-
-#endif
-
   nochildren(r);
-
-#ifdef REGIONPROFILE
-  totalbytes -= r->bytes;
-  totalregions--;
-#endif
-
   free_all_pages(r, &r->normal);
-  free_all_pages(r, &r->atomic);
-
-#ifdef RCPAIRS
-  /* We do this late because of sanity checking in pages.c */
-  __rcregions[regionid] = NULL;
-#endif
 }
 
 void deleteregion(region r)
 {
-  int rc;
-
-
   unlink_region(r);
-
-  rc = r->rc;
-  unscanregion(r);
-  delregion(r, rc);
-
+  delregion(r);
 }
 
 static region derc(region *r)
