@@ -44,4 +44,4 @@ parser_st.exe: $(OBJS) #../engine/libengine.a ../libcompat/libregions.a
 
 
 clean:
-	rm -f $(OBJS) parser.exe *~
+	rm -f $(OBJS) parser.exe parser_st.exe *~
