@@ -53,6 +53,7 @@ IBANSHEE_BT_TESTS += simple.ibc
 
 IBANSHEE_PERSIST_TESTS :=
 IBANSHEE_PERSIST_TESTS += cons_def_persist.ibc
+IBANSHEE_PERSIST_TESTS += row_flow_persist.ibc
 
 IBANSHEE_EXEC := $(IBANSHEE_DIR)/ibanshee.exe
 
