@@ -228,19 +228,12 @@ typedef struct cons_group_ *cons_group;
 
 cons_group make_cons_group(const char *name, sig_elt s[], int arity);
 
-/* Add a constructor to a cons group. Must have the same signature as the group,
-   and be a setif constructor */
+/* Add a constructor to a cons group. Must have the same signature as
+   the group, and be a setif constructor */
 void cons_group_add(cons_group g, constructor c);
 
 /* Create a group projection pattern */
 gen_e setif_group_proj_pat(cons_group g, int i, gen_e e);
-
-/* Adds a constraint e <= group_projpat(g,i,fv) where fv is a fresh variable 
- 
-   NOT IMPLEMENTED
-
-*/
-// gen_e setif_group_proj(cons_group g, int i, gen_e e);
 
 EXTERN_C_END
 

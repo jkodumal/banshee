@@ -37,3 +37,5 @@ other tasks (a wishlist)
   --- write script for banshee to run output through indent
   -x- fix etags dependencies
   -x- tests/Makefile dependencies are not right (they seem correct now)
+  --- update website, move to sourceforge
+  --- RELEASE

@@ -5,6 +5,25 @@ This is a beta release of banshee. Although banshee has been designed to solve
 many kinds of constraints, it has only been extensively tested on 
 Andersen's-style points-to analysis. 
 
+To build banshee, the following must be installed: 
+ --- o'caml (see http://caml.inria.fr)
+ --- gcc
+
+You can then build banshee by typing 'make' at the command line in
+this directory. 'make check' will verify your build.
+
+Other useful make targets:
+
+'make docs' : build just the documentation
+
+
+banshee should build and run on Linux and Windows (with cygwin)
+
+
+
+
+
+
 banshee is distributed under the BSD license, with the exception of
 the following files:
 

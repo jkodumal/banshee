@@ -1,0 +1,25 @@
+New manual outline
+
+I. Introduction
+
+II. Installation
+
+III. Set Constraints
+
+IV. Using Banshee
+
+    -- Memory management
+    -- Data structures
+
+V. Using the nonspecialized engine
+ 
+    -- API (nonspec.h)
+    -- Linking
+    -- Handling errors
+
+VI. Using the engine generator
+
+VII. CFL Reachability with Banshee
+
+VIII. Adding New Sorts to Banshee
+    
