@@ -17,7 +17,7 @@ def list_to_string_nolf(list):
 def modify_file(filename):
 #    os.system("echo \"#ifndef CANON_IDENT\" >> %s" %filename)
 #    os.system("echo \"#define CANON_IDENT\" >> %s" %filename)
-    os.system("echo \"const char *CANON_IDENT = \\\"%s\\\";\" >> %s" % (filename, filename))
+    os.system("echo \"const char *CANON_IDENT = \\\"CANON_IDENT_%s\\\";\" >> %s" % (filename, filename))
 #    os.system("echo \"#endif\" >> %s" %filename)
 
 def main():
