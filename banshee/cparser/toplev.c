@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 #include "rc.h"
 #include "analysis.h"
 
-//extern long get_memusage(void);
+// extern long get_memusage(void);
 
 /* Name of program invoked, sans directories.  */
 char *progname;
@@ -1078,11 +1078,11 @@ int main(int argc, char **argv) deletes
       {
 	analysis_print_graph();
       }
-
-//     if (flag_print_memusage)
-//       {
-// 	printf("\nMemory usage (bytes): %li\n",get_memusage());
-//       }
+    
+  /*   if (flag_print_memusage) */
+/*       { */
+/* 	 printf("\nMemory usage (bytes): %li\n",get_memusage()); */
+/*       } */
   
 
   if (errorcount)

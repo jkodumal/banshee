@@ -26,7 +26,7 @@
 # SUCH DAMAGE.
 
 .PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
-        docs points-to install 
+        docs points-to install perf
 
 all: banshee tests points-to 
 
@@ -65,6 +65,9 @@ docs:
 check: 
 	$(MAKE) -C tests check
 	$(MAKE) -C tests -f pta_test.mk
+
+perf:
+	$(MAKE) -C tests -f pta_perf.mk
 
 install:
 	@echo "banshee does not have an install target."

@@ -27,35 +27,29 @@
 
 PARSER_DIR = ../cparser
 
-.PHONY: pta-check
-pta-check: pta-regr
+.PHONY: pta-perf
+pta-perf: pta-check-perf
 
 PTA_DIR := ./test.programs
-COR_DIR := ./test.cor
 
-PTA_LARGE := 
-PTA_LARGE += ML-typecheck.preproc
-PTA_LARGE += li.preproc
+PTA_LARGE :=
+PTA_LARGE += espresso.preproc
 
+PTA_EXEC := $(PARSER_DIR)/parser.exe -fprint-memusage
 
-PTA_EXEC := $(PARSER_DIR)/parser.exe
-
-.PHONY: pta-regr
-pta-regr:  $(PARSER_DIR)/parser.exe pta-regr/clean \
-           $(patsubst %,pta-large/%,$(PTA_LARGE)) pta-done
-
-pta-regr/clean:
-	rm -f $(PTA_DIR)/*.out
+.PHONY: pta-check-perf
+pta-check-perf: $(PARSER_DIR)/parser.exe \
+		$(patsubst %,pta-large/%,$(PTA_LARGE)) pta-done
 
 .PHONY: pta-done
 
-pta-done:; @echo "PTA tests pass"
+pta-done:; @echo "Finished PTA performance tests."
 
 pta-large/%:
-	$(PTA_EXEC) $(PTA_DIR)/$*/*.c 2> /dev/null | grep "Number of things pointed to" > $(PTA_DIR)/$*.out
-	diff -u $(COR_DIR)/$*.cor $(PTA_DIR)/$*.out
+	$(PTA_EXEC) $(PTA_DIR)/$*/*.c 2>/dev/null
 
 $(PARSER_DIR)/parser.exe: 
 	$(MAKE) -C ../ points-to	
 
-clean: pta-regr/clean
+clean: 
+	@echo "Nothing to clean."

@@ -33,15 +33,18 @@ lambda_dir = ../lambda
 DYCKCFL_EXTRA_OBJS = $(dyckcfl_dir)/dyckcfl.o $(dyckcfl_dir)/mr_dyckcfl.o
 LAMBDA_EXTRA_OBJS = $(lambda_dir)/lambda.o
 
-
 REGION_LIB = $(region_dir)/libregions.a
 NSENGINE_LIB = $(engine_dir)/libnsengine.a
 ENGINE_LIB = $(engine_dir)/libengine.a
 
 CC = gcc
 
-CFLAGS = -g -pg -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr= -Wall -Werror
+
+ifdef DEBUG
+CFLAGS := -g -pg ${CFLAGS}
+endif 
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
