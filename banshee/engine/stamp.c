@@ -44,7 +44,6 @@
 //#define MAX  1073741824 /* 2^30 */
 
 static hash_table str_hash;
-static region str_hash_rgn;
 
 static int count1 = INITIAL1, count2 = INITIAL2, count3 = INITIAL3;
 static int bounds1 = INT_MIN, bounds2 = 536870911, bounds3 = INT_MAX;
@@ -102,8 +101,6 @@ stamp stamp_string(const char *str) deletes
 
 void stamp_reset(void) 
 {
-  deleteregion(str_hash_rgn);
-
   stamp_init();
 }
 
@@ -112,8 +109,7 @@ void stamp_init(void)
   count1 = INITIAL1;
   count2 = INITIAL2;
   count3 = INITIAL3;
-  str_hash_rgn = newregion();
-  str_hash = make_persistent_string_hash_table(str_hash_rgn,INITIAL_SIZE,
+  str_hash = make_persistent_string_hash_table(INITIAL_SIZE,
 					       NONPTR_PERSIST_KIND);
 }
 
@@ -153,6 +149,11 @@ void stamp_deserialize(FILE *f)
 void stamp_set_fields(void)
 {
   deserialize_set_obj((void **)&str_hash);
+}
+
+void update_module_stamp(translation t)
+{
+  update_pointer(t, (void **)&str_hash);
 }
 
 /* Taken from here: http://www.concentric.net/~Ttwang/tech/inthash.htm  */

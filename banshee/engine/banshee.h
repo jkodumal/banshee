@@ -89,8 +89,6 @@ typedef struct banshee_rollback_info_ {
   sort_kind kind;
 } * banshee_rollback_info;
 
-extern region banshee_rollback_region;
-
 /* Read the global banshee clock */
 int banshee_get_time(void);
 

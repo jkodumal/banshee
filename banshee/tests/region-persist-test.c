@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
   r[1] = banshee_ptr_region;
   r[0] = node_region;
 
-  thetable = make_persistent_string_hash_table(table_region, 8, 1);
+  thetable = make_persistent_string_hash_table(8, 1);
   thelist = new_persistent_node_list();
 
   for(i = 0; i < NUM_NODES; i++) {

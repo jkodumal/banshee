@@ -36,6 +36,7 @@
 #include "setif-sort.h"
 #include "utils.h"
 #include "banshee_persist_kinds.h"
+#include "banshee_region_persist_kinds.h"
 
 struct setif_union_ /* extends gen_e */
 {
@@ -90,9 +91,14 @@ static bool tlb_cache_valid = FALSE;
 static region tlb_cache_region;
 static setif_var_list tlb_var_cache;
 static jcoll_dict tlb_dict;
+region setif_var_region;
+region sv_info_region;
+region setif_term_region;
+region added_ub_proj_info_region;
+region setif_rollback_info_region;
+
 setif_rollback_info setif_current_rollback_info = NULL;
 
-region setif_region;
 term_hash setif_hash;
 struct setif_stats setif_stats;
 
@@ -334,19 +340,17 @@ static setif_var_list cycle_detect_rev(region r, setif_var v1, setif_var v2)
 void setif_register_rollback(void) 
 {
 #ifdef BANSHEE_ROLLBACK
-  setif_current_rollback_info = ralloc(banshee_rollback_region,
+  setif_current_rollback_info = ralloc(setif_rollback_info_region,
 				 struct setif_rollback_info_);
   banshee_set_time((banshee_rollback_info)setif_current_rollback_info);
   setif_current_rollback_info->kind = setif_sort;
   setif_current_rollback_info->added_edges = 
-    make_persistent_hash_table(banshee_rollback_region,
-			       4, stamp_hash, stamp_eq,
+    make_persistent_hash_table(4, stamp_hash, stamp_eq,
 			       BANSHEE_PERSIST_KIND_nonptr,
 			       BANSHEE_PERSIST_KIND_added_edge_info);
 
   setif_current_rollback_info->added_ub_projs = 
-    make_persistent_hash_table(banshee_rollback_region,
-			       4, stamp_hash, stamp_eq,
+    make_persistent_hash_table(4, stamp_hash, stamp_eq,
 			       BANSHEE_PERSIST_KIND_nonptr,
 			       BANSHEE_PERSIST_KIND_added_ub_proj_info);
   
@@ -368,9 +372,9 @@ void setif_register_edge(const bounds b, stamp st) {
     stamp_list_cons(st,info->sl);
   }
   else {
-    stamp_list sl = new_stamp_list(banshee_rollback_region);
+    stamp_list sl = new_persistent_stamp_list();
     stamp_list_cons(st,sl);
-    info = ralloc(banshee_rollback_region, struct added_edge_info_);
+    info = ralloc(added_edge_info_region, struct added_edge_info_);
     info->b = b;
     info->sl = sl;
     hash_table_insert(setif_current_rollback_info->added_edges,
@@ -392,9 +396,9 @@ void setif_register_ub_proj(gen_e_list ub_projs, gen_e e) {
     gen_e_list_cons(e,info->el);
   }
   else {
-    gen_e_list el = new_gen_e_list(banshee_rollback_region);
+    gen_e_list el = new_persistent_gen_e_list();
     gen_e_list_cons(e,el);
-    info = ralloc(banshee_rollback_region, struct added_ub_proj_info_);
+    info = ralloc(added_ub_proj_info_region, struct added_ub_proj_info_);
     info->ub_projs = ub_projs;
     info->el = el;
     hash_table_insert(setif_current_rollback_info->added_ub_projs,
@@ -681,27 +685,30 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
   
 }
 
-#ifdef NONSPEC
-static struct setif_term zero = {setif_sort,ZERO_TYPE,ZERO_TYPE}; 
-static struct setif_term one  = {setif_sort,ONE_TYPE,ONE_TYPE};
-#else
-static struct setif_term zero = {ZERO_TYPE,ZERO_TYPE};
-static struct setif_term one  = {ONE_TYPE,ONE_TYPE};
-#endif /* NONSPEC */
+/* #ifdef NONSPEC */
+/* static struct setif_term zero = {setif_sort,ZERO_TYPE,ZERO_TYPE}; */
+/* static struct setif_term one  = {setif_sort,ONE_TYPE,ONE_TYPE}; */
+/* #else */
+/* static struct setif_term zero = {ZERO_TYPE,ZERO_TYPE}; */
+/* static struct setif_term one  = {ONE_TYPE,ONE_TYPE}; */
+/* #endif /\* NONSPEC *\/ */
+
+setif_term zero;
+setif_term one;
 
 gen_e setif_zero(void)
 {
-  return (gen_e)&zero;
+  return (gen_e)zero;
 }
 
 gen_e setif_one(void)
 {
-  return (gen_e)&one;
+  return (gen_e)one;
 }
 
 gen_e setif_fresh(const char *name)
 {
-  setif_var result = sv_fresh(setif_region,name);
+  setif_var result = sv_fresh(NULL,name);
 
   setif_stats.fresh++;
   return (gen_e)result;
@@ -709,7 +716,7 @@ gen_e setif_fresh(const char *name)
 
 gen_e setif_fresh_large(const char *name)
 {
-  setif_var result = sv_fresh_large(setif_region,name);
+  setif_var result = sv_fresh_large(NULL,name);
 
   setif_stats.fresh_large++;
   return (gen_e)result;
@@ -717,7 +724,7 @@ gen_e setif_fresh_large(const char *name)
 
 gen_e setif_fresh_small(const char *name)
 {
-  setif_var result = sv_fresh_small(setif_region,name);
+  setif_var result = sv_fresh_small(NULL,name);
 
   setif_stats.fresh_small++;
   return (gen_e)result;
@@ -727,7 +734,7 @@ gen_e setif_constant(const char *str) deletes
 {
   stamp st[2];
   gen_e result;
-  char *name = rstrdup(setif_region,str);
+  char *name = rstrdup(banshee_nonptr_region,str);
 
   assert (str != NULL);
   
@@ -736,7 +743,7 @@ gen_e setif_constant(const char *str) deletes
 
   if ( (result = term_hash_find(setif_hash,st,2)) == NULL)
     {
-      setif_constant_ c = ralloc(setif_region, struct setif_constant_);
+      setif_constant_ c = ralloc(setif_term_region, struct setif_constant_);
 #ifdef NONSPEC
       c->sort = setif_sort;
 #endif
@@ -772,7 +779,7 @@ static bool filter_one(const gen_e e)
 
 gen_e setif_union(gen_e_list exprs) deletes
 {
-  gen_e_list filtered = gen_e_list_filter(setif_region,exprs,filter_zero);
+  gen_e_list filtered = gen_e_list_filter(NULL,exprs,filter_zero);
   
   if ( gen_e_list_empty(filtered) )
     {
@@ -804,11 +811,12 @@ gen_e setif_union(gen_e_list exprs) deletes
 	   term_hash_find(setif_hash,st,gen_e_list_length(filtered)+1)) 
 	   == NULL )
 	{
-	  struct setif_union_ *u = ralloc(setif_region,struct setif_union_);
+	  struct setif_union_ *u = 
+	    ralloc(setif_term_region,struct setif_union_);
 	  
 	  u->type = UNION_TYPE;
 	  u->st = stamp_fresh();
-	  u->proj_cache = new_gen_e_list(setif_region);
+	  u->proj_cache = new_persistent_gen_e_list();
 	  u->exprs = filtered;
 #ifdef NONSPEC
 	  u->sort = setif_sort;
@@ -830,7 +838,7 @@ gen_e setif_union(gen_e_list exprs) deletes
 
 gen_e setif_inter(gen_e_list exprs) deletes
 {
-  gen_e_list filtered = gen_e_list_filter(setif_region,exprs,filter_one);
+  gen_e_list filtered = gen_e_list_filter(NULL,exprs,filter_one);
   
   if ( gen_e_list_empty(filtered) )
     {
@@ -862,7 +870,8 @@ gen_e setif_inter(gen_e_list exprs) deletes
 	   term_hash_find(setif_hash,st,gen_e_list_length(filtered)+1)) 
 	   == NULL )
 	{
-	  struct setif_inter_ *u = ralloc(setif_region,struct setif_inter_);
+	  struct setif_inter_ *u = 
+	    ralloc(setif_term_region,struct setif_inter_);
 	  
 	  u->type = UNION_TYPE;
 	  u->st = stamp_fresh();
@@ -925,11 +934,30 @@ char *setif_get_constant_name(gen_e e)
 
 void setif_init(void)
 {
-  setif_region = newregion();
+  setif_var_region = newregion();
+  sv_info_region = newregion();
+  setif_term_region = newregion();
+  added_ub_proj_info_region = newregion();
+  setif_rollback_info_region = newregion();
   tlb_cache_region = newregion(); 
   tlb_var_cache = new_setif_var_list(tlb_cache_region);
-  setif_hash = make_term_hash(setif_region);
+  setif_hash = make_term_hash(NULL);
   tlb_dict = jcoll_create_dict(tlb_cache_region,setif_get_stamp);
+
+  /* TODO -- these allocated constant terms will be leaked */
+  zero = ralloc(banshee_nonptr_region, struct setif_term);
+#ifdef NONSPEC
+  zero->sort = setif_sort;
+#endif
+  zero->st = ZERO_TYPE;
+  zero->type = ZERO_TYPE;
+
+  one = ralloc(banshee_nonptr_region, struct setif_term);
+#ifdef NONSPEC
+  one->sort = setif_sort;
+#endif
+  one->st = ONE_TYPE;
+  one->type = ONE_TYPE;
 }
 
 
@@ -975,16 +1003,16 @@ void setif_reset(void) deletes
 {
   term_hash_delete(setif_hash);
   invalidate_tlb_cache();
-  deleteregion_ptr(&setif_region);
-  deleteregion_ptr(&tlb_cache_region);
+  deleteregion(tlb_cache_region);
+  deleteregion(sv_info_region);
+  deleteregion(setif_var_region);
+  deleteregion(setif_term_region);
+  deleteregion(added_ub_proj_info_region);
+  deleteregion(setif_rollback_info_region);
 
   setif_reset_stats();
-
-  setif_region = newregion();
-  tlb_cache_region = newregion();
-  tlb_var_cache = new_setif_var_list(tlb_cache_region);
-  setif_hash = make_term_hash(setif_region);
-
+  
+  setif_init();
 }
 
 static jcoll tlb_aux(gen_e e)
@@ -1317,7 +1345,8 @@ bool setif_rollback_serialize(FILE *f, banshee_rollback_info i)
 
 banshee_rollback_info setif_rollback_deserialize(FILE *f)
 {
-  setif_rollback_info info = ralloc(permanent, struct setif_rollback_info_);
+  setif_rollback_info info = ralloc(setif_rollback_info_region, 
+				    struct setif_rollback_info_);
   assert(f);
 
 /*   fread((void *)&info->added_edges, sizeof(hash_table), 1, f); */
@@ -1382,7 +1411,7 @@ bool setif_constant_serialize(FILE *f, gen_e e)
 
 void *setif_union_deserialize(FILE *f)
 {
-  setif_union_ expr = ralloc(permanent, struct setif_union_);
+  setif_union_ expr = ralloc(setif_term_region, struct setif_union_);
   
 /*   fread((void *)&expr->st, sizeof(stamp), 1, f); */
 /*   fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f); */
@@ -1394,7 +1423,7 @@ void *setif_union_deserialize(FILE *f)
 
 void *setif_inter_deserialize(FILE *f)
 {
-  setif_inter_ expr = ralloc(permanent, struct setif_inter_);
+  setif_inter_ expr = ralloc(setif_term_region, struct setif_inter_);
 /*   fread((void *)&expr->st, sizeof(stamp), 1, f); */
 /*   fread((void *)&expr->exprs, sizeof(gen_e_list), 1, f); */
   fread(&expr->st, sizeof(stamp) + sizeof(gen_e_list), 1, f);
@@ -1405,7 +1434,7 @@ void *setif_inter_deserialize(FILE *f)
 
 void *setif_constant_deserialize(FILE *f)
 {
-  setif_constant_ c = ralloc(permanent, struct setif_constant_);
+  setif_constant_ c = ralloc(setif_term_region, struct setif_constant_);
 
   fread((void *)&c->st, sizeof(stamp), 1, f);
   c->name = string_data_deserialize(f);
@@ -1464,6 +1493,14 @@ void setif_set_fields(void)
   deserialize_set_obj((void **)&setif_hash);
 }
 
+void update_module_setif(translation t)
+{
+  update_pointer(t, (void **)&setif_current_rollback_info);
+  update_pointer(t, (void **)&setif_hash);
+  update_pointer(t, (void **)&setif_zero);
+  update_pointer(t, (void **)&setif_one);
+}
+
 bool added_ub_proj_info_serialize(FILE *f, void *obj)
 {
   added_ub_proj_info info = (added_ub_proj_info)obj;
@@ -1479,7 +1516,7 @@ bool added_ub_proj_info_serialize(FILE *f, void *obj)
 
 void *added_ub_proj_info_deserialize(FILE *f)
 {
-  added_ub_proj_info info = ralloc(banshee_rollback_region, 
+  added_ub_proj_info info = ralloc(added_ub_proj_info_region, 
 				   struct added_ub_proj_info_);
 
   fread(info, sizeof(struct added_ub_proj_info_), 1, f);
@@ -1494,4 +1531,51 @@ bool added_ub_proj_info_set_fields(void *obj)
   deserialize_set_obj((void **)&info->el);
 
   return TRUE;
+}
+
+int update_setif_term(translation t, void *m)
+{
+  setif_term e = (setif_term)m;
+
+  switch(e->type) {
+  case UNION_TYPE:
+    {
+      update_pointer(t, (void **)& ((setif_union_)e)->exprs);
+      update_pointer(t, (void **)& ((setif_union_)e)->proj_cache);
+      return sizeof(struct setif_union_);
+    }
+  case INTER_TYPE:
+    {
+      update_pointer(t, (void **)& ((setif_inter_)e)->exprs);
+      return sizeof(struct setif_inter_);
+    }
+  case CONSTANT_TYPE:
+    {
+      update_pointer(t, (void **)& ((setif_constant_)e)->name);
+      return sizeof(struct setif_constant_);
+    }
+  default:
+    fail("Unknown type in update_setif_term!\n");
+    return 0;
+  }
+}
+
+int update_added_ub_proj_info(translation t, void *m)
+{
+  added_ub_proj_info info = (added_ub_proj_info)m;
+
+  update_pointer(t, (void **)&info->ub_projs);
+  update_pointer(t, (void **)&info->el);
+  
+  return sizeof(struct added_ub_proj_info_);
+}
+
+int update_setif_rollback_info(translation t, void *m)
+{
+  setif_rollback_info info = (setif_rollback_info)m;
+
+  update_pointer(t, (void **)&info->added_edges);
+  update_pointer(t, (void **)&info->added_ub_projs);
+  
+  return sizeof(struct setif_rollback_info_);
 }

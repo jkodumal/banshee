@@ -44,7 +44,7 @@ class setsort_gen =
        for bottom, top, and union types *)
     val mutable counter = 10;
 
-    val region = "setif_region"
+    val region = "permanent"
     val hash = "setif_hash"
 
     method get_new_type () = 

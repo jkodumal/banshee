@@ -33,6 +33,7 @@
 #include "term-sort.h"
 #include "hash.h"
 #include "banshee_persist_kinds.h"
+#include "banshee_region_persist_kinds.h"
 
 struct term_constant_ /* extends gen_e */
 {
@@ -44,14 +45,18 @@ struct term_constant_ /* extends gen_e */
   char *name;
 };
 
+typedef struct term_constant_ *term_constant_;
+
+
 typedef struct term_rollback_info_ { /* extends banshee_rollback_info */
   int time;
   sort_kind kind;
   hash_table added_edges; 	/* a mapping from bounds to gen_e's added */
 } * term_rollback_info; 
 
-typedef struct term_constant_ *term_constant_;
-
+region term_rollback_info_region;
+region term_constant_region; 
+region term_var_region;
 region term_sort_region;
 term_hash term_sort_hash;
 bool flag_occurs_check = FALSE;
@@ -109,7 +114,7 @@ gen_e term_constant(const char *str)
 {
   stamp st[2];
   gen_e result;
-  char *name = rstrdup(term_sort_region,str);
+  char *name = rstrdup(banshee_nonptr_region,str);
 
   assert (str != NULL);
   
@@ -118,7 +123,7 @@ gen_e term_constant(const char *str)
 
   if ( (result = term_hash_find(term_sort_hash,st,2)) == NULL)
     {
-      term_constant_ c = ralloc(term_sort_region, struct term_constant_);
+      term_constant_ c = ralloc(term_constant_region, struct term_constant_);
       c->type = CONSTANT_TYPE;
       c->st = stamp_fresh();
       c->name = name;
@@ -211,12 +216,11 @@ static void term_register_rollback(void)
 {
 #ifdef BANSHEE_ROLLBACK
   term_current_rollback_info = 
-    ralloc(banshee_rollback_region, struct term_rollback_info_); 
+    ralloc(term_rollback_info_region, struct term_rollback_info_); 
   banshee_set_time((banshee_rollback_info)term_current_rollback_info);
   term_current_rollback_info->kind = term_sort;
   term_current_rollback_info->added_edges = 
-    make_persistent_hash_table(banshee_rollback_region,
-			       4, stamp_hash, stamp_eq,
+    make_persistent_hash_table(4, stamp_hash, stamp_eq,
 			       BANSHEE_PERSIST_KIND_nonptr,
 			       BANSHEE_PERSIST_KIND_added_edge_info);
   
@@ -238,9 +242,9 @@ static void term_register_edge(const bounds b, stamp st) {
     stamp_list_cons(st,info->sl);
   }
   else {
-    stamp_list sl = new_stamp_list(banshee_rollback_region);
+    stamp_list sl = new_persistent_stamp_list();
     stamp_list_cons(st,sl);
-    info  = ralloc(banshee_rollback_region, struct added_edge_info_);
+    info  = ralloc(added_edge_info_region, struct added_edge_info_);
     info->b = b;
     info->sl = sl;
     hash_table_insert(term_current_rollback_info->added_edges,
@@ -367,19 +371,23 @@ void term_print_constraint_graph(FILE *f)
 
 void term_init(void)
 {
+  term_rollback_info_region = newregion();
+  term_constant_region = newregion();
+  term_var_region = newregion();
   term_sort_region = newregion();
-  term_sort_hash = make_term_hash(term_sort_region);
+  term_sort_hash = make_term_hash(NULL);
 }
 
 void term_reset(void)
 {
   term_hash_delete(term_sort_hash);
-  deleteregion_ptr(&term_sort_region);
- 
+  deleteregion(term_sort_region);
+  deleteregion(term_var_region);
+  deleteregion(term_constant_region);
+  deleteregion(term_rollback_info_region);
+
   term_reset_stats();
- 
-  term_sort_region = newregion();
-  term_sort_hash = make_term_hash(term_sort_region);
+  term_init();
 }
 
 /* For term rollbacks, we just remove conditional unifications. The uf
@@ -418,7 +426,8 @@ bool term_rollback_serialize(FILE *f, banshee_rollback_info i)
 
 banshee_rollback_info term_rollback_deserialize(FILE *f)
 {
-  term_rollback_info info = ralloc(permanent, struct term_rollback_info_);
+  term_rollback_info info = ralloc(term_rollback_info_region, 
+				   struct term_rollback_info_);
   assert(f);
 
   fread((void *)&info->added_edges, sizeof(void *), 1, f);
@@ -449,7 +458,7 @@ bool term_constant_serialize(FILE *f, gen_e e)
 
 void *term_constant_deserialize(FILE *f)
 {
-  term_constant_ c = ralloc(permanent, struct term_constant_);
+  term_constant_ c = ralloc(term_constant_region, struct term_constant_);
   assert(f);
 
   fread((void *)&c->st, sizeof(stamp), 1, f);
@@ -472,11 +481,21 @@ void term_deserialize(FILE *f)
   assert(f);
   fread((void *)&flag_occurs_check, sizeof(bool), 1, f);
   fread((void *)&term_current_rollback_info, sizeof(term_rollback_info), 1, f);
-
 }
-
 
 void term_set_fields(void)
 {
   deserialize_set_obj((void **)&term_current_rollback_info);
+}
+
+void update_module_term(translation t)
+{
+  update_pointer(t, (void **)&term_current_rollback_info);
+}
+
+int update_term_constant(translation t, void *m)
+{
+  update_pointer(t, (void **)&((term_constant_)m)->name);
+
+  return sizeof(struct term_constant_);
 }

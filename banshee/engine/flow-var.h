@@ -38,7 +38,7 @@
 
 EXTERN_C_BEGIN
 
-typedef struct flow_var *flow_var;
+typedef struct flow_var_ *flow_var;
 
 typedef gen_e (*contour_inst_fn_ptr) (fresh_fn_ptr,get_stamp_fn_ptr,gen_e) deletes;
 
@@ -48,6 +48,9 @@ struct contour
   fresh_fn_ptr fresh;
   get_stamp_fn_ptr get_stamp;
   contour_inst_fn_ptr instantiate;
+  int fresh_fn_id;
+  int get_stamp_id;
+  int contour_inst_id;
 };
 
 typedef struct contour *contour;

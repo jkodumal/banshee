@@ -38,10 +38,9 @@
 
 EXTERN_C_BEGIN
 
-typedef struct setif_var *setif_var;
+typedef struct setif_var_ *setif_var;
 
 DECLARE_LIST(setif_var_list,setif_var);
-
 
 bool sv_lt(setif_var v1, setif_var v2);
 bool sv_eq(setif_var v1, setif_var v2);

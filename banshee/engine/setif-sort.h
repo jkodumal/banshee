@@ -41,7 +41,7 @@ EXTERN_C_BEGIN
 struct setif_term /* extends gen_e */
 {
 #ifdef NONSPEC
-  const sort_kind sort;
+  sort_kind sort;
 #endif
   int type;
   stamp st;
@@ -52,7 +52,6 @@ typedef struct setif_term *setif_term;
 extern bool flag_merge_projections;
 extern bool flag_eliminate_cycles;
 
-extern region setif_region;
 extern term_hash setif_hash;
 
 typedef bool (*res_proj_fn_ptr) (setif_var v,gen_e proj) deletes;

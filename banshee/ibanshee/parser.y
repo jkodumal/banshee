@@ -156,13 +156,13 @@ static void ibanshee_init(void) {
 
   ibanshee_region = newregion();
   constructor_env = 
-    make_persistent_string_hash_table(ibanshee_region,32,
+    make_persistent_string_hash_table(32,
 				      BANSHEE_PERSIST_KIND_constructor);
   named_env = 
-    make_persistent_string_hash_table(ibanshee_region,32,
+    make_persistent_string_hash_table(32,
 				      BANSHEE_PERSIST_KIND_gen_e);
   var_env = 
-    make_persistent_string_hash_table(ibanshee_region,32,
+    make_persistent_string_hash_table(32,
 				      BANSHEE_PERSIST_KIND_gen_e);
 }
 

@@ -113,7 +113,7 @@ static void pt_serialize()
   { 				
     node n2,n3,n4;
     
-    table = make_persistent_string_hash_table(test_rgn, 4, 
+    table = make_persistent_string_hash_table(4, 
 					      0);
 
     n1 = ralloc(test_rgn, struct node_);

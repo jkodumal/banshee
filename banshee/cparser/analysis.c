@@ -47,6 +47,8 @@ DEFINE_LIST(hash_table_list, hash_table);
 DECLARE_LIST(int_list, int);
 DEFINE_NONPTR_LIST(int_list, int);
 
+extern region banshee_nonptr_region;
+
 struct counts {
   int scope;
   int collection_count;
@@ -266,7 +268,7 @@ static var_info new_var(const char *name,type c_type,
 
   var_info v_info = ralloc(analysis_rgn, struct var_info);
   
-  v_info->name = rstrdup(analysis_rgn,name);
+  v_info->name = rstrdup(banshee_nonptr_region,name);
   v_info->c_type = c_type;
   v_info->kind = kind;
   v_info->visible = (int)is_visible;
@@ -458,7 +460,7 @@ static char *get_fun_ret(const char *name)
   char str[MAX_STR];
   char *ret_name;
   snprintf(str,MAX_STR,"@%s_return",name);
-  ret_name = rstrdup(analysis_rgn,str);
+  ret_name = rstrdup(banshee_nonptr_region,str);
   return ret_name;
 }
 
@@ -1683,7 +1685,7 @@ void analysis_init() deletes
   analysis_rgn = newregion();
   global_var_env = new_env(analysis_rgn,NULL);
   collection_hash = 
-    make_persistent_string_hash_table(permanent, 128, 
+    make_persistent_string_hash_table(128, 
 				      BANSHEE_PERSIST_KIND_gen_e);
 
   state.collection_envs = new_hash_table_list(analysis_rgn);

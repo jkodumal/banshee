@@ -136,3 +136,33 @@ bool bounds_set_fields(void *obj)
   return FALSE;
 }
 
+void bounds_init()
+{
+}
+
+void bounds_reset()
+{
+}
+
+bounds bounds_persistent_create()
+{
+  return bounds_create(permanent);
+}
+
+int update_bounds(translation t, void *m)
+{
+  return sizeof(struct bounds_);
+}
+
+int update_added_edge_info(translation t, void *m)
+{
+  added_edge_info info = (added_edge_info)m;
+
+  update_pointer(t, (void **)&info->b);
+  update_pointer(t, (void **)&info->sl);
+
+  return sizeof(struct added_edge_info_);
+}
+
+region bounds_region = NULL;
+region added_edge_info_region = NULL;

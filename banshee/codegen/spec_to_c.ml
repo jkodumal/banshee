@@ -134,6 +134,7 @@ let gen_preamble env sigid header source  =
   let inc8 = include_header false "string.h" in
   let inc9 = include_header true  "linkage.h" in
   let inc10 = include_header true "hash.h" in
+  let inc11 = include_header true "banshee_region_persist_kinds.h" in
 (* 
    Move these flags to individual sorts
    let flags = [ 
@@ -143,7 +144,7 @@ let gen_preamble env sigid header source  =
  *)
 
   header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9;inc10];
-  source#add_includes [start_cmnt;inc1;inc2;inc3;inc4;inc5;inc6;inc7;inc8;inc10];
+  source#add_includes [start_cmnt;inc1;inc2;inc3;inc4;inc5;inc6;inc7;inc8;inc10;inc11];
   header#add_macro (macro "EXTERN_C_BEGIN")
 
 let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) = 

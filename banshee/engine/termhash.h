@@ -37,14 +37,14 @@
 
 EXTERN_C_BEGIN
 
-typedef struct term_hash *term_hash;
+typedef struct term_hash_ *term_hash;
+
+void term_hash_init();
+void term_hash_reset();
 
 term_hash make_term_hash(region r);
-
 gen_e term_hash_find(term_hash h, stamp *st,int length);
-
 bool term_hash_insert(term_hash h, gen_e e, stamp *st, int length) deletes;
-
 void term_hash_delete(term_hash h) deletes;
 
 EXTERN_C_END

@@ -382,7 +382,7 @@ void andersen_terms_serialize(FILE *f, hash_table *entry_points,
 {
   unsigned long i = 0;
   hash_table constructors =
-    make_persistent_string_hash_table(permanent, 4,
+    make_persistent_string_hash_table(4,
 				      BANSHEE_PERSIST_KIND_constructor);
   hash_table *all_entry_points =
     rarrayalloc(permanent, sz+1, sizeof(hash_table));

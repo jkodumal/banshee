@@ -35,8 +35,9 @@
 #include "ufind.h"
 #include "bounds.h"
 #include "banshee_persist_kinds.h"
+#include "banshee_region_persist_kinds.h"
 
-struct sv_info
+struct sv_info_
 {
   stamp st;
   bounds sameregion lbs;
@@ -47,17 +48,15 @@ struct sv_info
   char *name;
 };
 
-typedef struct sv_info *sv_info;
+typedef struct sv_info_ *sv_info;
 
 DECLARE_UFIND(sv_elt,sv_info);
- 
 DEFINE_UFIND(sv_elt,sv_info);
-
 DEFINE_LIST(setif_var_list,setif_var);
 
 #define get_info(v) (sv_elt_get_info((v)->elt))
 
-struct setif_var /* extends gen_e */
+struct setif_var_ /* extends gen_e */
 {
 #ifdef NONSPEC
   sort_kind sort;
@@ -65,6 +64,10 @@ struct setif_var /* extends gen_e */
   int type;
   sv_elt elt;
 };
+
+
+extern region setif_var_region;
+extern region sv_info_region;
 
 bool sv_lt(setif_var v1, setif_var v2)
 {
@@ -78,19 +81,19 @@ bool sv_eq(setif_var v1, setif_var v2)
 
 static setif_var make_var(region r, const char *name, stamp st)
 {
-  setif_var result = ralloc(r, struct setif_var);
-  sv_info info = ralloc(r, struct sv_info);
+  setif_var result = ralloc(setif_var_region, struct setif_var_);
+  sv_info info = ralloc(sv_info_region, struct sv_info_);
  
   info->st = st;
-  info->lbs = bounds_create(r);
-  info->ubs = bounds_create(r);
+  info->lbs = bounds_persistent_create();
+  info->ubs = bounds_persistent_create();
   info->tlb_cache = NULL;
   info->ub_projs = new_gen_e_list(r);
-  info->name = name ? rstrdup(r,name) : "fv";
-  info->component = new_uf_element(r, NULL, BANSHEE_PERSIST_KIND_nonptr);
+  info->name = name ? rstrdup(banshee_nonptr_region,name) : "fv";
+  info->component = new_uf_element(NULL, NULL, BANSHEE_PERSIST_KIND_nonptr);
 
   result->type = VAR_TYPE;
-  result->elt = new_sv_elt(r,info); 
+  result->elt = new_sv_elt(NULL,info); 
   
 #ifdef NONSPEC
   result->sort = setif_sort;
@@ -248,7 +251,7 @@ void *setif_var_deserialize(FILE *f)
   setif_var var;
   assert(f);
 
-  var = ralloc(permanent, struct setif_var);
+  var = ralloc(setif_var_region, struct setif_var_);
 
   var->type = VAR_TYPE;
   fread(&var->elt, sizeof(void *), 1, f);
@@ -296,7 +299,7 @@ bool sv_info_serialize(FILE *f, void *obj)
 
 void *sv_info_deserialize(FILE *f)
 {
-  sv_info info = ralloc(permanent, struct sv_info);
+  sv_info info = ralloc(sv_info_region, struct sv_info_);
   assert(f);
   assert(permanent);
 
@@ -325,4 +328,26 @@ bool sv_info_set_fields(void *obj)
   deserialize_set_obj((void **)&info->component);
 
   return TRUE;
+}
+
+int update_sv_info(translation t, void *m)
+{
+  sv_info info = (sv_info)m;
+  update_pointer(t, (void **)&info->lbs);
+  update_pointer(t, (void **)&info->ubs);
+
+  /* Null out the tlb_cache, it's invalid */
+  info->tlb_cache = NULL;
+  update_pointer(t, (void **)&info->ub_projs);
+  update_pointer(t, (void **)&info->component);
+  update_pointer(t, (void **)&info->name);
+
+  return sizeof(struct sv_info_);
+}
+
+int update_setif_var(translation t, void *m)
+{
+  update_pointer(t, (void **)&((setif_var)m)->elt);
+
+  return sizeof(struct setif_var_);
 }

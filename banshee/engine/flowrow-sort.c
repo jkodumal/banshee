@@ -37,10 +37,16 @@
 #include "bounds.h"
 #include "setif-sort.h"
 #include "banshee_persist_kinds.h"
+#include "persist.h"
+#include "banshee_region_persist_kinds.h"
+
 
 #define ABS_TYPE 2
 #define WILD_TYPE 3
 #define ROW_TYPE 4
+
+extern hash_table fn_ptr_table;
+
 
 /* generic flow row */
 struct flowrow_gen
@@ -85,16 +91,22 @@ typedef struct flowrow_rollback_info_ { /* extends banshee_rollback_info */
   int time;
   sort_kind kind;
   hash_table added_edges;	/* a mapping from bounds to the gen_e's added */
-  flow_var_list set_aliases;    /* a list of flow_var's that have become aliases. Call fv_unset_alias on them */
+  flow_var_list set_aliases;    /* a list of flow_var's that have
+				   become aliases. Call fv_unset_alias
+				   on them */
 } *flowrow_rollback_info;
 
-region flowrow_region;
-term_hash flowrow_hash;
+region flowrow_rollback_info_region = NULL;
+region flow_var_region = NULL;
+region flowrow_region = NULL;
+region flowrow_field_region = NULL;
+region contour_region = NULL;
+term_hash flowrow_hash = NULL;
 struct flowrow_stats flowrow_stats;
 flowrow_rollback_info flowrow_current_rollback_info = NULL;
 
-static void fields_print(FILE *f,flowrow_map m,field_print_fn_ptr field_print)
-;
+static void fields_print(FILE *f,flowrow_map m,field_print_fn_ptr field_print);
+
 stamp flowrow_get_stamp(gen_e e)
 {
   if ( ((flowrow_gen)e)->type == ALIAS_TYPE)
@@ -219,17 +231,16 @@ static struct field_split split_fields(region r, flowrow_map fields1,
 static void flowrow_register_rollback(void)
 {
 #ifdef BANSHEE_ROLLBACK
-  flowrow_current_rollback_info = ralloc(banshee_rollback_region,
+  flowrow_current_rollback_info = ralloc(flowrow_rollback_info_region,
 					 struct flowrow_rollback_info_);
   banshee_set_time((banshee_rollback_info)flowrow_current_rollback_info);
   flowrow_current_rollback_info->kind = flowrow_sort;
   flowrow_current_rollback_info->added_edges = 
-    make_persistent_hash_table(banshee_rollback_region,
-			       4, stamp_hash, stamp_eq,
+    make_persistent_hash_table(4, stamp_hash, stamp_eq,
 			       BANSHEE_PERSIST_KIND_nonptr,
 			       BANSHEE_PERSIST_KIND_added_edge_info);
   flowrow_current_rollback_info->set_aliases = 
-    new_flow_var_list(banshee_rollback_region);
+    new_persistent_flow_var_list();
 #endif /* BANSHEE_ROLLBACK */
 }
 
@@ -255,9 +266,9 @@ void flowrow_register_edge(const bounds b, stamp st) {
     stamp_list_cons(st,info->sl);
   }
   else {
-    stamp_list sl = new_stamp_list(banshee_rollback_region);
+    stamp_list sl = new_persistent_stamp_list();
     stamp_list_cons(st,sl);
-    info = ralloc(banshee_rollback_region, struct added_edge_info_);
+    info = ralloc(added_edge_info_region, struct added_edge_info_);
     info->b = b;
     info->sl = sl;
     hash_table_insert(flowrow_current_rollback_info->added_edges,
@@ -288,7 +299,7 @@ static gen_e normalize(get_stamp_fn_ptr get_stamp,
   if (flowrow_is_row(r))
     {
       flowrow_map_append(m,
-			 flowrow_map_copy(flowrow_region,
+			 flowrow_map_copy(NULL,
 					  flowrow_get_fields(r)));
       return normalize(get_stamp,m,flowrow_get_rest(r));
     }
@@ -306,7 +317,7 @@ static gen_e normalize_row(get_stamp_fn_ptr get_stamp, gen_e r) deletes
   if (flowrow_is_normalized(r))
     return r;
   else /* normalize the row */
-    return normalize(get_stamp,new_flowrow_map(flowrow_region),r);
+    return normalize(get_stamp,new_persistent_flowrow_map(),r);
 }
 
 static bool eq(gen_e e1, gen_e e2)
@@ -396,7 +407,7 @@ gen_e contour_instantiate(fresh_fn_ptr fresh,
       while (flowrow_map_next(&scan,&f))
 	{
 	  flowrow_field new_field =
-	    ralloc(flowrow_region,struct flowrow_field_);
+	    ralloc(flowrow_field_region,struct flowrow_field_);
 	  new_field->label = f->label;
 	  new_field->expr = fresh(NULL);
 	  
@@ -430,12 +441,19 @@ static contour make_contour(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
     {
       contour result;
 
-      result = ralloc(flowrow_region,struct contour);
+      result = ralloc(contour_region, struct contour);
       result->shape = e;
       result->fresh = fresh;
       result->get_stamp = get_stamp;
       result->instantiate = contour_instantiate;
-	  
+
+      hash_table_lookup(fn_ptr_table, (hash_key)result->fresh, 
+			(hash_data*)&result->fresh_fn_id);
+      hash_table_lookup(fn_ptr_table, (hash_key)result->get_stamp,
+			(hash_data*)&result->get_stamp_id);
+      hash_table_lookup(fn_ptr_table, (hash_key)result->instantiate,
+			(hash_data*)&result->contour_inst_id);
+
       return result;
     }
   else
@@ -748,7 +766,7 @@ void flowrow_inclusion(fresh_fn_ptr fresh,get_stamp_fn_ptr get_stamp,
 
 gen_e flowrow_row(get_stamp_fn_ptr get_stamp,flowrow_map f, gen_e rest) deletes
 {
-  flowrow_map fields = flowrow_map_copy(flowrow_region,f);
+  flowrow_map fields = flowrow_map_copy(NULL,f);
 
   if (flowrow_map_empty(fields))
     {
@@ -831,49 +849,77 @@ gen_e flowrow_wild(void)
 gen_e flowrow_fresh(const char *name)
 {
   flowrow_stats.fresh++;
-  return (gen_e)fv_fresh(flowrow_region,name);
+  return (gen_e)fv_fresh(NULL,name);
 }
 
 gen_e flowrow_fresh_small(const char *name)
 {
   flowrow_stats.fresh_small++;
-  return (gen_e)fv_fresh_small(flowrow_region,name);
+  return (gen_e)fv_fresh_small(NULL,name);
 }
 
 gen_e flowrow_fresh_large(const char *name)
 {
   flowrow_stats.fresh_large++;
-  return (gen_e)fv_fresh_large(flowrow_region,name);
+  return (gen_e)fv_fresh_large(NULL,name);
 }
 
 #else
-static struct flowrow_gen term_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,term_sort};
-static struct flowrow_gen term_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,term_sort};
-static struct flowrow_gen term_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,term_sort};
-static struct flowrow_gen term_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,term_sort};
+flowrow_gen term_zero_row = NULL;
+flowrow_gen term_one_row = NULL;
+flowrow_gen term_abs_row = NULL;
+flowrow_gen term_wild_row = NULL;
 
+flowrow_gen setif_zero_row = NULL;
+flowrow_gen setif_one_row = NULL;
+flowrow_gen setif_abs_row = NULL;
+flowrow_gen setif_wild_row = NULL;
 
-static struct flowrow_gen setif_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,setif_sort};
-static struct flowrow_gen setif_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,setif_sort};
-static struct flowrow_gen setif_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,setif_sort};
-static struct flowrow_gen setif_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,setif_sort};
+flowrow_gen setst_zero_row = NULL;
+flowrow_gen setst_one_row = NULL;
+flowrow_gen setst_abs_row = NULL;
+flowrow_gen setst_wild_row = NULL;
 
-static struct flowrow_gen setst_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,setst_sort};
-static struct flowrow_gen setst_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,setst_sort};
-static struct flowrow_gen setst_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,setst_sort};
-static struct flowrow_gen setst_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,setst_sort};
+/* static struct flowrow_gen term_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,term_sort}; */
+/* static struct flowrow_gen term_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,term_sort}; */
+/* static struct flowrow_gen term_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,term_sort}; */
+/* static struct flowrow_gen term_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,term_sort}; */
 
+/* static struct flowrow_gen setif_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,setif_sort}; */
+/* static struct flowrow_gen setif_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,setif_sort}; */
+/* static struct flowrow_gen setif_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,setif_sort}; */
+/* static struct flowrow_gen setif_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,setif_sort}; */
+
+/* static struct flowrow_gen setst_zero_row = {flowrow_sort,ZERO_TYPE,ZERO_TYPE,setst_sort}; */
+/* static struct flowrow_gen setst_one_row = {flowrow_sort,ONE_TYPE,ONE_TYPE,setst_sort}; */
+/* static struct flowrow_gen setst_abs_row = {flowrow_sort,ABS_TYPE, ABS_TYPE,setst_sort}; */
+/* static struct flowrow_gen setst_wild_row = {flowrow_sort,WILD_TYPE, WILD_TYPE,setst_sort}; */
+
+static flowrow_gen make_constant_row(sort_kind base_sort, int type) {
+  flowrow_gen result = ralloc(banshee_nonptr_region, struct flowrow_gen);
+  result->base_sort = base_sort;
+  result->sort = flowrow_sort;
+  result->st = type;
+  result->type = type;
+  return result;
+}
 
 gen_e flowrow_zero(sort_kind base_sort)
 {
   switch (base_sort)
     {
     case setif_sort:
-      return (gen_e)&setif_zero_row;
+      if (!setif_zero_row)
+	setif_zero_row = make_constant_row(setif_sort, ZERO_TYPE);
+      return (gen_e)setif_zero_row;
     case setst_sort:
-      return (gen_e)&setst_zero_row;
+      if (!setst_zero_row)
+	setst_zero_row = make_constant_row(setst_sort, ZERO_TYPE);
+      return (gen_e)setst_zero_row;
     case term_sort:
-      return (gen_e)&term_zero_row;
+      if (!term_zero_row)
+	term_zero_row = make_constant_row(term_sort, ZERO_TYPE);
+      return (gen_e)term_zero_row;
     default:
       {
 	assert(FALSE);
@@ -889,31 +935,17 @@ gen_e flowrow_one(sort_kind base_sort)
   switch (base_sort)
     {
     case setif_sort:
-      return (gen_e)&setif_one_row;
+      if (!setif_one_row)
+	setif_one_row = make_constant_row(setif_sort, ONE_TYPE);
+      return (gen_e)setif_one_row;
     case setst_sort:
-      return (gen_e)&setst_one_row;
+      if (!setst_one_row)
+	setst_one_row = make_constant_row(setst_sort, ONE_TYPE);
+      return (gen_e)setst_one_row;
     case term_sort:
-      return (gen_e)&term_one_row;
-    default:
-      {
-	assert(FALSE);
-	return NULL;
-      }
-    }
-  
-  return NULL;
-}
-
-gen_e flowrow_abs(sort_kind base_sort)
-{
-  switch (base_sort)
-    {
-    case setif_sort:
-      return (gen_e)&setif_abs_row;
-    case setst_sort:
-      return (gen_e)&setst_abs_row;
-    case term_sort:
-      return (gen_e)&term_abs_row;
+      if (!term_one_row)
+	term_one_row = make_constant_row(term_sort, ONE_TYPE);
+      return (gen_e)term_one_row;
     default:
       {
 	assert(FALSE);
@@ -926,15 +958,20 @@ gen_e flowrow_abs(sort_kind base_sort)
 
 gen_e flowrow_wild(sort_kind base_sort)
 {
-
   switch (base_sort)
     {
     case setif_sort:
-      return (gen_e)&setif_wild_row;
+      if (!setif_wild_row)
+	setif_wild_row = make_constant_row(setif_sort, WILD_TYPE);
+      return (gen_e)setif_wild_row;
     case setst_sort:
-      return (gen_e)&setst_wild_row;
+      if (!setst_wild_row)
+	setst_wild_row = make_constant_row(setst_sort, WILD_TYPE);
+      return (gen_e)setst_wild_row;
     case term_sort:
-      return (gen_e)&term_wild_row;
+      if (!term_wild_row)
+	term_wild_row = make_constant_row(term_sort, WILD_TYPE);
+      return (gen_e)term_wild_row;
     default:
       {
 	assert(FALSE);
@@ -944,6 +981,94 @@ gen_e flowrow_wild(sort_kind base_sort)
   
   return NULL;
 }
+
+
+gen_e flowrow_abs(sort_kind base_sort)
+{
+  switch (base_sort)
+    {
+    case setif_sort:
+      if (!setif_abs_row)
+	setif_abs_row = make_constant_row(setif_sort, ABS_TYPE);
+      return (gen_e)setif_abs_row;
+    case setst_sort:
+      if (!setst_abs_row)
+	setst_abs_row = make_constant_row(setst_sort, ABS_TYPE);
+      return (gen_e)setst_abs_row;
+    case term_sort:
+      if (!term_abs_row)
+	term_abs_row = make_constant_row(term_sort, ABS_TYPE);
+      return (gen_e)term_abs_row;
+    default:
+      {
+	assert(FALSE);
+	return NULL;
+      }
+    }
+  
+  return NULL;
+}
+
+/* gen_e flowrow_one(sort_kind base_sort) */
+/* { */
+/*   switch (base_sort) */
+/*     { */
+/*     case setif_sort: */
+/*       return (gen_e)&setif_one_row; */
+/*     case setst_sort: */
+/*       return (gen_e)&setst_one_row; */
+/*     case term_sort: */
+/*       return (gen_e)&term_one_row; */
+/*     default: */
+/*       { */
+/* 	assert(FALSE); */
+/* 	return NULL; */
+/*       } */
+/*     } */
+  
+/*   return NULL; */
+/* } */
+
+/* gen_e flowrow_abs(sort_kind base_sort) */
+/* { */
+/*   switch (base_sort) */
+/*     { */
+/*     case setif_sort: */
+/*       return (gen_e)&setif_abs_row; */
+/*     case setst_sort: */
+/*       return (gen_e)&setst_abs_row; */
+/*     case term_sort: */
+/*       return (gen_e)&term_abs_row; */
+/*     default: */
+/*       { */
+/* 	assert(FALSE); */
+/* 	return NULL; */
+/*       } */
+/*     } */
+  
+/*   return NULL; */
+/* } */
+
+/* gen_e flowrow_wild(sort_kind base_sort) */
+/* { */
+
+/*   switch (base_sort) */
+/*     { */
+/*     case setif_sort: */
+/*       return (gen_e)&setif_wild_row; */
+/*     case setst_sort: */
+/*       return (gen_e)&setst_wild_row; */
+/*     case term_sort: */
+/*       return (gen_e)&term_wild_row; */
+/*     default: */
+/*       { */
+/* 	assert(FALSE); */
+/* 	return NULL; */
+/*       } */
+/*     } */
+  
+/*   return NULL; */
+/* } */
 
 gen_e flowrow_fresh(const char *name,sort_kind base_sort)
 {
@@ -1058,8 +1183,12 @@ bool flowrow_is_row(gen_e e)
 
 void flowrow_init(void)
 {
+  flowrow_rollback_info_region = newregion();
+  flow_var_region = newregion();
   flowrow_region = newregion();
-  flowrow_hash = make_term_hash(flowrow_region);
+  contour_region = newregion();
+  flowrow_field_region = newregion();
+  flowrow_hash = make_term_hash(NULL);
 }
 
 static void flowrow_reset_stats(void)
@@ -1088,13 +1217,15 @@ static void flowrow_reset_stats(void)
 void flowrow_reset(void) deletes
 {
   term_hash_delete(flowrow_hash);
-  deleteregion_ptr(&flowrow_region);
+  deleteregion(flowrow_region);
+  deleteregion(flow_var_region);
+  deleteregion(flowrow_rollback_info_region);
+  deleteregion(flowrow_field_region);
+  deleteregion(contour_region);
 
   flowrow_reset_stats();
 
-  flowrow_region = newregion();
-  flowrow_hash = make_term_hash(flowrow_region);
-
+  flowrow_init();
 }
 
 static void fields_print(FILE *f,flowrow_map m,field_print_fn_ptr field_print) deletes
@@ -1220,7 +1351,7 @@ void *flowrow_field_deserialize(FILE *f)
   flowrow_field result;
   assert(f);
   
-  result = ralloc(permanent, struct flowrow_field_);
+  result = ralloc(flowrow_field_region, struct flowrow_field_);
 
   result->label = (char *)string_data_deserialize(f);
   fread(&result->expr, sizeof(gen_e), 1 ,f);
@@ -1257,7 +1388,7 @@ bool flowrow_rollback_serialize(FILE *f, banshee_rollback_info i)
 banshee_rollback_info flowrow_rollback_deserialize(FILE *f)
 {
   flowrow_rollback_info info = 
-    ralloc(permanent, struct flowrow_rollback_info_);
+    ralloc(flowrow_rollback_info_region, struct flowrow_rollback_info_);
   
   assert(f);
 
@@ -1326,7 +1457,7 @@ void *flowrow_expr_deserialize(FILE *f)
       }
     case ROW_TYPE:
       {
-	flowrow frow = ralloc(permanent, struct flowrow);
+	flowrow frow = ralloc(flowrow_region, struct flowrow);
 	fread(&frow->st, sizeof(stamp), 1, f);
 #ifdef NONSPEC      
 	fread(&frow->base_sort, sizeof(int), 1, f);
@@ -1431,4 +1562,75 @@ void flowrow_set_fields(void)
 {
   deserialize_set_obj((void **)&flowrow_hash);
   deserialize_set_obj((void **)&flowrow_current_rollback_info);
+}
+
+void update_module_flowrow(translation t)
+{
+  update_pointer(t, (void **)&flowrow_hash);
+  update_pointer(t, (void **)&flowrow_current_rollback_info);
+
+#ifdef NONSPEC
+  update_pointer(t, (void **)&term_zero_row);
+  update_pointer(t, (void **)&term_one_row);
+  update_pointer(t, (void **)&term_abs_row);
+  update_pointer(t, (void **)&term_wild_row);
+  
+  update_pointer(t, (void **)&setif_zero_row);
+  update_pointer(t, (void **)&setif_one_row);
+  update_pointer(t, (void **)&setif_abs_row);
+  update_pointer(t, (void **)&setif_wild_row);
+  
+  update_pointer(t, (void **)&setst_zero_row);
+  update_pointer(t, (void **)&setst_one_row);
+  update_pointer(t, (void **)&setst_abs_row);
+  update_pointer(t, (void **)&setst_wild_row);
+#endif NONSPEC
+}
+
+int update_flowrow_rollback_info(translation t, void *m)
+{
+  flowrow_rollback_info info = (flowrow_rollback_info)m;
+
+  update_pointer(t, (void **)&info->added_edges);
+  update_pointer(t, (void **)&info->set_aliases);
+  
+  return sizeof(struct flowrow_rollback_info_);
+}
+
+int update_flowrow(translation t, void *m)
+{
+  flowrow f = (flowrow)m;
+
+  update_pointer(t, (void **)&f->fields);
+  update_pointer(t, (void **)&f->rest);
+
+  return sizeof(struct flowrow);
+}
+
+int update_flowrow_field(translation t, void *m)
+{
+  flowrow_field f = (flowrow_field)m;
+  update_pointer(t, (void **)&f->label);
+  update_pointer(t, (void **)&f->expr);
+  
+  return sizeof(struct flowrow_field_);
+}
+
+int update_contour(translation t, void *m)
+{
+  contour c = (contour)m;
+  update_pointer(t, (void **)&c->shape);
+
+  c->fresh = update_funptr_data(c->fresh_fn_id);
+  c->get_stamp = update_funptr_data(c->get_stamp_id);
+  c->instantiate = update_funptr_data(c->contour_inst_id);
+
+  hash_table_lookup(fn_ptr_table, (hash_key)c->fresh, 
+		    (hash_data*)&c->fresh_fn_id);
+  hash_table_lookup(fn_ptr_table, (hash_key)c->get_stamp,
+		    (hash_data*)&c->get_stamp_id);
+  hash_table_lookup(fn_ptr_table, (hash_key)c->instantiate,
+		    (hash_data*)&c->contour_inst_id);
+
+  return sizeof(struct contour);
 }

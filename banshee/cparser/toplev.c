@@ -1,7 +1,7 @@
-/* This file was modified in 2000-2001 by David Gay for the RC compiler, and
-   John Kodumal for banshee-pta.
-   The changes are 
-   Copyright (c) 2000-2001 The Regents of the University of California.
+/* This file was modified in 2000-2001 by David Gay for the RC
+   compiler, and John Kodumal for banshee-pta.  The changes are
+   Copyright (c) 2000-2001 The Regents of the University of
+   California.
 
    This file is distributed under the terms of the GNU General Public License
    (see below).
@@ -43,6 +43,7 @@ Boston, MA 02111-1307, USA.  */
 // extern long get_memusage(void);
 extern int banshee_get_time();
 extern void banshee_backtrack(int);
+extern region *get_persistent_regions();
 
 /* Name of program invoked, sans directories.  */
 char *progname;
@@ -287,6 +288,8 @@ int flag_print_graph = 0;
 int flag_model_strings = 1;
 int flag_print_memusage = 0;
 int flag_debug_backtrack = 0;
+int flag_debug_region_serialization = 0;
+int flag_debug_region_deserialization = 0;
 int flag_backtrack_constraints = 0;
 int flag_serialize_constraints = 0;
 int flag_deserialize_constraints = 0;
@@ -314,6 +317,8 @@ struct { char *string; int *variable; int on_value;} f_options[] =
   {"print-stats",&flag_print_stats,1},
   {"points-to",&flag_points_to,1},
   {"serialize-constraints",&flag_serialize_constraints,1},
+  {"debug-region-serialization", &flag_debug_region_serialization,1},
+  {"debug-region-deserialization", &flag_debug_region_deserialization,1},
   {"deserialize-constraints",&flag_deserialize_constraints,1},
 #ifndef ANDERSEN_ST
   {"cycle_elim",(int*)&flag_eliminate_cycles,1},
@@ -422,7 +427,7 @@ char *lang_options[] =
   0
 };
 
-
+
 /* Likewise for -W.  */
 
 struct { char *string; int *variable; int on_value;} W_options[] =
@@ -440,7 +445,8 @@ struct { char *string; int *variable; int on_value;} W_options[] =
 
 /* Timing stuff  */
 struct timeval parse_time, analyze_time, tlb_time, 
-  serialize_time, deserialize_time, rollback_time;
+  serialize_time, deserialize_time, rollback_time, 
+  region_serialization_time, region_deserialization_time;
 
 static struct timeval start_time, finish_time;
 
@@ -1080,6 +1086,20 @@ int main(int argc, char **argv) deletes
 /*     compile_file(0); */
 /*   else */
 
+  if (flag_points_to && flag_debug_region_deserialization)
+    {
+      translation t;
+      region temp = newregion();
+      begin_time();
+      t = deserialize("data","offsets", NULL, temp);
+      end_time(&region_deserialization_time);
+
+      printf("\nRegion deserialization time: ");
+      print_time(stdout,&region_deserialization_time);
+      printf("\n");
+      exit(0);
+    }
+
   if (!dd_is_empty(files))
     dd_scan(cur, files)
       {
@@ -1102,7 +1122,14 @@ int main(int argc, char **argv) deletes
       analysis_serialize("andersen.out");
       end_time(&serialize_time);
     }
-    
+
+  if (flag_points_to && flag_debug_region_serialization)
+    {
+      begin_time();
+      serialize(get_persistent_regions(), "data", "offsets");
+      end_time(&region_serialization_time);
+    }
+
   printf("Andersen's Points to Analysis\n");
   printf("Files analyzed: %d\n",files_processed);
   printf("Files skipped: %d\n",files_skipped);
@@ -1131,6 +1158,11 @@ int main(int argc, char **argv) deletes
     print_time(stdout,&serialize_time);
     }
     
+    if (flag_debug_region_serialization) {
+    printf("\nRegion serialization time: ");
+    print_time(stdout,&region_serialization_time);
+    }
+
     if (flag_deserialize_constraints && flag_backtrack_constraints) {
     printf("\nRollback time: ");
     print_time(stdout,&rollback_time);

@@ -147,7 +147,7 @@ static void unlink_region(region r)
     scan = &(*scan)->sibling;
   *scan = (*scan)->sibling;
 
-  renumber_regions(&zeroregion, 0);
+/*   renumber_regions(&zeroregion, 0); */
 }
 
 static void link_region(region r, region parent)
@@ -156,7 +156,7 @@ static void link_region(region r, region parent)
   r->parent = parent;
   parent->children = r;
 
-  renumber_regions(&zeroregion, 0);
+/*   renumber_regions(&zeroregion, 0); */
 }
 
 void check_child(region r, region of)
@@ -490,6 +490,7 @@ static void delregion(region r)
 {
   nochildren(r);
   free_all_pages(r, &r->normal);
+  free_all_pages(r, &r->atomic); /* AA */
 }
 
 void deleteregion(region r)
@@ -565,7 +566,7 @@ void deleteregion_array(int n, region *regions)
 #else
       rc = r->rc;
 #endif
-      delregion(r, rc);
+      delregion(r);
     }
 
 }

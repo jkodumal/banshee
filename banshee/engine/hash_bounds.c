@@ -42,18 +42,31 @@ struct bounds_ {
   hash_table table;
 };
 
+region bounds_region = NULL;
+region added_edge_info_region = NULL;
 
 bounds bounds_create(region r)
 {
   bounds result;
-  result = ralloc(r, struct bounds_);
 
+  if (r) {
+    result = ralloc(r, struct bounds_);
+    result->table = make_hash_table(r, 8, stamp_hash, stamp_eq);
+  }
+  else {
+    result = ralloc(bounds_region, struct bounds_);
+    result->table = make_persistent_hash_table(8, stamp_hash, stamp_eq,
+					       BANSHEE_PERSIST_KIND_nonptr,
+					       BANSHEE_PERSIST_KIND_gen_e);
+  }
   result->st = stamp_fresh();
-  result->table = make_persistent_hash_table(r, 8, stamp_hash, stamp_eq,
-					     BANSHEE_PERSIST_KIND_nonptr,
-					     BANSHEE_PERSIST_KIND_gen_e);
-  
+
   return result;
+}
+
+bounds bounds_persistent_create()
+{
+  return bounds_create(NULL);
 }
 
 /* TODO */
@@ -128,7 +141,7 @@ bool bounds_serialize(FILE *f, void *obj)
 
 void *bounds_deserialize(FILE *f)
 {
-  bounds b = ralloc(permanent, struct bounds_);
+  bounds b = ralloc(bounds_region, struct bounds_);
 
   assert(f);
   fread(b, sizeof(struct bounds_), 1, f);
@@ -167,7 +180,7 @@ bool added_edge_info_serialize(FILE *f, void *obj)
 void *added_edge_info_deserialize(FILE *f)
 {
   added_edge_info info = 
-    ralloc(banshee_rollback_region, struct added_edge_info_);
+    ralloc(added_edge_info_region, struct added_edge_info_);
 
   assert(f);
   fread(info, sizeof(struct added_edge_info_), 1, f);
@@ -182,4 +195,35 @@ bool added_edge_info_set_fields(void *obj)
   deserialize_set_obj((void **)&info->sl);
   
   return TRUE;
+}
+
+void bounds_init()
+{
+  added_edge_info_region = newregion();
+  bounds_region = newregion();
+}
+
+void bounds_reset()
+{
+  deleteregion(bounds_region);
+  deleteregion(added_edge_info_region);
+  
+  bounds_init();
+}
+
+int update_bounds(translation t, void *m)
+{
+  update_pointer(t, (void **)&((bounds)m)->table);
+
+  return (sizeof(struct bounds_));
+}
+
+int update_added_edge_info(translation t, void *m)
+{
+  added_edge_info info = (added_edge_info)m;
+
+  update_pointer(t, (void **)&info->b);
+  update_pointer(t, (void **)&info->sl);
+
+  return sizeof(struct added_edge_info_);
 }

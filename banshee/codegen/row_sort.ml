@@ -68,7 +68,7 @@ class row_sort_gen (e' : exprid) =
 	 EXPRID_field EXPRID_make_field(const char *label, EPRIME expr)\n\
 	 {\n \
 	     flowrow_field result = ralloc(REGION, struct flowrow_field_);\n\
-	     result->label = rstrdup(REGION,label);\n\
+	     result->label = rstrdup(banshee_nonptr_region,label);\n\
 	     result->expr = (gen_e) expr;\n\
 	     return result;\n\
 	 }\n\n\

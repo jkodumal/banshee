@@ -50,6 +50,8 @@ typedef struct added_edge_info_ {
   stamp_list sl;
 } *added_edge_info;
 
+extern region added_edge_info_region;
+
 /* Hack: throw in all the necessary scanner implementations */
 struct bounds_scanner_ {
   struct list_scanner ls;
@@ -58,8 +60,15 @@ struct bounds_scanner_ {
 
 typedef struct bounds_scanner_ bounds_scanner;
 
-/* Create a new bounds representation */
+/* Init/reset bounds module */
+void bounds_init();
+void bounds_reset();
+
+/* Create a new bounds representation stored in region r */
 bounds bounds_create(region r);
+
+/* Create a new persistent bounds */
+bounds bounds_persistent_create();
 
 /* Replace with iterator */
 gen_e_list bounds_exprs(bounds);

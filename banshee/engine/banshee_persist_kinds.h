@@ -55,23 +55,23 @@ typedef enum banshee_persist_kind_ {
   BANSHEE_PERSIST_KIND_nonptr = 0,  /* for non-pointer data: KEEP THIS 0 */
   BANSHEE_PERSIST_KIND_funptr = 1,
   BANSHEE_PERSIST_KIND_string = 2,
-  BANSHEE_PERSIST_KIND_uf_element, 
-  BANSHEE_PERSIST_KIND_setif_var,  
-  BANSHEE_PERSIST_KIND_sv_info,	 
-  BANSHEE_PERSIST_KIND_list,	
-  BANSHEE_PERSIST_KIND_bounds,
+  BANSHEE_PERSIST_KIND_uf_element, /* DONE */
+  BANSHEE_PERSIST_KIND_setif_var,  /* DONE */
+  BANSHEE_PERSIST_KIND_sv_info,	   /* DONE */
+  BANSHEE_PERSIST_KIND_list,	   /* DONE */
+  BANSHEE_PERSIST_KIND_bounds,	   /* DONE */
   BANSHEE_PERSIST_KIND_contour,	
   BANSHEE_PERSIST_KIND_banshee_rollback_info,
-  BANSHEE_PERSIST_KIND_flow_var,	      
+  BANSHEE_PERSIST_KIND_flow_var,   /* DONE */
   BANSHEE_PERSIST_KIND_flowrow_field,
   BANSHEE_PERSIST_KIND_setst_var,
   BANSHEE_PERSIST_KIND_st_info,
-  BANSHEE_PERSIST_KIND_term_var,	
-  BANSHEE_PERSIST_KIND_ustack_elt,
-  BANSHEE_PERSIST_KIND_hash_table,
-  BANSHEE_PERSIST_KIND_term_hash,
+  BANSHEE_PERSIST_KIND_term_var, /* DONE */
+  BANSHEE_PERSIST_KIND_ustack_elt, /* DONE */
+  BANSHEE_PERSIST_KIND_hash_table, /* DONE */
+  BANSHEE_PERSIST_KIND_term_hash,  /* DONE */
   BANSHEE_PERSIST_KIND_gen_e,
-  BANSHEE_PERSIST_KIND_added_edge_info,
+  BANSHEE_PERSIST_KIND_added_edge_info, /* DONE */
   BANSHEE_PERSIST_KIND_added_ub_proj_info,
 #ifdef NONSPEC
   BANSHEE_PERSIST_KIND_cons_group,	

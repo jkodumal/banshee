@@ -34,10 +34,11 @@
 #include "flow-var.h"
 #include "ufind.h"
 #include "bounds.h"
+#include "banshee_region_persist_kinds.h"
 
 DECLARE_UFIND(contour_elt,contour);
 
-struct flow_var /* extends gen_e */
+struct flow_var_ /* extends gen_e */
 {
 #ifdef NONSPEC
   sort_kind sort;
@@ -53,6 +54,8 @@ struct flow_var /* extends gen_e */
   int extra_persist_kind;
 };
 
+extern region flow_var_region;
+
 DEFINE_UFIND(contour_elt,contour);
 DEFINE_LIST(flow_var_list, flow_var);
 
@@ -60,15 +63,15 @@ DEFINE_LIST(flow_var_list, flow_var);
 
 static flow_var make_var(region r,const char *name, stamp st)
 {
-  flow_var result = ralloc(r,struct flow_var);
+  flow_var result = ralloc(flow_var_region, struct flow_var_);
 
   result->type = VAR_TYPE;
   result->st = st;
   result->alias = NULL;
-  result->ubs = bounds_create(r);
-  result->lbs = bounds_create(r);
-  result->elt = new_contour_elt(r,NULL);
-  result->name = name ? rstrdup(r,name) : "fv";
+  result->ubs = bounds_persistent_create();
+  result->lbs = bounds_persistent_create();
+  result->elt = new_contour_elt(NULL,NULL);
+  result->name = name ? rstrdup(banshee_nonptr_region,name) : "fv";
   result->extra_info = NULL;
   result->extra_persist_kind = 0;
 
@@ -233,7 +236,7 @@ void *flow_var_deserialize(FILE *f)
 {
   flow_var var = NULL;
 
-  var = ralloc(permanent, struct flow_var);
+  var = ralloc(flow_var_region, struct flow_var_);
 
   fread((void *)&var->st, sizeof(stamp), 1, f);
   fread((void *)&var->alias, sizeof(gen_e), 1, f);
@@ -284,8 +287,7 @@ bool contour_serialize(FILE *f, void *obj)
 
 void *contour_deserialize(FILE *f)
 {
-  contour c = ralloc(permanent, struct contour);
-
+  contour c = ralloc(contour_region, struct contour);
   assert(f);
 
   fread((void *)&c->shape, sizeof(gen_e), 1, f);
@@ -306,3 +308,20 @@ bool contour_set_fields(void *obj)
 
   return TRUE;
 }
+
+int update_flow_var(translation t, void *m)
+{
+  flow_var v = (flow_var)m;
+
+  update_pointer(t, (void **)&v->alias);
+  update_pointer(t, (void **)&v->ubs);
+  update_pointer(t, (void **)&v->lbs);
+  update_pointer(t, (void **)&v->elt);
+  update_pointer(t, (void **)&v->name);
+  if (v->extra_persist_kind) {
+    update_pointer(t, (void **)&v->extra_info);
+  }
+  
+  return sizeof(struct flow_var_);
+}
+

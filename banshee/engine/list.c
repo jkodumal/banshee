@@ -65,7 +65,7 @@ struct list *new_list(region r, int persist_kind)
   struct list *result;
 
   if (!r) {
-    result = ralloc(list_header_region,struct list);
+    result = ralloc(list_header_region, struct list);
     result->r = NULL;
   }
   else {

@@ -37,7 +37,7 @@
 
 EXTERN_C_BEGIN
 
-typedef struct term_var *term_var;
+typedef struct term_var_ *term_var;
 
 DECLARE_LIST(term_var_list,term_var);
 

@@ -35,14 +35,15 @@
 #include "term-var.h"
 #include "bounds.h"
 #include "banshee_persist_kinds.h"
+#include "banshee_region_persist_kinds.h"
 
 DECLARE_UFIND(tv_elt,gen_e);
- 
 DEFINE_UFIND(tv_elt,gen_e);
-
 DEFINE_LIST(term_var_list,term_var);
 
-struct term_var
+extern region term_var_region;
+
+struct term_var_
 {
 #ifdef NONSPEC
   sort_kind sort;
@@ -56,13 +57,13 @@ struct term_var
 
 static term_var make_var(region r, const char *name, stamp st)
 {
-  term_var result = ralloc(r, struct term_var);
+  term_var result = ralloc(term_var_region, struct term_var_);
   gen_e info = (gen_e) result;
 
   result->type = VAR_TYPE;
   result->st = st;
-  result->pending = bounds_create(r);
-  result->name = name ? rstrdup(r,name) : "fv";
+  result->pending = bounds_persistent_create();
+  result->name = name ? rstrdup(banshee_nonptr_region,name) : "fv";
   result->elt = new_tv_elt(r,info);
 #ifdef NONSPEC
   result->sort = term_sort;
@@ -158,7 +159,7 @@ void *term_var_deserialize(FILE *f)
   assert(f);
   assert(permanent);
   
-  var = ralloc(permanent, struct term_var);
+  var = ralloc(term_var_region, struct term_var_);
 
   fread((void *)&var->st, sizeof(stamp), 1, f);
   fread((void *)&var->pending, sizeof(bounds), 1, f);
@@ -176,4 +177,15 @@ bool term_var_set_fields(void *obj)
   deserialize_set_obj((void **)&var->elt);
 
   return TRUE;
+}
+
+int update_term_var(translation t, void *m)
+{
+  term_var var = (term_var)m;
+
+  update_pointer(t, (void **)&var->pending);
+  update_pointer(t, (void **)&var->name);
+  update_pointer(t, (void **)&var->elt);
+
+  return sizeof(struct term_var_);
 }

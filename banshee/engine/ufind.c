@@ -58,14 +58,16 @@ struct uf_element_ {
   elt_stack elt_stack;
 };
 
-static region uf_region = NULL;
+region uf_element_region;
+region ustack_element_region;
+
 static union_stack ustack = NULL;
 
 struct uf_element_ *new_uf_element(region r, void *info, int persist_kind)
 {
   struct uf_element_ *result;
 
-  result = ralloc(r, struct uf_element_);
+  result = ralloc(uf_element_region, struct uf_element_);
 
   result->kind = uf_ecr;
   result->rank = 0;
@@ -101,7 +103,7 @@ static struct uf_element_ *find(struct uf_element_ *e)
 
 static ustack_elt make_ustack_elt(uf_element e,void *info)
 {
-  ustack_elt result = ralloc(uf_region,struct ustack_elt_);
+  ustack_elt result = ralloc(ustack_element_region, struct ustack_elt_);
   result->nonroot = e;
   result->old_info = info;
   result->persist_kind = e->persist_kind;
@@ -127,7 +129,7 @@ bool uf_union(struct uf_element_ *a, struct uf_element_ *b)
 
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(uf_region);
+      e1->elt_stack = new_persistent_elt_stack();
 
       return TRUE;
     }
@@ -140,7 +142,7 @@ bool uf_union(struct uf_element_ *a, struct uf_element_ *b)
 
       union_stack_cons(ue, ustack);
       assert(e2->elt_stack == NULL);
-      e2->elt_stack = new_elt_stack(uf_region);
+      e2->elt_stack = new_persistent_elt_stack();
 
       return TRUE;
     }
@@ -155,7 +157,7 @@ bool uf_union(struct uf_element_ *a, struct uf_element_ *b)
 
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(uf_region);
+      e1->elt_stack = new_persistent_elt_stack();
 
       return TRUE;
     }
@@ -182,7 +184,7 @@ bool uf_unify(combine_fn_ptr combine,
      
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(uf_region);
+      e1->elt_stack = new_persistent_elt_stack();
 
 
       return TRUE;
@@ -197,7 +199,7 @@ bool uf_unify(combine_fn_ptr combine,
 
       union_stack_cons(ue, ustack);
       assert(e2->elt_stack == NULL);
-      e2->elt_stack = new_elt_stack(uf_region);
+      e2->elt_stack = new_persistent_elt_stack();
 
       return TRUE;
     }
@@ -213,7 +215,7 @@ bool uf_unify(combine_fn_ptr combine,
 
       union_stack_cons(ue, ustack);
       assert(e1->elt_stack == NULL);
-      e1->elt_stack = new_elt_stack(uf_region);
+      e1->elt_stack = new_persistent_elt_stack();
 
       return TRUE;
     }
@@ -251,7 +253,6 @@ static void repair_elt_stack(struct uf_element_ *nonroot)
   elt_stack_scan(nonroot->elt_stack,&scan);
 
   while(elt_stack_next(&scan,&temp)) {
-    //    printf("persist kind is: %d, kind is: %d, uf_link is: %d, uf_ecr is %d\n",temp->persist_kind, temp->kind, uf_link, uf_ecr);
     assert(temp->kind == uf_link);
     temp->link = nonroot;
   }
@@ -312,13 +313,16 @@ void uf_tick()
 
 void uf_init()
 {
-  uf_region = newregion();
-  ustack = new_union_stack(uf_region);
+  uf_element_region = newregion();
+  uf_element_region = newregion();
+  ustack_element_region = newregion();
+  ustack = new_persistent_union_stack();
 }
 
 void uf_reset()
 {
-  deleteregion(uf_region);
+  deleteregion(ustack_element_region);
+  deleteregion(uf_element_region);
 
   uf_init();
 }
@@ -347,7 +351,7 @@ bool uf_element_serialize(FILE *f, void *obj)
 
 void *uf_element_deserialize(FILE *f)
 {
-  uf_element elt = ralloc(uf_region, struct uf_element_);
+  uf_element elt = ralloc(uf_element_region, struct uf_element_);
 
   fread((void *)&elt->kind, sizeof(int), 1, f);
   fread((void *)&elt->rank, sizeof(int), 1, f);
@@ -389,7 +393,7 @@ bool ustack_elt_serialize(FILE *f, void *obj)
 
 void *ustack_elt_deserialize(FILE *f)
 {
-  ustack_elt elt = ralloc(uf_region, struct ustack_elt_);
+  ustack_elt elt = ralloc(ustack_element_region, struct ustack_elt_);
   
   fread((void *)&elt->nonroot, sizeof(uf_element), 1, f);
   fread((void *)&elt->old_info, sizeof(void *), 1, f);
@@ -424,3 +428,29 @@ void uf_set_fields()
 {
   deserialize_set_obj((void **)&ustack);
 }
+
+void update_module_uf(translation t)
+{
+  update_pointer(t, (void **)&ustack);
+}
+
+int update_ustack_element(translation t, void *m)
+{
+  update_pointer(t, (void **)&((ustack_elt)m)->nonroot);
+  update_pointer(t, (void **)&((ustack_elt)m)->old_info);
+
+  return sizeof(struct ustack_elt_);
+}
+
+int update_uf_element(translation t, void *m)
+{
+  uf_element e = (uf_element)m;
+
+  if (e->persist_kind) update_pointer(t, (void **)&e->info);
+  
+  update_pointer(t, (void **)&e->link);
+  update_pointer(t, (void **)&e->elt_stack);
+
+  return sizeof(struct uf_element_);
+}
+

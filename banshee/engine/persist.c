@@ -107,6 +107,7 @@ bool serialize_object(void *obj, int kind)
 {
   persist_entry entry;
 
+  assert(kind >= 0);
   assert(current_state == persist_serializing);
 
   /* Don't serialize null objects */

@@ -96,12 +96,12 @@ void qalloc(region r, struct allocator *a, void **p1, int s1, int a1,
   if (n <= RPAGESIZE / K)
     return alloc_block(r, a, &a->page, p1, s1, a1, p2, s2, a2, RPAGESIZE,
 		       needsclear);
-  if (n <= RPAGESIZE)
-    return alloc_block(r, a, &a->superpage, p1, s1, a1, p2, s2, a2,
-		       K * RPAGESIZE, needsclear);
-  if (n <= RPAGESIZE * K)
-    return alloc_block(r, a, &a->hyperpage, p1, s1, a1, p2, s2, a2,
-		       K * K * RPAGESIZE, needsclear);
+/*   if (n <= RPAGESIZE) */
+/*     return alloc_block(r, a, &a->superpage, p1, s1, a1, p2, s2, a2, */
+/* 		       K * RPAGESIZE, needsclear); */
+/*   if (n <= RPAGESIZE * K) */
+/*     return alloc_block(r, a, &a->hyperpage, p1, s1, a1, p2, s2, a2, */
+/* 		       K * K * RPAGESIZE, needsclear); */
 
   npages = (n + ALIGN(offsetof(struct page, previous), a1) + RPAGESIZE - 1)
     >> RPAGELOG;

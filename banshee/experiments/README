@@ -61,6 +61,8 @@ dumps preprocessed files to stdout. Using in conjunction with -o
 should work, but some Makefiles use -c but don't explicitly specify an
 output file with -o. 
 
+Could potentially get this to work with a spec file
+
 ** What files have been modified?
 
 We really need to produce .i files and md5 them to know for sure

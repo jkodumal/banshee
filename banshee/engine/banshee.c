@@ -38,6 +38,7 @@
 #include "term-sort.h"
 #include "ufind.h"
 #include "list.h"
+#include "termhash.h"
 #include "banshee_region_persist_kinds.h"
 
 DECLARE_LIST(banshee_rollback_stack, banshee_rollback_info);
@@ -48,7 +49,6 @@ EXTERN_C void seed_fn_ptr_table(region r);
 static int banshee_clock = 0;
 static banshee_rollback_stack rb_stack;
 static region engine_region;
-region banshee_rollback_region;
 banshee_error_handler_fn handle_error = NULL;
 
 static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
@@ -60,13 +60,14 @@ void engine_init(void)
 {
   banshee_region_persistence_init();
   hash_table_init();
+  bounds_init();
   stamp_init();
   list_init();
   uf_init();
+  term_hash_init();
 
   engine_region = newregion();
-  banshee_rollback_region = newregion();
-  rb_stack = new_banshee_rollback_stack(engine_region);
+  rb_stack = new_persistent_banshee_rollback_stack();
   handle_error = default_error_handler;
 
   seed_fn_ptr_table(engine_region);
@@ -77,14 +78,16 @@ void engine_reset(void) deletes
   stamp_reset();
   // TODO: figure out what to do about this: list_reset();
   uf_reset();
+  bounds_reset();
   /* TODO -- need to rename this because the name hash_table_reset is
      taken  */
 /*   hash_table_reset(); */
+  term_hash_reset();
 
   banshee_clock = 0;
   deleteregion(engine_region);
   engine_region = newregion();
-  rb_stack = new_banshee_rollback_stack(engine_region);
+  rb_stack = new_persistent_banshee_rollback_stack();
 }
 
 void engine_stats(FILE *f)
@@ -294,3 +297,7 @@ void engine_set_fields(void)
   deserialize_set_obj((void **)&rb_stack);
 }
 
+void update_module_engine(translation t)
+{
+  update_pointer(t, (void **)&rb_stack);
+}

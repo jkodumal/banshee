@@ -841,7 +841,7 @@ void setst_init(void)
 {
   setst_region = newregion();
   tlb_cache_region = newregion();
-  setst_hash = make_term_hash(setst_region);
+  setst_hash = make_term_hash(NULL);
   setst_vars = new_setst_var_list(setst_region);
   tlb_dict = jcoll_create_dict(tlb_cache_region,setst_get_stamp);
 }

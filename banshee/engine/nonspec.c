@@ -59,6 +59,7 @@
 #include "hash.h"
 #include "ufind.h"
 #include "banshee_persist_kinds.h"
+#include "banshee_region_persist_kinds.h"
 
 /* Types defined here MUST be larger than LARGEST_BUILTIN_TYPE (banshee.h). */
 #define GROUP_PROJ_PAT_TYPE 11
@@ -156,6 +157,12 @@ struct nonspec_stats_
 } nonspec_stats_;
 
 static const int smallest_special_type = LARGEST_BUILTIN_TYPE + NUM_EXTRA_TYPES;
+
+region constructor_region;
+region cons_expr_region;
+region cons_group_region;
+region proj_pat_region;
+region gproj_pat_region;
 
 static int new_type()
 {
@@ -281,26 +288,6 @@ switch (s)
 }
 
 
-static region get_sort_region(sort_kind s)
-{
-  switch (s)
-    {
-    case setif_sort:
-      return setif_region;
-    case setst_sort:
-      return setst_region;
-    case flowrow_sort:
-      return flowrow_region;
-    case term_sort:
-      return term_sort_region;
-    default:
-      {
-	fail("Unmatched sort in get_sort_region: %d\n",s);
-	return NULL;
-      }
-    }
-  return NULL;
-}
 
 static term_hash get_sort_hash(sort_kind s)
 {
@@ -426,8 +413,8 @@ static char * sort_to_string(sort_kind s)
 constructor make_constructor(const char *name,sort_kind sort, sig_elt s[],
 			     int arity)
 {
-  constructor c = ralloc(get_sort_region(sort),struct constructor_);
-  sig_elt *sig = rarrayalloc(get_sort_region(sort),arity,sig_elt);
+  constructor c = ralloc(constructor_region,struct constructor_);
+  sig_elt *sig = rarrayalloc(banshee_nonptr_region,arity,sig_elt);
   
   c->type = new_type();
 
@@ -440,11 +427,11 @@ constructor make_constructor(const char *name,sort_kind sort, sig_elt s[],
   
   c->sort = sort;
   c->arity = arity;
-  c->name = rstrdup(get_sort_region(sort),name);
+  c->name = rstrdup(banshee_nonptr_region,name);
   c->sig = sig;
 
   if (sort == setif_sort) {
-    c->groups = new_cons_group_list(get_sort_region(sort));
+    c->groups = new_persistent_cons_group_list();
   }
   else c->groups = NULL;
 
@@ -458,8 +445,8 @@ constructor make_constructor_from_list(const char*name, sort_kind sort,
   sig_elt *temp;
   int i = 0;
   int arity = sig_elt_list_length(elts);
-  constructor c = ralloc(get_sort_region(sort),struct constructor_);
-  sig_elt *sig = rarrayalloc(get_sort_region(sort),arity,sig_elt);
+  constructor c = ralloc(constructor_region,struct constructor_);
+  sig_elt *sig = rarrayalloc(banshee_nonptr_region,arity,sig_elt);
   
   sig_elt_list_scan(elts,&scan);
 
@@ -470,12 +457,12 @@ constructor make_constructor_from_list(const char*name, sort_kind sort,
   }
   c->sort = sort;
   c->arity = arity;
-  c->name = rstrdup(get_sort_region(sort),name);
+  c->name = rstrdup(banshee_nonptr_region,name);
   c->sig = sig;
   c->type = new_type();
 
   if (sort == setif_sort) { 
-    c->groups = new_cons_group_list(get_sort_region(sort));
+    c->groups = new_persistent_cons_group_list();
   }
   else c->groups = NULL;
 
@@ -487,10 +474,9 @@ gen_e constructor_expr(constructor c, gen_e exps[], int arity)
   cons_expr result;
   int i;
   get_stamp_fn_ptr get_stamp;
-  region sort_region = get_sort_region(c->sort);
   term_hash sort_hash = get_sort_hash(c->sort);
   
-  stamp *st = rarrayalloc(sort_region,arity + 1,stamp);
+  stamp *st = rarrayalloc(banshee_nonptr_region,arity + 1,stamp);
   st[0] = c->type;
   
   // Dynamic arity check
@@ -515,14 +501,14 @@ gen_e constructor_expr(constructor c, gen_e exps[], int arity)
   if (!(result = (cons_expr)term_hash_find(sort_hash,st,arity+1)) 
       || arity == 0 )
     {
-      gen_e *e = rarrayalloc(sort_region,arity,gen_e);
+      gen_e *e = rarrayalloc(banshee_ptr_region,arity,gen_e);
       
       if (arity)
 	memcpy(e,exps,sizeof(gen_e)*arity);
       else 
 	e = NULL;
 
-      result = ralloc(sort_region,struct cons_expr_);  
+      result = ralloc(cons_expr_region,struct cons_expr_);  
       result->type = st[0];
       result->st = stamp_fresh();
       result->sort = c->sort;
@@ -547,7 +533,6 @@ gen_e constructor_expr(constructor c, gen_e exps[], int arity)
 static gen_e make_proj_pat(constructor c, int i, gen_e e)
 {
   proj_pat pat;
-  region sort_region = get_sort_region(e->sort);
   term_hash sort_hash = get_sort_hash(e->sort);
   get_stamp_fn_ptr get_stamp = get_sort_stamp(e->sort);
   
@@ -558,7 +543,7 @@ static gen_e make_proj_pat(constructor c, int i, gen_e e)
 
   if (! (pat = (proj_pat)term_hash_find(sort_hash,s,3)) )
     {
-      pat = ralloc(sort_region,struct proj_pat_);
+      pat = ralloc(proj_pat_region,struct proj_pat_);
       pat->type = s[0];
       pat->st = stamp_fresh();
       pat->sort = c->sort;
@@ -898,8 +883,8 @@ static bool setif_res_proj(setif_var v1,gen_e e2)
 /* Add a field */
 flowrow_field flowrow_make_field(const char *name, gen_e e)
 {
-  flowrow_field result = ralloc(flowrow_region,struct flowrow_field_);
-  result->label = rstrdup(flowrow_region,name);
+  flowrow_field result = ralloc(flowrow_field_region,struct flowrow_field_);
+  result->label = rstrdup(banshee_nonptr_region,name);
   result->expr = e;
   return result;
 }
@@ -1210,7 +1195,7 @@ static struct decon deconstruct_expr_aux(constructor c,gen_e e)
 	if ( setif_is_cons_expr(e) && check_cons_match(c,((setif_term)e)->type) )
 	  {
 	    cons_expr ce = (cons_expr)e;
-	    gen_e *elems = rarrayalloc(get_sort_region(e->sort),ce->arity,
+	    gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
 				       gen_e);
 	    memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
 	    return (struct decon){ce->name,ce->arity,elems};
@@ -1223,7 +1208,7 @@ static struct decon deconstruct_expr_aux(constructor c,gen_e e)
 	if ( setst_is_cons_expr(e) && check_cons_match(c,((setst_term)e)->type) )
 	  {
 	    cons_expr ce = (cons_expr)e;
-	    gen_e *elems = rarrayalloc(get_sort_region(e->sort),ce->arity,
+	    gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
 				       gen_e);
 	    memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
 	    return (struct decon){ce->name,ce->arity,elems};
@@ -1237,7 +1222,7 @@ static struct decon deconstruct_expr_aux(constructor c,gen_e e)
 	     check_cons_match(c, ((gen_term)term_get_ecr(e))->type) )
 	  {
 	    cons_expr ce = (cons_expr)term_get_ecr(e);
-	    gen_e *elems = rarrayalloc(get_sort_region(e->sort),ce->arity,
+	    gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
 				       gen_e);
 	    memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
 	    return (struct decon){ce->name,ce->arity,elems};
@@ -1269,6 +1254,15 @@ struct decon deconstruct_any_expr(gen_e e)
 
 void nonspec_init(void)
 {
+  region_init();
+
+  cons_group_region = newregion();
+  constructor_region = newregion();
+  cons_expr_region = newregion();
+  cons_group_region = newregion();
+  proj_pat_region = newregion();
+  gproj_pat_region = newregion();
+
   engine_init();
   term_init();
   setif_init();
@@ -1278,6 +1272,12 @@ void nonspec_init(void)
 
 void nonspec_reset(void)
 {
+  deleteregion(cons_group_region);
+  deleteregion(constructor_region);
+  deleteregion(cons_expr_region);
+  deleteregion(proj_pat_region);
+  deleteregion(gproj_pat_region);
+
   flowrow_reset();
   setst_reset();
   setif_reset();
@@ -1568,16 +1568,16 @@ void register_error_handler(banshee_error_handler_fn error_handler)
 cons_group make_cons_group(const char *name, sig_elt s[], int arity)
 {
   static int next_gid = 0;
-  cons_group g = ralloc(setif_region, struct cons_group_);
+  cons_group g = ralloc(cons_group_region, struct cons_group_);
   sig_elt *sig = NULL;
   
   if (arity > 0) {
-    sig = rarrayalloc(setif_region, arity, sig_elt);
+    sig = rarrayalloc(banshee_nonptr_region, arity, sig_elt);
     memcpy(sig,s,sizeof(sig_elt)*arity);
   }
   
   g->arity = arity;
-  g->name = rstrdup(setif_region,name);
+  g->name = rstrdup(banshee_nonptr_region,name);
   g->sig = sig;
   g->gid = next_gid++;
 
@@ -1613,7 +1613,6 @@ void cons_group_add(cons_group g, constructor c)
 static gen_e make_group_proj_pat(cons_group g, int i, gen_e e)
 {
   gproj_pat pat;
-  region sort_region = get_sort_region(e->sort);
   term_hash sort_hash = get_sort_hash(e->sort);
   get_stamp_fn_ptr get_stamp = get_sort_stamp(e->sort);
   
@@ -1625,7 +1624,7 @@ static gen_e make_group_proj_pat(cons_group g, int i, gen_e e)
 
   if (! (pat = (gproj_pat)term_hash_find(sort_hash,s,4)) )
     {
-      pat = ralloc(sort_region,struct gproj_pat_);
+      pat = ralloc(gproj_pat_region,struct gproj_pat_);
       pat->sort = setif_sort;
       pat->type = s[0];
       pat->st = stamp_fresh();
@@ -1733,7 +1732,7 @@ bool cons_group_serialize(FILE *f, void *obj)
 
 void *cons_group_deserialize(FILE *f)
 {
-  cons_group g = ralloc(permanent, struct cons_group_);
+  cons_group g = ralloc(cons_group_region, struct cons_group_);
   assert(f);
 
   fread((void *)&g->arity, sizeof(int), 1, f);
@@ -1770,7 +1769,7 @@ static bool setif_proj_pat_serialize(FILE *f, proj_pat pat)
 
 static void *setif_proj_pat_deserialize(FILE *f)
 {
-  proj_pat pat = ralloc(permanent, struct proj_pat_);
+  proj_pat pat = ralloc(proj_pat_region, struct proj_pat_);
   assert(f);
   fread((void *)&pat->st, sizeof(int), 1, f);
   fread((void *)&pat->i, sizeof(int), 1, f);
@@ -1806,7 +1805,7 @@ static bool setif_gproj_pat_serialize(FILE *f, gproj_pat gpat)
 
 static void *setif_gproj_pat_deserialize(FILE *f)
 {
-  gproj_pat gpat = ralloc(permanent, struct gproj_pat_);
+  gproj_pat gpat = ralloc(gproj_pat_region, struct gproj_pat_);
   assert(f);
 
   fread((void *)&gpat->st, sizeof(stamp), 1, f);
@@ -1849,7 +1848,7 @@ static bool cons_expr_serialize(FILE *f, cons_expr e)
 
 static void *cons_expr_deserialize(FILE *f)
 {
-  cons_expr e = ralloc(permanent, struct cons_expr_);
+  cons_expr e = ralloc(cons_expr_region, struct cons_expr_);
   assert(f);
 
   fread((void *)&e->st, sizeof(stamp), 1, f);
@@ -2207,7 +2206,7 @@ bool constructor_serialize(FILE *f, void *obj)
 
 void *constructor_deserialize(FILE *f)
 {
-  constructor c = ralloc(permanent, struct constructor_);
+  constructor c = ralloc(constructor_region, struct constructor_);
   fread((void *)&c->sort, sizeof(int), 1, f);
   fread((void *)&c->type, sizeof(int), 1, f);
   fread((void *)&c->arity, sizeof(int), 1, f);
@@ -2310,4 +2309,56 @@ hash_table *deserialize_cs(FILE *f)
   banshee_deserialize_end();
 
   return entry_points;
+}
+
+int update_constructor(translation t, void *m)
+{
+  constructor c = (constructor)m;
+
+  update_pointer(t, (void **)&c->name);
+  update_pointer(t, (void **)&c->sig);
+  update_pointer(t, (void **)&c->groups);
+
+  return sizeof(struct constructor_);
+}
+
+int update_cons_group(translation t, void *m)
+{
+  cons_group g = (cons_group)m;
+  update_pointer(t, (void **)&g->name);
+  update_pointer(t, (void **)&g->sig);
+
+  return sizeof(struct cons_group_);
+}
+
+int update_proj_pat(translation t, void *m)
+{
+  proj_pat p = (proj_pat)m;
+  
+  update_pointer(t, (void **)&p->exp);
+  update_pointer(t, (void **)&p->c);
+
+  return sizeof(struct proj_pat_);
+}
+
+int update_gproj_pat(translation t, void *m)
+{
+  gproj_pat g = (gproj_pat)m;
+  
+  update_pointer(t, (void **)&g->exp);
+  update_pointer(t, (void **)&g->g);
+
+  return sizeof(struct gproj_pat_);
+}
+
+int update_cons_expr(translation t, void *m)
+{
+  cons_expr e = (cons_expr)m;
+
+  update_pointer(t, (void **)&e->name);
+  update_pointer(t, (void **)&e->sig);
+  update_pointer(t, (void **)&e->exps);
+  update_pointer(t, (void **)&e->c);
+
+  return sizeof(struct cons_expr_);
 }
