@@ -208,6 +208,8 @@ harness will then call cparser twice:
 
 ** Incorporate backtracking tests into build process
 
+DONE.
+
 * iBanshee interpreter
 
 ** Allow programs to be read from files
