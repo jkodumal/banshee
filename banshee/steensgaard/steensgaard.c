@@ -237,7 +237,7 @@ T pta_rvalue(T t) {
 }
 
 T pta_address(T t1) {
-  return ref(alabel_t_fresh("wild"), t1,L_wild());
+  return ref(alabel_t_wild(), t1,L_wild());
 }
 
 void pta_assignment(T t1, T t2) {
