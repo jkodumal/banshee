@@ -23,7 +23,7 @@ def list_to_string_nolf(list):
 # identifier
 def get_canon_ident(filename):
     m = md5.new()
-    m.update(filename)
+    m.update(os.path.abspath(os.curdir) + "/" + filename)
     return m.hexdigest()
 #    output = os.popen("md5 -s \"%s\"" % filename)
 #    return output.readlines()[0].split()[3]
@@ -44,10 +44,11 @@ def gcc_cmd():
 
 # Add a string variable declaration to the end of a file. If the file
 # already ends with such a declaration, this won't add another
+# TODO -- md5 the FULL filename, including ${pwd}
 def modify_file(filename):
-    appendline = "const char CANON_IDENT_%s[] = \"CANON_IDENT_%s\";" % (get_canon_ident(filename), filename)
+    appendline = "const char CANON_IDENT_%s[] = \"CANON_IDENT_%s\";" % (get_canon_ident(filename), os.path.abspath(os.curdir) + "/" + filename)
     if (not already_added(appendline,filename)):
-	os.system("echo \"const char CANON_IDENT_%s[] = \\\"CANON_IDENT_%s\\\";\" >> %s" % (get_canon_ident(filename), filename, filename))
+	os.system("echo \"const char CANON_IDENT_%s[] = \\\"CANON_IDENT_%s\\\";\" >> %s" % (get_canon_ident(filename), os.path.abspath(os.curdir) + "/" + filename, filename))
 
 def main():
     for arg in sys.argv[1:]:
