@@ -33,9 +33,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
 #include "regions.h"
 #include "persist.h"
 #include "utils.h"
+
 
 #define DEFAULT_FILENAME "persist-test.out"
 
@@ -202,8 +204,12 @@ int main(int argc, char **argv)
 
   test_rgn = newregion();
 
-
-  if (argc == 2) {
+  if (argc == 1) {
+    serialize();
+    deserialize();
+    unlink(DEFAULT_FILENAME);
+  }
+  else if (argc == 2) {
     /* Serialize */
     if (!strcmp(argv[1], "--out")) {
       serialize();
