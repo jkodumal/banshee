@@ -9,7 +9,8 @@ long_options=['start-with=','end-with=',"help"]
 
 # Default values for command line options
 project = "cqual"
-repository = ":pserver:anonymous@cvs.sourceforge.net:/cvsroot/" + project
+#repository = ":pserver:anonymous@cvs.sourceforge.net:/cvsroot/" + project
+repository = "/Users/jkodumal/work/local_repositories/" + project
 logfilename = "logs/" + project + ".log"
 outfilename = "out/" + project + ".out"
 statefilename = "state/" + project + ".state"
@@ -104,7 +105,7 @@ def get_banshee_state(statefile):
 
 # Get the name of the directory to store the checkout in
 def get_dirname(current):
-    if (start_with_entry % 2):
+    if ( (current % 2) == 1):
 	dirname = project + "_odd"
     else:
 	dirname = project + "_even"
@@ -132,7 +133,6 @@ def process_andersen_output(output):
     outfile = open(outfilename,"w")
     for line in output:
 	if (line == '##################\n'):
-	    print "Found delimiter"
 	    found = True
 	if found:
 	    outfile.write(line)
@@ -152,7 +152,7 @@ def main():
     date,_ = next_log_entry(logfile)
     dirname = get_dirname(start_with_entry)
     os.system("rm -rf %s" % dirname) 
-    os.system("cvs -d %s co -D \"%s\" %s" % (repository, date, project))
+    os.system("cvs -d %s co -D \"%s\" %s >/dev/null" % (repository, date, project))
     os.system("mv %s %s" % (project, dirname))
     build_error = os.system("%s %s" % (compilescript, dirname))
     if (build_error):
@@ -160,9 +160,7 @@ def main():
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
     files = list_to_string(get_filelist(dirname,".i"))
-    print files
     cmd = "%s -fserialize-constraints %s 2>/dev/null" % (parser_ns,files)
-    print cmd
     output = os.popen(cmd).readlines()
     process_andersen_output(output)
 
@@ -181,10 +179,8 @@ def main():
 	banshee_state = get_banshee_state(statefile)
  	date,_ = next_log_entry(logfile)
 	dirname = get_dirname(current)
-	print dirname
-	print current
 	os.system("rm -rf %s" % dirname)
-	os.system("cvs -d %s co -D \"%s\" %s" % (repository, date, project))
+	os.system("cvs -d %s co -D \"%s\" %s>/dev/null" % (repository, date, project))
 	os.system("mv %s %s" % (project, dirname))
 	build_error = os.system("%s %s" % (compilescript, dirname))
 	if (build_error):
