@@ -19,7 +19,7 @@
 O = mobj/
 CC = gcc
 
-ifdef LIBCOMPAT
+ifndef RLIB
 region_dir = ../libcompat
 else
 region_dir = ../rlib

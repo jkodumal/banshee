@@ -73,11 +73,15 @@ check:
 	$(MAKE) -C tests -f pta_test.mk
 	$(MAKE) -C tests -f pta_test.mk pta-bt-regr
 	$(MAKE) -C tests -f pta_test.mk pta-persist-regr
+ifdef RLIB
 	$(MAKE) -C tests -f pta_test.mk pta-rpersist-regr
+endif
 	$(MAKE) -C tests -f ibanshee_test.mk
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-bt
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-persist
+ifdef RLIB
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-rpersist
+endif
 	@echo "SUCCESS: All check targets passed."
 
 perf:
@@ -101,5 +105,5 @@ clean:
 	$(MAKE) -C tests -f pta_test.mk clean
 	$(MAKE) -C tests -f ibanshee_test.mk clean
 	$(MAKE) -C ibanshee clean
-	rm -rf *~
+	rm -rf *~ data statics offsets extras
 

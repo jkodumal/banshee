@@ -26,7 +26,7 @@
 # SUCH DAMAGE.
 
 
-ifdef LIBCOMPAT
+ifndef RLIB
 region_dir = ../libcompat
 else
 region_dir = ../rlib

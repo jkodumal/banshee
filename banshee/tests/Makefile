@@ -25,7 +25,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-ifdef LIBCOMPAT
+ifndef RLIB
 region_dir = ../libcompat
 else
 region_dir = ../rlib
@@ -58,7 +58,7 @@ EXES = lambda-test.exe dyckcfl-random-test.exe \
        uf-bt-test.exe persist-test.exe dyckcfl-test.exe
 
 # tests that only pass if rlib is used (won't work with libcompat)
-ifndef LIBCOMPAT
+ifdef RLIB
 EXES := ${EXES} region-persist-test.exe
 endif
 
