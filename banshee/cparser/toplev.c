@@ -549,7 +549,12 @@ static void compile_file(char *name) deletes
   fclose (ifile);
 
   end_time(&parse_time);
-
+  
+/*   if (errorcount != 0) */
+/*     { */
+/*       fprintf(stderr, "Warning: there were some parse errors, trying to analyze anyway."); */
+/*       errorcount = 0; */
+/*     } */
   if (errorcount == 0)
     {
       if (the_program)

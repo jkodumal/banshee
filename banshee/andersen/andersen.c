@@ -248,4 +248,12 @@ hash_table *pta_deserialize(FILE *f)
   return andersen_terms_deserialize(f);
 }
 
+void pta_region_serialize(FILE *f)
+{
+  andersen_terms_region_serialize(f);
+}
 
+void pta_region_deserialize(translation t, FILE *f)
+{
+  andersen_terms_region_deserialize(t, f);
+}

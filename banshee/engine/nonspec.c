@@ -164,6 +164,8 @@ region cons_group_region;
 region proj_pat_region;
 region gproj_pat_region;
 
+/* TODO -- this state really needs to be saved, it's a total
+   coincidence that it works as is */
 static int new_type()
 {
   static int next_type = LARGEST_BUILTIN_TYPE + NUM_EXTRA_TYPES;
@@ -2255,6 +2257,38 @@ void serialize_cs(FILE *f, hash_table *entry_points,
 
   banshee_serialize_end();
   
+  /* Finally, close the file */
+  fclose(f);
+}
+
+/* Write out any nonpointer static data in any modules */
+void write_module_nonspec(FILE *f)
+{
+  write_module_engine(f);
+  write_module_stamp(f);
+  write_module_uf(f);
+  write_module_setif(f);
+  write_module_flowrow(f);
+  write_module_term(f);
+}
+
+/* Call the pointer update routines with the given translation, and
+   also read any extra information (static data) from f  */
+void update_module_nonspec(translation t, FILE *f)
+{
+  assert(f);
+  
+  /* Reset the constraint solver */
+  engine_reset();
+
+  /* Update any static data (pointer and nonpointer) in f */
+  update_module_engine(t, f);
+  update_module_stamp(t, f);
+  update_module_uf(t, f);
+  update_module_setif(t, f);
+  update_module_flowrow(t, f);
+  update_module_term(t, f);
+
   /* Finally, close the file */
   fclose(f);
 }

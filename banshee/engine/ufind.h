@@ -96,6 +96,10 @@ void uf_serialize(FILE *f);
 void uf_deserialize(FILE *f);
 void uf_set_fields(void);
 
+/* Region persistence */
+void write_module_uf(FILE *f);
+void update_module_uf(translation t, FILE *f);
+
 #define DECLARE_UFIND(name,type) \
 typedef struct name *name; \
 typedef type (* name ## _combine_fn_ptr)(const type info1, const type info2); \

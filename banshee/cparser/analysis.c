@@ -225,7 +225,7 @@ static void var_info_clear(void) deletes
 
 static void collect_state(void)
 { 
-  hash_table_list_append_tail(hash_table_copy(analysis_rgn, collection_hash), state.collection_envs);
+  hash_table_list_append_tail(hash_table_copy(NULL, collection_hash), state.collection_envs);
   int_list_append_tail(acnt.scope, state.scopes);
   int_list_append_tail(acnt.collection_count, state.collection_counts);
   int_list_append_tail(acnt.string_count, state.string_counts); 
@@ -1509,17 +1509,17 @@ void analysis_backtrack(int backtrack_time)
 
   /* Truncate each of the lists */
   state.collection_envs = 
-    hash_table_list_copy_upto(analysis_rgn, state.collection_envs, length);
+    hash_table_list_copy_upto(NULL, state.collection_envs, length);
   state.scopes = 
-    int_list_copy_upto(analysis_rgn, state.scopes, length);
+    int_list_copy_upto(NULL, state.scopes, length);
   state.collection_counts  = 
-    int_list_copy_upto(analysis_rgn, state.collection_counts, length);
+    int_list_copy_upto(NULL, state.collection_counts, length);
   state.string_counts  = 
-    int_list_copy_upto(analysis_rgn, state.string_counts, length);
+    int_list_copy_upto(NULL, state.string_counts, length);
   state.next_allocs = 
-    int_list_copy_upto(analysis_rgn, state.next_allocs, length);
+    int_list_copy_upto(NULL, state.next_allocs, length);
   state.banshee_times =
-    int_list_copy_upto(analysis_rgn, state.banshee_times, length);
+    int_list_copy_upto(NULL, state.banshee_times, length);
 
   /* Set the collection environment and acnt struct */
   collection_hash = hash_table_list_last(state.collection_envs);
@@ -1587,6 +1587,28 @@ void analysis_serialize(const char *filename)
   pta_serialize(f, entries, length);
 }
 
+void analysis_region_serialize(const char *filename)
+{
+  FILE *f = fopen(filename, "wb");
+  assert(f);
+  fwrite((void *)&acnt, sizeof(struct counts), 1, f);
+
+}
+
+void analysis_region_deserialize(translation t, const char *filename)
+{
+  FILE *f = fopen(filename, "rb");
+  assert(f);
+
+  fread((void *)&acnt, sizeof(struct counts), 1, f);
+  update_pointer(t, (void **)&state.scopes);
+  update_pointer(t, (void **)&state.collection_counts);
+  update_pointer(t, (void **)&state.string_counts);
+  update_pointer(t, (void **)&state.next_allocs);
+  update_pointer(t, (void **)&state.banshee_times);
+  update_pointer(t, (void **)&state.collection_envs);
+}
+
 void analysis_deserialize(const char *filename)
 {
   int length,i;
@@ -1604,7 +1626,7 @@ void analysis_deserialize(const char *filename)
   state.banshee_times = read_int_list(f);
 
   result = pta_deserialize(f);
-  collection_envs = new_hash_table_list(permanent);
+  collection_envs = new_persistent_hash_table_list();
 
   length = int_list_length(state.scopes);
 
@@ -1688,12 +1710,12 @@ void analysis_init() deletes
     make_persistent_string_hash_table(128, 
 				      BANSHEE_PERSIST_KIND_gen_e);
 
-  state.collection_envs = new_hash_table_list(analysis_rgn);
-  state.scopes = new_int_list(analysis_rgn);
-  state.collection_counts = new_int_list(analysis_rgn);
-  state.string_counts = new_int_list(analysis_rgn);
-  state.next_allocs = new_int_list(analysis_rgn);
-  state.banshee_times = new_int_list(analysis_rgn);
+  state.collection_envs = new_persistent_hash_table_list();
+  state.scopes = new_persistent_int_list();
+  state.collection_counts = new_persistent_int_list();
+  state.string_counts = new_persistent_int_list();
+  state.next_allocs = new_persistent_int_list();
+  state.banshee_times = new_persistent_int_list();
 }
 
 

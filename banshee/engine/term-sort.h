@@ -100,6 +100,11 @@ void term_serialize(FILE *f);
 void term_deserialize(FILE *f);
 void term_set_fields(void);
 
+/* Region persistence */
+void write_module_term(FILE *f);
+void update_module_term(translation t, FILE *f);
+
+
 /* Stats */
 extern struct term_stats term_stats;
 

@@ -282,6 +282,10 @@ void serialize_cs(FILE *f, hash_table *entry_points,
 
 hash_table *deserialize_cs(FILE *f);
 
+/* Region persistence */
+void write_module_nonspec(FILE *f);
+void update_module_nonspec(translation t, FILE *f);
+
 EXTERN_C_END
 
 #endif /* NONSPEC_H */

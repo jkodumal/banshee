@@ -143,6 +143,9 @@ void engine_serialize(FILE *f);
 void engine_deserialize(FILE *f);
 void engine_set_fields(void);
 
+/* Region persistence */
+void write_module_engine(FILE *f);
+void update_module_engine(translation t, FILE *f);
 
 void print_constraint_graphs(FILE *f);
 

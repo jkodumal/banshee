@@ -488,7 +488,12 @@ void term_set_fields(void)
   deserialize_set_obj((void **)&term_current_rollback_info);
 }
 
-void update_module_term(translation t)
+void write_module_term(FILE *f)
+{
+  return;
+}
+
+void update_module_term(translation t, FILE *f)
 {
   update_pointer(t, (void **)&term_current_rollback_info);
 }

@@ -156,6 +156,8 @@ let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) =
   let graph = strid ^ "_print_graph" in
   let serialize = strid ^ "_serialize" in
   let deserialize = strid ^ "_deserialize" in
+  let serialize_rgn = strid ^ "_region_serialize" in
+  let deserialize_rgn = strid ^ "_region_deserialize" in
   let formals = [] in
   let cmnt = block_comment "Init/reset engine, print constraint graphs, serialize/deserialize constraint graphs" in
   let init_engine = Expr "engine_init();" in
@@ -187,12 +189,19 @@ let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) =
 			[(no_qual (Ident "FILE *"),"arg1")],
 			deserialize_body,[])
   in
+  let serialize_rgn_fun = (return, serialize_rgn, [(no_qual (Ident "FILE *"),"arg1");
+					      ], serialize_body,[])in
+  let deserialize_rgn_fun = (return, deserialize_rgn, [(no_qual (Ident "translation"), "arg1"); (no_qual (Ident "FILE *"),"arg2")],
+			     serialize_body,[]) 
+  in
   (header#add_gdecls [cmnt;prototype init_fun;prototype reset_fun; 
                       prototype stats_fun;prototype graph_fun; 
 		      prototype serialize_fun; prototype deserialize_fun;
+		      prototype serialize_rgn_fun; prototype deserialize_rgn_fun;
 		      (macro "EXTERN_C_END");endif];
    source#add_fdefs [func init_fun;func reset_fun; func stats_fun;
-		    func graph_fun;func serialize_fun;func deserialize_fun])
+		    func graph_fun;func serialize_fun;func deserialize_fun;
+		    func serialize_rgn_fun; func deserialize_rgn_fun])
     
 let to_c (strid,sigid,dataspecs) = 
   let env,header,source = Env.empty_env,empty_header,empty_file in

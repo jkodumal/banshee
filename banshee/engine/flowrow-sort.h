@@ -116,6 +116,10 @@ void flowrow_serialize(FILE *f);
 void flowrow_deserialize(FILE *f);
 void flowrow_set_fields(void);
 
+/* Region persistence */
+void write_module_flowrow(FILE *f);
+void update_module_flowrow(translation t, FILE *f);
+
 /* Stats */
 extern struct flowrow_stats flowrow_stats;
 

@@ -1493,7 +1493,12 @@ void setif_set_fields(void)
   deserialize_set_obj((void **)&setif_hash);
 }
 
-void update_module_setif(translation t)
+void write_module_setif(FILE *f)
+{
+  return;
+}
+
+void update_module_setif(translation t, FILE *f)
 {
   update_pointer(t, (void **)&setif_current_rollback_info);
   update_pointer(t, (void **)&setif_hash);

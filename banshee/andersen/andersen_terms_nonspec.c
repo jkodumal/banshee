@@ -38,7 +38,6 @@ typedef flowrow_field argT_field;
 static constructor ref_c;
 static constructor lam_c;
 
-
 typedef gen_e_list argT_list;
 typedef gen_e_list alabel_t_list;
 typedef gen_e_list T_list;
@@ -418,6 +417,19 @@ hash_table *andersen_terms_deserialize(FILE *f)
 
   return &result[1];
 }
+
+void andersen_terms_region_serialize(FILE *f)
+{
+  write_module_nonspec(f);
+}
+
+void andersen_terms_region_deserialize(translation t, FILE *f)
+{
+  update_pointer(t, (void **)&ref_c);
+  update_pointer(t, (void **)&lam_c);
+  update_module_nonspec(t, f);
+}
+
 
 void andersen_terms_reset(void) deletes
 {

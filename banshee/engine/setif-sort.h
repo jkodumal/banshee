@@ -117,6 +117,10 @@ void setif_serialize(FILE *F);
 void setif_deserialize(FILE *f);
 void setif_set_fields(void);
 
+/* Region persistence */
+void write_module_setif(FILE *f);
+void update_module_setif(translation t, FILE *f);
+
 /* Stats */
 extern struct setif_stats setif_stats;
 struct setif_stats

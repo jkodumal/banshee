@@ -429,7 +429,12 @@ void uf_set_fields()
   deserialize_set_obj((void **)&ustack);
 }
 
-void update_module_uf(translation t)
+void write_module_uf(FILE *f)
+{
+  return;
+}
+
+void update_module_uf(translation t, FILE *f)
 {
   update_pointer(t, (void **)&ustack);
 }

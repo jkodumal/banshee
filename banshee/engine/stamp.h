@@ -62,6 +62,10 @@ unsigned long stamp_hash(void *key);
 
 bool stamp_eq(void *s1, void *s2);
 
+/* Region persistence */
+void write_module_stamp(FILE *f);
+void update_module_stamp(translation t, FILE *f);
+
 EXTERN_C_END
 
 #endif /* STAMP_H */

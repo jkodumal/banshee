@@ -1564,7 +1564,13 @@ void flowrow_set_fields(void)
   deserialize_set_obj((void **)&flowrow_current_rollback_info);
 }
 
-void update_module_flowrow(translation t)
+
+void write_module_flowrow(FILE *f)
+{
+  return;
+}
+
+void update_module_flowrow(translation t, FILE *f)
 {
   update_pointer(t, (void **)&flowrow_hash);
   update_pointer(t, (void **)&flowrow_current_rollback_info);
