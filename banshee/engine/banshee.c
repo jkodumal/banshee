@@ -51,7 +51,7 @@ banshee_error_handler_fn handle_error = NULL;
 
 static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
 {
-  fail("Unhandled banshee error: code %d\n",k);
+  fprintf(stderr,"Unhandled banshee error: code %d\n",k);
 }
 
 void engine_init(void)

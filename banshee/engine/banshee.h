@@ -73,7 +73,7 @@ typedef struct gen_e_ *gen_e;
 
 DECLARE_LIST(gen_e_list,gen_e);
 
-// Keep these in sync with nonspec.h
+// Keep these in sync with nonspec.h and the code generator
 typedef enum banshee_error_kind
 {
   bek_cons_mismatch, 	        // c(...) <= d(...)
@@ -97,7 +97,7 @@ typedef struct banshee_rollback_info_ {
   sort_kind kind;
 } * banshee_rollback_info;
 
-region banshee_rollback_region;
+extern region banshee_rollback_region;
 
 /* Read the global banshee clock */
 banshee_time banshee_get_time(void);

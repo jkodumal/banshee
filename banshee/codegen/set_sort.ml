@@ -364,13 +364,13 @@ class setsort_gen =
 	 Switch ("((setif_term)arg2)->type",
 		 (gen_con_case c consig)::(proj_cases) @ 
 		 (gen_others c others),
-		 Expr "fail(\"Inconsistent system of constraints\\n\");") )
+		 Expr "handle_error(arg1,arg2,bek_cons_mismatch);") )
       |	None -> (String.uppercase c ^ "_",
-		 Expr "if (((setif_term)arg1)->type != ((setif_term)arg2)->type) fail(\"Inconsistent system of constraints\\n\");  ";)
+		 Expr "if (((setif_term)arg1)->type != ((setif_term)arg2)->type) handle_error(arg1,arg2,bek_cons_mismatch);  ";)
       in
       let body conids = 
       	(Switch("((setif_term)arg1)->type",List.map gen_inner_switch conids, 
-		Expr "fail(\"Inconsistent system of constraints\\n\");"))
+		Expr "handle_error(arg1,arg2,bek_cons_mismatch);"))
       in
       let conids' = (foldl 
 		       (function ((c,sig_opt),acc) -> 
