@@ -71,14 +71,18 @@ docs:
 check: 
 	$(MAKE) -C tests check
 	$(MAKE) -C tests -f pta_test.mk
+ifndef NO_BANSHEE_ROLLBACK
 	$(MAKE) -C tests -f pta_test.mk pta-bt-regr
 	$(MAKE) -C tests -f pta_test.mk pta-persist-regr
+endif
 ifdef RLIB
 	$(MAKE) -C tests -f pta_test.mk pta-rpersist-regr
 endif
 	$(MAKE) -C tests -f ibanshee_test.mk
+ifndef NO_BANSHEE_ROLLBACK
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-bt
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-persist
+endif
 ifdef RLIB
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-rpersist
 endif

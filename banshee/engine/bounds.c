@@ -88,6 +88,11 @@ bool bounds_remove(bounds b, stamp s)
   return FALSE;
 }
 
+stamp bounds_stamp(bounds b)
+{
+  return 0;
+}
+
 bool bounds_empty(bounds b)
 {
   return (gen_e_list_empty(b->elems));
@@ -136,8 +141,11 @@ bool bounds_set_fields(void *obj)
   return FALSE;
 }
 
+region added_edge_info_region;
+
 void bounds_init()
 {
+  added_edge_info_region = newregion();
 }
 
 void bounds_reset()
@@ -165,4 +173,18 @@ int update_added_edge_info(translation t, void *m)
 }
 
 region bounds_region = NULL;
-region added_edge_info_region = NULL;
+
+bool added_edge_info_serialize(FILE *f, void *obj)
+{
+  return FALSE;
+}
+
+void *added_edge_info_deserialize(FILE *f)
+{
+  return NULL;
+}
+
+bool added_edge_info_set_fields(void *obj)
+{
+  return FALSE;
+}

@@ -25,8 +25,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-
-# if HASH_BOUNDS is defined, use hash_bounds.o, otherwise, use bounds.o
 ifdef NO_HASH_BOUNDS
 FILTEREDOBJS = hash_bounds.o
 else
@@ -34,7 +32,6 @@ FILTEREDOBJS = bounds.o
 endif
 
 FILTEREDOBJS += malloc.o
-
 NONSPEC_OBJ = nonspec.o
 
 ifndef RLIB
@@ -67,12 +64,12 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 TARGETS = libengine.a libnsengine.a 
 
 ifdef DEBUG
-CFLAGS := -pg -g -DREGION_PROFILE ${CFLAGS}
+CFLAGS := -pg -g ${CFLAGS}
 else
 CFLAGS := -DNDEBUG -O3 ${CFLAGS}
 endif
 
-all: $(TARGETS) TAGS
+all: $(TARGETS) 
 
 libengine.a: $(OBJS)
 	@echo $(OBJS)

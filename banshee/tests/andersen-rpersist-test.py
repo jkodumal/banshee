@@ -15,9 +15,10 @@ def list_to_string(list):
 
 files = sys.argv[1:]
 
-correct = int(os.popen("bash -c \"../cparser/parser_ns.exe %s 2>/dev/null | grep \\\"Number of things pointed to\\\"\"" % list_to_string(files)).readlines()[0].split()[5])
+correct = int(os.popen("bash -c \"../cparser/parser_ns.exe %s 2> /dev/null | grep \\\"Number of things pointed to\\\"\"" % list_to_string(files)).readlines()[0].split()[5])
 
 for pivot in range(1,len(files)):
+    print "%d / %d" % (pivot,len(files))
     os.system("bash -c \"../cparser/parser_ns.exe -frserialize-constraints %s &>/dev/null\"" % list_to_string(files[:pivot]))
     output = os.popen("bash -c \"../cparser/parser_ns.exe -frdeserialize-constraints %s 2>/dev/null | grep \\\"Number of things pointed to\\\" \"" % list_to_string(files[pivot:])).readlines()[0]
     result = int(output.split()[5])
