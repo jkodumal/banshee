@@ -46,9 +46,9 @@ Compile the project as follows:
 
 make CC="gcc -P -save-temps"
 
-NOTE: now use
+NOTE: now ./configure with CC="/full_path_to/gcc_subst.py" then:
 
-make CC="./gcc_subst.py -P -save-temps"
+make CC="/full_path_to/gcc_subst.py -P -save-temps"
 
 This will leave the preprocessed files as .i files in the source
 directories. The '-P' option will suppress line directives, which
@@ -88,3 +88,9 @@ find . -name "*.i"
 The test harness must maintain some additional state-- namely the
 ordered list of files analyzed paired with a banshee time (this is the
 time after each file has been analyzed)
+
+** Simulate only
+
+Run:
+
+./run-bt-experiment.py --analysis="../cparser/parser_ns.exe -fno-points-to"
