@@ -39,8 +39,13 @@ TAGFILES = *.c *.h
 
 CC = gcc
 
-CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
+ifdef DEBUG
+CFLAGS = -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr= 
+else
+CFLAGS = -DNDEBUG -O3 -I$(engine_dir) -I$(region_dir) -Ddeletes= \
+         -Dtraditional= -Dsameregion= -Dparentptr= 
+endif
 
 .PHONY: clean
 
@@ -48,10 +53,10 @@ all: $(TARGETS) TAGS
 
 $(RCA).c: $(RCA).bsp $(BANSHEE)
 	$(BANSHEE) $(RCA).bsp $(RCA)
-	indent -npsl $@ -o $@
+	indent -npsl $@ 
 
 $(RCA).h: $(RCA).c
-	indent -npsl $@ -o $@
+	indent -npsl $@ 
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)
@@ -61,4 +66,4 @@ $(BANSHEE):
 	$(MAKE) -C ../ banshee
 
 clean:
-	rm -f $(TARGETS) *~
+	rm -f $(TARGETS) *~ *BAK

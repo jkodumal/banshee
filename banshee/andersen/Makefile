@@ -42,8 +42,13 @@ TAGFILES = *.c *.h
 
 CC = gcc
 
+ifdef DEBUG
 CFLAGS = -pg -g -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr=
+else
+CFLAGS = -DNDEBUG -O3 -I$(engine_dir) -I$(region_dir) -Ddeletes= \
+         -Dtraditional= -Dsameregion= -Dparentptr=
+endif
 
 all: $(TARGETS)
 
@@ -51,17 +56,17 @@ andersen.o: $(ANDERSEN).h
 
 $(ANDERSEN).c: $(ANDERSEN).bsp $(BANSHEE)
 	$(BANSHEE) $(ANDERSEN).bsp $(ANDERSEN)
-	indent -npsl $@ -o $@
+	indent -npsl $@
 
 $(ANDERSEN).h: $(ANDERSEN).c
-	indent -npsl $@ -o $@
+	indent -npsl $@
 
 $(ANDERSEN_ST).c: $(ANDERSEN_ST).bsp $(BANSHEE)
 	$(BANSHEE) $(ANDERSEN_ST).bsp $(ANDERSEN_ST)
-	indent -npsl $@ -o $@
+	indent -npsl $@ 
 
 $(ANDERSEN_ST).h: $(ANDERSEN_ST).c
-	indent -npsl $@ -o $@
+	indent -npsl $@ 
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)
@@ -73,4 +78,4 @@ $(BANSHEE):
 .PHONY: clean
 
 clean:
-	rm -f $(TARGETS) *~
+	rm -f $(TARGETS) *~ *BAK

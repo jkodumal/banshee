@@ -48,10 +48,10 @@ all: $(TARGETS)
 
 $(LAMBDA).c: $(LAMBDA).bsp $(BANSHEE)
 	$(BANSHEE) $(LAMBDA).bsp $(LAMBDA)
-	indent -npsl $@ -o $@
+	indent -npsl $@ 
 
 $(LAMBDA).h: $(LAMBDA).c
-	indent -npsl $@ -o $@
+	indent -npsl $@ 
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)
@@ -61,4 +61,4 @@ $(BANSHEE):
 	$(MAKE) -C ../ banshee
 
 clean:
-	rm -f $(TARGETS) *~
+	rm -f $(TARGETS) *~ *BAK	

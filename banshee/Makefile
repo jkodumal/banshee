@@ -28,7 +28,7 @@
 .PHONY: banshee libcompat codegen engine tests rca andersen lambda dyckcfl \
         docs points-to install 
 
-all: banshee tests points-to docs
+all: banshee tests points-to 
 
 banshee: libcompat codegen engine
 

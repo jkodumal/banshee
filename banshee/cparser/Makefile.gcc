@@ -19,6 +19,7 @@
 O = mobj/
 CC = gcc
 
+
 ifdef DEBUG
 CFLAGS = -g -pg -Wall -Wno-char-subscripts -I. -I../libcompat -I../engine -I../andersen -Ddeletes= -Dtraditional= -Dsameregion=  -Dparentptr= -DUSEMALLOC $(ARCH_FLAGS) $(EXTRACFLAGS) -Itests/rc/original
 else
