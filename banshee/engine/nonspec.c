@@ -163,6 +163,7 @@ region cons_expr_region;
 region cons_group_region;
 region proj_pat_region;
 region gproj_pat_region;
+region gen_e_ptr_region;
 
 /* TODO -- this state really needs to be saved, it's a total
    coincidence that it works as is */
@@ -1264,6 +1265,7 @@ void nonspec_init(void)
   cons_group_region = newregion();
   proj_pat_region = newregion();
   gproj_pat_region = newregion();
+  gen_e_ptr_region = newregion();
 
   engine_init();
   term_init();
@@ -1279,12 +1281,19 @@ void nonspec_reset(void)
   deleteregion(cons_expr_region);
   deleteregion(proj_pat_region);
   deleteregion(gproj_pat_region);
+  deleteregion(gen_e_ptr_region);
 
   flowrow_reset();
   setst_reset();
   setif_reset();
   term_reset();
   engine_reset();
+}
+
+int update_gen_e_ptr(translation t, void *m)
+{
+  update_pointer(t, m);
+  return sizeof(void *);
 }
 
 static void cons_expr_print(FILE *f, cons_expr ce)

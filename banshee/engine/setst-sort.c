@@ -852,7 +852,7 @@ void setst_reset(void) deletes
   deleteregion_ptr(&setst_region);
 
   setst_region = newregion();
-  setst_hash = make_term_hash(setst_region);
+  setst_hash = make_term_hash(NULL);
   setst_vars = new_setst_var_list(setst_region);
   invalidate_tlb_cache();
   setst_changed = FALSE;

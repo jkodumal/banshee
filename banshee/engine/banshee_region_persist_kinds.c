@@ -191,6 +191,8 @@ region *get_persistent_regions(const char *filename)
   result[31] = term_constant_region; 
   result[32] = bucketptr_region;
   result[33] = keystrbucket_region;
+  result[34] = gen_e_ptr_region;
+  result[35] = term_bucketptr_region;
 
   {
     int count = 0;
@@ -266,6 +268,8 @@ Updater *get_updater_functions(const char *filename)
   result[31] = update_term_constant;
   result[32] = update_bucketptr;
   result[33] = update_keystrbucket;
+  result[34] = update_gen_e_ptr;
+  result[35] = update_term_bucketptr;
 
   return result;
 #endif  /* NONSPEC  */
@@ -283,6 +287,10 @@ void unregister_persistent_region(region r)
 {
   bool success = hash_table_remove(extra_regions, r);
 
-  if (! success) 
-    fail("Error: attempted to unregister a nonexistent region in unregister_persistent_region\n");
+  /* This is (sort of) a benign warning. The issue is that we haven't
+     called update_pointer on these regions, so we may occasionally
+     (from termhash.c) try to unregister a region that hasn't been
+     updated properly */
+  if (! success)
+    fprintf(stderr, "Warning: attempted to unregister a nonexistent region in unregister_persistent_region\n");
 }

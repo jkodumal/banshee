@@ -32,7 +32,7 @@
 
 EXTERN_C_BEGIN
 
-#define NUM_REGIONS 34
+#define NUM_REGIONS 36
 
 /*****************************************************************************
  *                                                                           *
@@ -102,6 +102,7 @@ extern region hash_entry_region;
 extern region term_bucket_region;
 extern region term_hash_region;
 extern region strbucket_region;
+extern region term_bucketptr_region;
 
 /* Regions for setif-sort.c */
 extern region setif_rollback_info_region;
@@ -125,6 +126,7 @@ extern region cons_expr_region;
 extern region cons_group_region;  
 extern region proj_pat_region;	  
 extern region gproj_pat_region;	  
+extern region gen_e_ptr_region;
 
 /* Regions for term-sort.c */
 extern region term_constant_region;
@@ -167,6 +169,7 @@ int update_setif_var(translation t, void *m);
 int update_hash_entry(translation t, void *m); 
 int update_term_bucket(translation t, void *m);
 int update_term_hash(translation t, void *m);
+int update_term_bucketptr(translation t, void *m);
 
 /* Update functions for setif-sort.c */
 int update_setif_term(translation t, void *m);
@@ -189,6 +192,7 @@ int update_gproj_pat(translation t, void *m);
 int update_constructor(translation t, void *m);
 int update_cons_group(translation t, void *m);
 int update_cons_expr(translation t, void *m);
+int update_gen_e_ptr(translation t, void *m);
 
 /* Update functions for term-sort.c */
 int update_term_constant(translation t, void *m);
