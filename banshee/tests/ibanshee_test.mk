@@ -38,6 +38,8 @@ COR_BT_DIR := ./test.ibc.cor/bt
 
 IBC_PERSIST_DIR := ./test.ibc/persist
 COR_PERSIST_DIR := ./test.ibc.cor/persist
+IBC_RPERSIST_DIR := ./test.ibc/rpersist
+COR_RPERSIST_DIR := ./test.ibc.cor/rpersist
 
 IBANSHEE_TESTS := 
 IBANSHEE_TESTS += cons_def.ibc
@@ -55,6 +57,9 @@ IBANSHEE_PERSIST_TESTS :=
 IBANSHEE_PERSIST_TESTS += cons_def_persist.ibc
 IBANSHEE_PERSIST_TESTS += row_flow_persist.ibc
 
+IBANSHEE_RPERSIST_TESTS :=
+IBANSHEE_RPERSIST_TESTS := simple_rpersist
+
 IBANSHEE_EXEC := $(IBANSHEE_DIR)/ibanshee.exe
 
 .PHONY: ibanshee-regr
@@ -67,6 +72,9 @@ ibanshee-bt: $(IBANSHEE_EXEC) ibanshee-bt/clean \
 ibanshee-persist: $(IBANSHEE_EXEC) ibanshee-persist/clean \
 	$(patsubst %,ibanshee-persist-tests/%,$(IBANSHEE_PERSIST_TESTS)) ibanshee-persist-done
 
+ibanshee-rpersist: $(IBANSHEE_EXEC) ibanshee-rpersist/clean \
+	$(patsubst %,ibanshee-rpersist-tests/%,$(IBANSHEE_RPERSIST_TESTS)) ibanshee-rpersist-done
+
 ibanshee-regr/clean:
 	rm -f $(IBC_DIR)/*.out
 
@@ -77,6 +85,9 @@ ibanshee-persist/clean:
 	rm -f $(IBC_PERSIST_DIR)/*.out
 	rm -f tmpfile
 
+ibanshee-rpersist/clean:
+	rm -f $(IBC_RPERSIST_DIR)/*.out
+
 .PHONY: ibanshee-done ibanshee-bt-done ibanshee-persist-done
 
 ibanshee-done:; @echo "iBanshee tests pass"
@@ -84,6 +95,8 @@ ibanshee-done:; @echo "iBanshee tests pass"
 ibanshee-bt-done:; @echo "iBanshee backtracking tests pass"
 
 ibanshee-persist-done:; @echo "iBanshee persistence tests pass"
+
+ibanshee-rpersist-done:; @echo "iBanshee region persistence tests pass"
 
 ibanshee-tests/%:
 	$(IBANSHEE_EXEC) -f $(IBC_DIR)/$* > $(IBC_DIR)/$*.out
@@ -97,7 +110,12 @@ ibanshee-persist-tests/%:
 	$(IBANSHEE_EXEC) -f $(IBC_PERSIST_DIR)/$* > $(IBC_PERSIST_DIR)/$*.out
 	diff $(COR_PERSIST_DIR)/$*.cor $(IBC_PERSIST_DIR)/$*.out
 
+ibanshee-rpersist-tests/%:
+	$(IBANSHEE_EXEC) -f $(IBC_RPERSIST_DIR)/$*_save.ibc > $(IBC_RPERSIST_DIR)/$*_save.ibc.out
+	$(IBANSHEE_EXEC) -f $(IBC_RPERSIST_DIR)/$*_load.ibc > $(IBC_RPERSIST_DIR)/$*_load.ibc.out
+	diff $(COR_RPERSIST_DIR)/$*.cor $(IBC_RPERSIST_DIR)/$*_load.ibc.out
+
 $(IBANSHEE_DIR)/ibanshee.exe: 
 	$(MAKE) -C ../ ibanshee
 
-clean: ibanshee-regr/clean ibanshee-bt/clean ibanshee-persist/clean
+clean: ibanshee-regr/clean ibanshee-bt/clean ibanshee-persist/clean ibanshee-rpersist/clean

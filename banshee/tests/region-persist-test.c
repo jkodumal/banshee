@@ -101,6 +101,12 @@ int verify()
     }
     thelist = node_list_tail(thelist);
   }
+
+  /* Try allocating something else */
+  {
+    node n = ralloc(newregion(), struct node_);
+    n->next = NULL;
+  }
   
   return 1;
 }
