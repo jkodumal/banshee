@@ -8,6 +8,9 @@
 #include <unistd.h>
 #include <errno.h>
 
+#ifndef NMEMDEBUG
+static int from_update_ablock = 0;
+#endif 
 
 /*
   The region allocator keeps pages in two lists: REGULAR single page
@@ -175,7 +178,7 @@ requires that pages be aligned at addresses where the last SHIFT bits are 0's.
 */
 inline void *translate_pointer(translation map, void *old_address) {
 #ifndef NMEMDEBUG 
-  if (old_address && *(map->map + (((unsigned int) old_address) >> SHIFT)) == 0) 
+  if (!from_update_ablock && old_address && *(map->map + (((unsigned int) old_address) >> SHIFT)) == 0) 
     fprintf(stderr,"Warning: The pointer %x has no translation.\n", (unsigned int) (map->map + (((unsigned int) old_address) >> SHIFT)));
 #endif
   return (*(map->map + (((unsigned int) old_address) >> SHIFT))) + (((unsigned int) old_address) & 0x00001FFF);
@@ -269,12 +272,20 @@ void allocate_regions(int state, translation map) {
 
 
 /*
-  Once the translation map for addresses is complete, the region objects can be updated to reflect the
-  current addresses where allocation will occur.  This state is the only thing that needs to be update
-  in the region objects.
+  Once the translation map for addresses is complete, the region
+  objects can be updated to reflect the current addresses where
+  allocation will occur.  This state is the only thing that needs to
+  be update in the region objects.
 */
 void update_ablock(translation map, struct ablock *a, struct ablock *old) {
+#ifndef NMEMDEBUG
+  from_update_ablock = 1;
+#endif 
   a->allocfrom = translate_pointer(map, (void *) old->allocfrom); 
+#ifndef NMEMDEBUG
+  from_update_ablock = 0;
+#endif 
+
 }
 
 void update_allocator(translation map, struct allocator *a, struct allocator *b) {
