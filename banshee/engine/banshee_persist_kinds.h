@@ -52,7 +52,6 @@ EXTERN_C_BEGIN
    will take care of choosing the right kind.
 */
 typedef enum banshee_persist_kind_ {
-  BANSHEE_PERSIST_KIND_nonpersistent = -1,
   BANSHEE_PERSIST_KIND_nonptr = 0,  /* for non-pointer data: KEEP THIS 0 */
   BANSHEE_PERSIST_KIND_funptr = 1,
   BANSHEE_PERSIST_KIND_string = 2,

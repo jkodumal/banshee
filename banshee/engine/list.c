@@ -42,17 +42,17 @@ struct list_node_
 
 #define scan_node(b,var) for (var = b; var; var = var->next)
 
-#define node_region(l) l->persist_kind > 0 ? list_node_region : (l->persist_kind == 0 ? list_strnode_region : banshee_ephemeral_region)
+#define node_region(l) l->r ? l->r : (l->persist_kind ? list_node_region : list_strnode_region)
 
 struct list 
 {
+  region r;
   int st;
   int length;
   int persist_kind;
   list_node sameregion head;
   list_node sameregion tail;
 };
-
 
 region list_header_region = NULL;
 region list_node_region = NULL;
@@ -64,13 +64,13 @@ struct list *new_list(region r, int persist_kind)
 {
   struct list *result;
 
-  assert(r);
-  
-  if (persist_kind >= 0) {
+  if (!r) {
     result = ralloc(list_header_region,struct list);
+    result->r = NULL;
   }
   else {
     result = ralloc(r, struct list);
+    result->r = r;
   }
   result->persist_kind = persist_kind;
   result->length = 0;

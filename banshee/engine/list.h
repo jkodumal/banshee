@@ -53,6 +53,7 @@ struct list_scanner
 
 
 struct list *new_list(region r, int persist_kind);
+struct list *new_persistent_list(int persist_kind);
 int list_length(struct list *a);
 struct list *list_cons(void *data, struct list *a);
 struct list *list_append(struct list *a, struct list *b);
@@ -93,6 +94,7 @@ typedef void (* name ## _app_fn) (type); \
 typedef bool (* name ## _eq_fn) (const type); \
 typedef int (* name ## _comparator_fn)(const type,const type); \
 name new_ ## name(region r); \
+name new_persistent_ ## name(); \
 int name ## _length(name a); \
 name name ## _cons(type data, name a); \
 name name ## _append(name a, name b); \
@@ -124,6 +126,10 @@ type *name ##_array_from_list(region r, name a);
 name new_ ## name(region r) \
 { \
   return (name)new_list(r,BANSHEE_PERSIST_KIND_ ## type);\
+} \
+name new_persistent_ ## name() \
+{ \
+  return (name)new_list(NULL,BANSHEE_PERSIST_KIND_ ## type);\
 } \
 int name ## _length(name a) \
 { \
@@ -235,6 +241,10 @@ name new_ ## name(region r) \
 { \
   return (name)new_list(r,kind);\
 } \
+name new_persistent_ ## name() \
+{ \
+  return (name)new_list(NULL,kind);\
+} \
 int name ## _length(name a) \
 { \
  return list_length((struct list *)a); \
@@ -344,6 +354,10 @@ type *name ##_array_from_list(region r, name a) \
 name new_ ## name(region r) \
 { \
   return (name)new_list(r,0);\
+} \
+name new_persistent_ ## name() \
+{ \
+  return (name)new_list(NULL,0);\
 } \
 int name ## _length(name a) \
 { \

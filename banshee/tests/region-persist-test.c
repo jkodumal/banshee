@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
   r[0] = node_region;
 
   thetable = make_persistent_string_hash_table(table_region, 8, 1);
-  thelist = new_node_list(list_header_region);
+  thelist = new_persistent_node_list();
 
   for(i = 0; i < NUM_NODES; i++) {
     char str[512];
