@@ -32,10 +32,10 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 #include "regions.h"
 #include "persist.h"
-#include "assert.h"
-
+#include "utils.h"
 
 #define DEFAULT_FILENAME "persist-test.out"
 
@@ -81,7 +81,7 @@ void *node_deserialize(FILE *f)
   return n;
 }
 
-bool set_fields(void *obj)
+bool node_set_fields(void *obj)
 {
   node n = (node) obj;
   n->left = (node) deserialize_get_obj( (void *) n->left);
@@ -146,6 +146,52 @@ static void serialize()
 
 static void deserialize()
 {
+  node n;
+  FILE *infile = NULL;
+  deserialize_fn_ptr deserialize_fns[1] = {node_deserialize};
+  set_fields_fn_ptr set_fields_fns[1] = {node_set_fields};
+
+  infile = fopen(DEFAULT_FILENAME, "rb");
+  
+  if (infile == NULL) {
+    printf("Couldn't open %s\n", DEFAULT_FILENAME);
+    exit(1);
+  }
+
+  /* Read in the old address of n1 and store it as n */
+  fread((void *)&n, sizeof(void *), 1, infile);
+
+  deserialize_all(infile, deserialize_fns, set_fields_fns, 1);
+  
+  /* Now update n with its new address */
+  n = deserialize_get_obj(n);
+  
+  /* And check well-formedness */
+  if (n->data != 1) {
+    fail("n1's data was not deserialized correctly: %d\n",n->data);
+  }
+  if (n->left->data != 2) {
+    fail("n2 was not deserialized correctly.\n");
+  }
+  if (n->right->data != 3) {
+    fail("n3 was not deserialized correctly.\n");
+  }
+  if (n->left->right != n->left->left) {
+    fail("n2's children were not deserialized correctly.\n");
+  }
+  if (n->right->left != n->right->left) {
+    fail("n3's children were not deserialized correctly.\n");
+  }
+  if (n->left->left != n->right->left) {
+    fail("n2 and n3 do not have the same children.\n");
+  }
+  if (n->left->left->data != 4) {
+    fail("n4's data was not deserialized correctly.\n");
+  }
+  if (n->left->left->left != n || n->left->left->right != n) {
+    fail("n4's children were not deserialized correctly.\n");
+  }
+  fclose(infile);
 }
 
 int main(int argc, char **argv)

@@ -151,7 +151,7 @@ static bool create_objects(FILE *f, deserialize_fn_ptr deserialize_obj[],
     entry = ralloc(persist_rgn, struct persist_entry_);
     entry->kind = kind;
     entry->obj = obj;
-    success &= !hash_table_insert(object_map, (hash_key) id, (hash_data) entry);
+    success &= hash_table_insert(object_map, (hash_key) id, (hash_data) entry);
   }
 
   assert(success);
@@ -165,8 +165,10 @@ static bool set_object_fields(set_fields_fn_ptr set_fields[], int length)
   persist_entry entry;
   bool success = TRUE;
 
-  assert(entry->kind < length);
+  hash_table_scan(object_map, &scan); 
+
   while(hash_table_next(&scan,&key, (hash_data *)&entry)) {
+    assert(entry->kind < length);
     success &= set_fields[entry->kind](entry->obj);
   }
 
