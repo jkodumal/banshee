@@ -28,8 +28,7 @@
 specification steensgaard_terms : STEENSGAARD_TERMS =
   spec
     data alabel_t : set
-    data A : term = alpha of T * L
-    and T : term = ref of alabel_t * A
-    and L : term = lam of alabel_t * argA * A
-    and argA : row(A)
+    data T : term = ref of alabel_t * T * L
+    and  L : term = lam of alabel_t * argT * T
+    and argT : row(T)
   end

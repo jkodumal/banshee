@@ -30,17 +30,65 @@
 #include <assert.h>
 #include <stdio.h>
 #include "utils.h"
-#include "pta.h"
 #include "regions.h"
 
 #include "steensgaard_terms.h"
 
-typedef A contents_type;
-
-DECLARE_LIST(contents_type_list, A);
-DEFINE_NONPTR_LIST(contents_type_list, A);
-
 /* Implements the interface defined in pta.h */
+
+/* Contents are a pair of ptr and fun */
+typedef struct contents_type_ {
+  T ptr;
+  L fun;
+} *contents_type;
+
+DECLARE_LIST(contents_type_list, contents_type);
+DEFINE_NONPTR_LIST(contents_type_list, contents_type);
+
+/* If t is ref(...), return its contents, otherwise, build a ref
+   constructor and unify it with t, returning its contents */
+static struct contents_type_ decompose_ref_or_fresh(T t) {
+  if (T_is_ref(t)) {
+    struct ref_decon decon = ref_decon(t);
+    return  (struct contents_type_) {decon.f1, decon.f2};
+  }
+  else {
+    alabel_t tag = alabel_t_fresh("'fv");
+    T ptr = T_fresh("'fv");
+    L fun = L_fresh("'fv");
+    T_cunify(t, ref(tag, ptr, fun));
+    return (struct contents_type_){ptr,fun};
+  }
+  assert(0);
+  return (struct contents_type_){NULL,NULL};
+}
+
+static argT fun_rec_T(T_list args)
+{
+  region scratch = newregion();
+  int counter = 0;
+  argT rest, result;
+  T_list_scanner scan;
+  T temp;
+  char field_name[512];
+  
+  argT_map map = new_argT_map(scratch);
+  T_list_scan(args,&scan);
+  while(T_list_next(&scan,&temp))
+    {
+      snprintf(field_name,512,"%d",counter++);
+      argT_map_cons(argT_make_field(field_name,temp),map);
+    }
+  
+  rest = argT_wild();
+  
+  // safe since field_add makes a copy of the string
+  result = argT_row(map,rest);
+  
+  deleteregion(scratch);
+  
+  return result;
+}
 
 void pta_init() {
   steensgaard_terms_init();
@@ -50,36 +98,20 @@ void pta_reset() {
   steensgaard_terms_reset();
 }
 
-/* ref(\loc_{id},\alpha_{id}) */
+/* ref(l,id_ptr, id_fun) */
 T pta_make_ref(const char *id) {
   alabel_t loc, tag;
-  A contents;
-  T lvalue;
-
+  T ptr;
+  L fun;
+  
   tag = alabel_t_fresh(id);
   loc = alabel_t_constant(id);
-  contents = T_fresh(id);
-
+  
+  ptr = T_fresh(id);
+  fun = L_fresh(id);
+  
   alabel_t_inclusion(loc, tag);
-  return ref(tag, contents);  
-}
-
-/* If t is ref(...), return its contents, otherwise, build a ref
-   constructor and unify it with t, returning its contents */
-static A decompose_ref_or_fresh(T t) {
-  if (T_is_ref(t)) {
-    struct ref_decon decon = ref_decon(t);
-    
-    return decon.f1;
-  }
-  else {
-    alabel_t tag = alabel_t_fresh("'fv");
-    A contents = A_fresh("'fv");
-    T_cunify(t, ref(tag, contents));
-    return contents;
-  }
-  assert(0);
-  return NULL;
+  return ref(tag, ptr, fun);  
 }
 
 /* The no information case  */
@@ -89,36 +121,32 @@ T pta_bottom(void) {
 
 /* Join t1 and t2's contents, but not their tags  */
 T pta_join(T t1, T t2) {
-  A a1, a2, a;
-  a = A_fresh("join");
-  a1 = decompose_ref_or_fresh(t1);
-  a2 = decompose_ref_or_fresh(t2);
+  T ptr;
+  L fun;  
   
-  T_cunify(a1, a);
-  T_cunify(a2, a);
-
-  return ref(alabel_t_fresh("join_tag"), a);
+  ptr = T_fresh("join_ptr");
+  fun = L_fresh("join_fun");
+  
+  struct contents_type_ c1 = decompose_ref_or_fresh(t1);
+  struct contents_type_ c2 = decompose_ref_or_fresh(t2);
+  
+  T_cunify(c1.ptr, ptr);
+  T_cunify(c2.ptr, ptr);
+  L_cunify(c1.fun, fun);
+  L_cunify(c2.fun, fun);
+  
+  return ref(alabel_t_fresh("join_tag"), ptr, fun);
 }
 
-/* ref(_,alpha(ptr,fun)) --> ptr */
+/* ref(tag, ptr, fun) --> ptr */
 T pta_deref(T t) {
   if (T_is_ref(t)) {
     struct ref_decon r_decon = ref_decon(t);
-    
-    if (A_is_alpha(r_decon.f1)) {
-      return (alpha_decon(r_decon.f1)).f0;
-    }
-    else {
-      T ptr = T_fresh("'ptr");
-      L fun = L_fresh("'fun");
-      A_unify(r_decon.f1, alpha(ptr,fun));
-      return ptr;
-    }
+    return r_decon.f1;
   }
   else {
     T ptr = T_fresh("'ptr");
-    L fun = L_fresh("'fun");
-    T_unify(t, ref(alabel_t_fresh("'fv"), alpha(ptr,fun)));
+    T_unify(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
     
     return ptr;
   }
@@ -127,25 +155,14 @@ T pta_deref(T t) {
   return NULL;
 }
 
-T pta_rvalue(T) {
+T pta_rvalue(T t) {
   if (T_is_ref(t)) {
     struct ref_decon r_decon = ref_decon(t);
-    
-    if (A_is_alpha(r_decon.f1)) {
-      return (alpha_decon(r_decon.f1)).f0;
-    }
-    else {
-      T ptr = T_fresh("'ptr");
-      L fun = L_fresh("'fun");
-      A_unify(r_decon.f1, alpha(ptr,fun));
-      return ptr;
-    }
+    return r_decon.f1;
   }
-
   else {
     T ptr = T_fresh("'ptr");
-    L fun = L_fresh("'fun");
-    T_cunify(t, ref(alabel_t_fresh("'fv"), alpha(ptr,fun)));
+    T_cunify(t, ref(alabel_t_fresh("'fv"), ptr, L_fresh("'fun")));
     
     return ptr;
   }
@@ -155,7 +172,7 @@ T pta_rvalue(T) {
 }
 
 T pta_address(T t1) {
-  return ref(alabel_t_fresh("wild"), alpha(t1,L_fresh("wild")));
+  return ref(alabel_t_fresh("wild"), t1,L_fresh("wild"));
 }
 
 void pta_assignment(T t1, T t2) {
@@ -163,16 +180,48 @@ void pta_assignment(T t1, T t2) {
 }
 
 T pta_make_fun(const char *name, T ret, T_list args) {
-
+  T body = pta_make_ref(name);
+  
+  T_unify(body, ref(alabel_t_fresh("mkFun"), T_fresh("'fv"),
+		    lam(alabel_t_fresh(name), fun_rec_T(args), ret)));
+  return body;
 }
 
-/* TODO */
-T pta_application(T, T_list) {
+/* t is the fun type, actuals are the actual parameters */
+T pta_application(T t, T_list actuals) {
+  L fun;
+  argT args;
+  region scratch = newregion();
+  T_list formals = new_T_list(scratch);
+  T_list_scanner scan;
+  T next;
+  T retVal = T_fresh("ret");
+  struct contents_type_ contents = decompose_ref_or_fresh(t);
 
+  T_list_scan(actuals, &scan);
+
+  while(T_list_next(&scan,&next)) {
+    T nextFormal = T_fresh("arg");
+    T_cunify(next, nextFormal);
+    T_list_append_tail(nextFormal, formals);
+  }
+
+  args = fun_rec_T(formals);
+  fun = lam(alabel_t_fresh("app"), args, retVal);
+  L_unify(contents.fun, fun);
+  deleteregion(scratch);
+
+  return pta_address(retVal);
 }
 
 contents_type pta_get_contents(T t) {
-  
+  contents_type contents = (contents_type) malloc(sizeof(struct contents_type_));
+  struct ref_decon decon = ref_decon(t);
+			   
+  contents->ptr = decon.f1;
+  contents->fun = decon.f2;
+
+  return contents;
 }
 
 /* TODO */
@@ -181,8 +230,8 @@ void pta_pr_ptset(contents_type c) {
 }
 
 /* TODO */
-int pta_get_ptsize(contents_type) {
-
+int pta_get_ptsize(contents_type c) {
+  return 0;
 }
 
 void pta_serialize(FILE *f, hash_table *entry_points, unsigned long sz)

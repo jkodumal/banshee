@@ -56,11 +56,13 @@ class row_sort_gen (e' : exprid) =
          bool EXPRID_eq(EXPRID row1, EXPRID row2);\n\
          int EXPRID_cmp(const EXPRID row1,const EXPRID row2);\n\
 	 void EXPRID_inclusion(EXPRID row1,EXPRID row2) ;\n\
-	 void EXPRID_unify(EXPRID row1,EXPRID row2) ;\n\
-	 void EXPRID_print(FILE *f,EXPRID row) ;\n" 
+	 void EXPRID_unify(EXPRID row1,EXPRID row2);\n\
+	 void EXPRID_print(FILE *f,EXPRID row);\n" 
       in
       let file_decl  = 
 	"DECLARE_OPAQUE_LIST(EXPRID_map,flowrow_field);\n\
+         void EXPRID_inclusion_ind(EXPRID row1, EXPRID row2);\n\
+         void EXPRID_unify_ind(EXPRID row1,EXPRID row2);\n\
 	 void EXPRID_print(FILE *f,EXPRID row) ;"
       in
       let file_defn =

@@ -30,6 +30,7 @@
 #ifndef PTA_H
 #define PTA_H
 
+#include "steensgaard_terms.h"
 #include "banshee_persist_kinds.h"
 
 typedef struct contents_type_ *contents_type;
