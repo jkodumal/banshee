@@ -110,8 +110,8 @@ def get_modified_files_enhanced(dir_a, dir_b, extension):
 	file = filewline[:-1]
 	if (os.system("bash -c \"diff %s %s >/dev/null\""
 		      % (file, dir_a + file[len(dir_b):]))):
-	    srcfile = os.popen("strings %s | grep CANON_IDENT").readlines()[0][len("CANON_IDENT_"):-2] + extension
-	    srcfound = os.popen("find %s -name %s" % (dir_b, srcfile)).readlines()[0]
+	    srcfile = os.popen("strings %s | grep CANON_IDENT").readlines()[0][len("CANON_IDENT_"):-3] + extension
+	    srcfound = os.popen("find %s -name %s" % (dir_b, srcfile)).readlines()[0][:-1]
 	    result.append(project + srcfound[len(dir_b):])
     return result
 

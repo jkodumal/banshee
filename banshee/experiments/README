@@ -93,4 +93,6 @@ time after each file has been analyzed)
 
 Run:
 
-./run-bt-experiment.py --analysis="../cparser/parser_ns.exe -fno-points-to"
+./run-bt-experiment.py --analysis "../cparser/parser_ns.exe -fno-points-to"
+
+ ./run-bt-experiment.py --analysis "../cparser/parser_ns.exe -fno-points-to" --start-with 0 --end-with 2 
