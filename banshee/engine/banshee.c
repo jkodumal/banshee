@@ -35,6 +35,7 @@
 #include "setst-sort.h"
 #include "flowrow-sort.h"
 #include "setif-var.h"
+#include "ufind.h"
 
 
 DEFINE_LIST(gen_e_list,gen_e);
@@ -45,6 +46,7 @@ void engine_init(void)
 {
   region_init(); 
   stamp_init();
+  uf_init();
 }
 
 void engine_reset(void) deletes

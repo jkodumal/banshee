@@ -29,20 +29,34 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include "ufind.h"
-#include "assert.h"
+#include "list.h"
 
+enum uf_kind {uf_ecr,uf_link};
+typedef enum uf_kind uf_kind;
 
-enum uf_type {uf_ecr,uf_link};
-typedef enum uf_type uf_type;
+DECLARE_LIST(elt_stack, uf_element);
+DEFINE_LIST(elt_stack, uf_element);
 
-struct uf_element
-{
-  uf_type type;
+typedef struct ustack_elt_ {
+  uf_element nonroot;
+  void *old_info;
+} *ustack_elt;
+
+DECLARE_LIST(union_stack,ustack_elt);
+DEFINE_LIST(union_stack,ustack_elt);
+
+struct uf_element {
+  uf_kind kind;
   int rank;
   void *info;
   struct uf_element *link;
+  elt_stack elt_stack;
 };
+
+static region stackregion = NULL;
+static union_stack ustack = NULL;
 
 struct uf_element *new_uf_element(region r, void *info)
 {
@@ -50,10 +64,11 @@ struct uf_element *new_uf_element(region r, void *info)
 
   result = ralloc(r, struct uf_element);
 
-  result->type = uf_ecr;
+  result->kind = uf_ecr;
   result->rank = 0;
   result->info = info;
   result->link = NULL;
+  result->elt_stack = NULL;
 
   return result;
 }
@@ -61,14 +76,17 @@ struct uf_element *new_uf_element(region r, void *info)
 static struct uf_element *find(struct uf_element *e)
 {
 
-  if (e->type == uf_ecr)
+  if (e->kind == uf_ecr)
     return e;
   
-  else if (e->link->type == uf_link)
+  else if (e->link->kind == uf_link)
     {
       struct uf_element *temp = e->link;
 	
-      e->link = e->link->link;
+      e->link = temp->link;
+      
+      assert(temp->elt_stack);
+      elt_stack_cons(temp,temp->elt_stack);
 
       return find(temp);
     }
@@ -77,36 +95,62 @@ static struct uf_element *find(struct uf_element *e)
     return e->link;
 }
 
+static ustack_elt make_ustack_elt(uf_element e,void *info)
+{
+  ustack_elt result = ralloc(stackregion,struct ustack_elt_ *);
+  result->nonroot = e;
+  result->old_info = info;
+  
+  return result;
+}
+
 bool uf_union(struct uf_element *a, struct uf_element *b)
 {
   struct uf_element *e1 = find(a);
   struct uf_element *e2 = find(b);
+
+  assert(ustack);
 
   if ( e1 == e2 )
     return FALSE;
 
  else if (e1->rank < e2->rank)
     {
-      e1->type = uf_link;
+      ustack_elt ue = make_ustack_elt(e1,e2->info);
+      e1->kind = uf_link;
       e1->link = e2;
+
+      union_stack_cons(ue, ustack);
+      assert(e1->elt_stack == NULL);
+      e1->elt_stack = new_elt_stack(stackregion);
 
       return TRUE;
     }
 
   else if (e1->rank > e2->rank)
     {
-      e2->type = uf_link;
+      ustack_elt ue = make_ustack_elt(e2,e1->info);
+      e2->kind = uf_link;
       e2->link = e1;
+
+      union_stack_cons(ue, ustack);
+      assert(e2->elt_stack == NULL);
+      e2->elt_stack = new_elt_stack(stackregion);
 
       return TRUE;
     }
   
   else 
     {
+      ustack_elt ue = make_ustack_elt(e1,e2->info);
       e2->rank++;
       
-      e1->type = uf_link;
+      e1->kind = uf_link;
       e1->link = e2;
+
+      union_stack_cons(ue, ustack);
+      assert(e1->elt_stack == NULL);
+      e1->elt_stack = new_elt_stack(stackregion);
 
       return TRUE;
     }
@@ -119,40 +163,56 @@ bool uf_unify(combine_fn_ptr combine,
   struct uf_element *e1 = find(a);
   struct uf_element *e2 = find(b);
 
+  assert(ustack);
+
   if ( e1 == e2 )
     return FALSE;
 
   else if (e1->rank < e2->rank)
     {
+      ustack_elt ue = make_ustack_elt(e1,e2->info);
       e2->info = combine(e2->info,e1->info);
-      e1->type = uf_link;
+      e1->kind = uf_link;
       e1->link = e2;
      
+      union_stack_cons(ue, ustack);
+      assert(e1->elt_stack == NULL);
+      e1->elt_stack = new_elt_stack(stackregion);
+
+
       return TRUE;
     }
 
   else if (e1->rank > e2->rank)
     {
+      ustack_elt ue = make_ustack_elt(e2,e1->info);
       e1->info = combine(e1->info,e2->info);
-      e2->type = uf_link;
+      e2->kind = uf_link;
       e2->link = e1;
+
+      union_stack_cons(ue, ustack);
+      assert(e2->elt_stack == NULL);
+      e2->elt_stack = new_elt_stack(stackregion);
 
       return TRUE;
     }
   
   else 
-    {
+    {      
+      ustack_elt ue = make_ustack_elt(e1,e2->info);
       e2->info = combine(e2->info, e1->info);
 
       e2->rank++;
-      e1->type = uf_link;
+      e1->kind = uf_link;
       e1->link = e2;
+
+      union_stack_cons(ue, ustack);
+      assert(e1->elt_stack == NULL);
+      e1->elt_stack = new_elt_stack(stackregion);
 
       return TRUE;
     }
 }
-
-
 
 void *uf_get_info(struct uf_element *e)
 {
@@ -165,12 +225,58 @@ bool uf_eq(struct uf_element *e1,struct uf_element *e2)
   return (find(e1) == find(e2));
 }
 
+/* TODO: fix this method in the presence of rollback */
 void uf_update(struct uf_element *e,uf_info i)
 {
   find(e)->info = i;
 }
 
+static void repair_elt_stack(struct uf_element *nonroot)
+{
+  elt_stack_scanner scan;
+  uf_element temp;
 
+  assert(nonroot->elt_stack);
+
+  elt_stack_scan(nonroot->elt_stack,&scan);
+
+  while(elt_stack_next(&scan,&temp)) {
+    assert(temp->kind == uf_link);
+    temp->link = nonroot;
+  }
+  nonroot->elt_stack = NULL;
+}
+
+/* Undo the last union operation */
+void uf_backtrack()
+{
+  ustack_elt ue = NULL;
+
+  if (union_stack_length(ustack) == 0) return;
+
+  /* Pop the last unioned elt off the stack */
+  ue = union_stack_head(ustack);
+  union_stack_tail(ustack);
+
+  /* Make sure it's a link */
+  assert(ue->nonroot->kind == uf_link);
+
+  /* Roll back the old ecr's info */
+  find(ue->nonroot)->info = ue->old_info;
+
+  /* Deunion */
+  ue->nonroot->kind = uf_ecr;
+  ue->nonroot->link = NULL;
+
+  /* Repair the element stack */
+  repair_elt_stack(ue->nonroot);
+}
+
+void uf_init()
+{
+  stackregion = newregion();
+  ustack = new_union_stack(stackregion);
+}
 
 
 

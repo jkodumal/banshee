@@ -1,4 +1,4 @@
---- Revising the directory structure ---
+Task 1: Revising the directory structure 
 
 the goal is to realize the following layout:
 
@@ -25,18 +25,47 @@ to accomplish this, the following changes must be made:
   -x- update every makefile
     
 other tasks (a wishlist)
-  --- bring .cvsignore files up to date
+  -x- bring .cvsignore files up to date
   -x- check builds on both unix and windows/cygwin
   -x- get dyckcfl ready for release (copyrights, etc)
-  --- fix dyckcfl-random
+  -x- fix dyckcfl-random
   -x- set up test suite
-  --- update manual
   -x- update copyrights (year)
   -x- fix all <>-style includes to "", and remove engine/ in codegen
   -x- add semicolon to end of all DECLARE_XXXX macros  in codegen
-  --- write script for banshee to run output through indent
+  -x- write script for banshee to run output through indent (just through make)
   -x- fix etags dependencies
   -x- tests/Makefile dependencies are not right (they seem correct now)
-  --- update website, move to sourceforge
+  -x- update website, move to sourceforge
+  --- update manual
   --- RELEASE
   --- dependencies aren't quite right: autogenerate header dependencies
+
+Task 2: Supporting backtrack
+
+Backtracking adds limited incremental support to the system. The idea
+is that you can "pop" off some number of constraints, effectively
+undo-ing them. The undo is stack-like: you cannot delete a constraint
+unless you also delete every constraint that was added after.
+
+This is not as powerful as a fully incremental analysis, but it should
+be fairly easy to implement. The basic idea is to keep a counter of
+the top-level constraints. Inclusion calls return this counter to the
+user. To pop a constraint, the user calls backtrack(n), which will
+effectively roll back the constraint system to its state just prior to
+the addition of the nth constraint. Note that this will only rollback
+the constraints; terms created after the addition of the nth
+constraint remain valid.
+
+Internally, this is implemented with a map that associates a list of
+bounds with each counter n. When a backtrack is requested, any bound
+whose counter is greater than n is deleted.
+
+This scheme is complicated by some of the optimizations. For instance,
+undoing cycle elimination may force us to undo a union-find
+operation. With projection merging we need to deal with ubprojs. I
+don't think cons hashing will cause a problem, but definitely think
+about this.
+
+so tasks:
+   --- Implement backtracking in union-find

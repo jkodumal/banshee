@@ -44,12 +44,14 @@ typedef void *uf_info;
 
 typedef uf_info (*combine_fn_ptr)(uf_info,uf_info);
 
+void uf_init();
 struct uf_element *new_uf_element(region r,uf_info i);  
 uf_info uf_get_info(struct uf_element *); 
-bool uf_unify(combine_fn_ptr,struct uf_element *,struct uf_element *);
+bool uf_unify(combine_fn_ptr, struct uf_element *, struct uf_element *);
 bool uf_union(struct uf_element *,struct uf_element *);
-bool uf_eq(struct uf_element *,struct uf_element *);
+bool uf_eq(struct uf_element *, struct uf_element *);
 void uf_update(struct uf_element *,uf_info i);
+void uf_backtrack();
 
 #define DECLARE_UFIND(name,type) \
 typedef struct name *name; \
