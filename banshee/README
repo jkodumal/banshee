@@ -10,6 +10,7 @@ To build banshee, the following must be installed:
  --- ocaml (see http://caml.inria.fr)
  --- gcc (should be standard)
  --- indent (should be standard)
+ --- python (should be standard)
 
 You can then build banshee by typing 'make' or 'gmake' at the command
 line in this directory. If everything succeeds, the following targets
@@ -36,29 +37,30 @@ interactively define constraints and inspect solutions.
 'make' will also build the user manual (docs/banshee.ps) a suite of
 small test applications (see tests/README) and the points-to analysis
 application (see cparser/README). Currently, the manual is extremely
-out of date. This will hopefully be remodied soon.
+out of date. This will hopefully be remedied soon.
 
 Other useful make targets:
 
 'make check' will verify your build. 
 'make banshee' will build banshee without building any test applications
 'make docs' will just build the documentation
-'make test' will build the test applications and dependencies
 'make points-to' will build the points-to analysis application and dependencies
 'make ibanshee' will build the iBanshee interpreter and dependencies
 
-banshee should build and run on Linux, FreeBSD and Windows (with
-cygwin). On FreeBSD, use 'gmake' instead of 'make'
+banshee should build and run on Linux, FreeBSD, Windows (with cygwin)
+and MacOS X. On FreeBSD, make sure to use 'gmake' instead of 'make'
 
 banshee is distributed under the BSD license, with the exception of
 the following files:
 
 engine/malloc.c (see file for license)
-codegen/OCamlMakefile (no license)
+codegen/OCamlMakefile (see http://www.ai.univie.ac.at/~markus/home/ocaml_sources.html)
 cparser (GPL, see cparser/COPYRIGHT)
 
 Note that the cparser is a separate application, no code from cparser
 is linked into banshee itself.
+
+See the COPYRIGHT file for more details.
 
 Known bugs:
 
@@ -66,6 +68,5 @@ Known bugs:
 bash shell (backspace won't delete characters, for instance). Calling
 ibanshee.exe from cmd.exe seems to fix the problem.
 
-See the COPYRIGHT file for more details.
 
 Send bug reports to jkodumal@cs.berkeley.edu.
