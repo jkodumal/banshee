@@ -114,7 +114,7 @@ void tv_unify(term_var v, gen_e e)
   assert(tv_get_ecr(v) == e);
 }
 
-static gen_e tv_combine(gen_e e1, gen_e e2)
+static gen_e tv_combine(const gen_e e1,const gen_e e2)
 {
 /*   term_var v1 = (term_var)e1, */
 /*     v2 = (term_var)e2; */

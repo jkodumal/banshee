@@ -124,7 +124,7 @@ char *sv_get_name(setif_var v)
 }
 
 
-static sv_info combine(sv_info i1, sv_info i2)
+static sv_info combine(const sv_info i1, const sv_info i2)
 {
   if (i1->st < i2->st)
     return i1;

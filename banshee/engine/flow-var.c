@@ -154,7 +154,7 @@ void fv_set_contour(flow_var v, contour c)
   contour_elt_update(v->elt,c);
 }
 
-static contour combine_contour(contour c1, contour c2)
+static contour combine_contour(const contour c1,const contour c2)
 {
   if (c1 == NULL)
     return c2;

@@ -42,7 +42,10 @@ struct uf_element;
 typedef struct uf_element *uf_element;
 typedef void *uf_info;
 
-typedef uf_info (*combine_fn_ptr)(uf_info,uf_info);
+/* Given two infos, return an equivalence class representative for
+   them. They are const so that the original (unmutated) information
+   can be saved and restored in the event of a de-union */
+typedef uf_info (*combine_fn_ptr)(const uf_info, const uf_info);
 
 void uf_init();
 struct uf_element *new_uf_element(region r,uf_info i);  
@@ -57,7 +60,7 @@ void uf_rollback(); 		/* Backtrack to the last tick */
 
 #define DECLARE_UFIND(name,type) \
 typedef struct name *name; \
-typedef type (* name ## _combine_fn_ptr)(type info1,type info2); \
+typedef type (* name ## _combine_fn_ptr)(const type info1, const type info2); \
 name new_ ## name(region r, type info); \
 type name ## _get_info(name); \
 bool name ## _unify(name ## _combine_fn_ptr,name e1, name e2); \
