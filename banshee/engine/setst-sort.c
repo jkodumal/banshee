@@ -34,6 +34,7 @@
 #include "bounds.h"
 #include "setst-sort.h"
 
+// You probably don't want to turn this off-- the thing won't terminate
 bool flag_eliminate_cycles_st = TRUE;
 
 
@@ -503,8 +504,10 @@ static void apply_sources(setst_var witness, bounds sources)
       if ( st_add_source(witness,source,setst_get_stamp(source)))
 	setst_stats.redundant_source++;
 	
-      else
+      else {
 	setst_stats.added_source++;
+	// setst_changed = TRUE;
+      }
     }  
 }
 
@@ -520,8 +523,10 @@ static void apply_sinks(setst_var witness, bounds sinks)
       if (st_add_sink(witness,sink,setst_get_stamp(sink)))
 	setst_stats.redundant_sink++;
 	
-      else
+      else {
+	// setst_changed = TRUE;
 	setst_stats.added_sink++;
+      }
     }  
 }
 
@@ -536,8 +541,10 @@ static void apply_lower_bounds(setst_var witness,bounds lower)
     {
       if (st_add_lb(witness,(setst_var)lb))
 	setst_stats.redundant_var++;
-      else
+      else {
+	// setst_changed = TRUE;
 	setst_stats.added_var++;
+      }
     }  
 }
 

@@ -467,13 +467,12 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 //   fprintf(stdout,"<=");
 //   pr(stdout,e2);
 //   fprintf(stdout,"\n");
-
-  if (eq(e1,e2))
+  if ( setif_is_zero(e1) || setif_is_one(e2) )
     return;
   
-  else if ( setif_is_zero(e1) || setif_is_one(e2) )
+  else if (eq(e1,e2))
     return;
-
+  
   /* c <= d */
   else if ( setif_is_constant(e1) && setif_is_constant(e2) )
     {

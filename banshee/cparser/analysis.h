@@ -21,6 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include "andersen_terms.h"
 
+extern int flag_field_based;
+
 void analyze(declaration program) deletes;
 
 void analysis_init(void) deletes;

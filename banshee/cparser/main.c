@@ -312,7 +312,8 @@ struct {
     { "print-stats", &flag_print_stats,1},
     { "no-cycle-elim",&flag_eliminate_cycles,0},
     { "no-proj-merge", &flag_merge_projections,0},
-    { "print-vars",&flag_print_vars,1}
+    { "print-vars",&flag_print_vars,1},
+    { "field-based",&flag_field_based,1}
 };
 
 /* Table of language-specific options.  */

@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "utils.h"
 #include "expr.h"
 #include "env.h"
-
+#include "hash.h"
 
 #define INIT_HASH_SIZE 128
 #define MAX_STR 1024
@@ -52,10 +52,13 @@ static env global_var_env;
 static env file_env;
 static env local_env;
 static env collection_env;
+static env struct_env;
 
 static char *alloc_names[] = {"malloc","calloc","realloc","valloc",
                               "xmalloc","__builtin_alloca","alloca",
 			      "kmalloc",NULL};
+
+int flag_field_based = 0;
 
 typedef enum var_kind // Scope information
 {
@@ -125,7 +128,6 @@ static bool var_info_insert(var_info v_info)
   return FALSE;
 }
 
-//TODO
 static data_declaration make_ret_decl(char *name,type t )
 {
   data_declaration ddecl = ralloc(parse_region,struct data_declaration);
@@ -165,6 +167,7 @@ static void var_info_init(void)
   env_rgn = newregion();
   local_env = new_env(env_rgn,NULL);
   file_env = new_env(env_rgn,NULL);
+  struct_env = new_env(env_rgn,NULL);
 }
 
 static void var_info_clear(void) deletes
@@ -228,6 +231,37 @@ static var_info new_var(const char *name,type c_type,
   return v_info;
 } 
 
+// For each type, map "name" to a T kind
+static T get_field_ref(const char *name, type c_type,
+		       type field_type)
+{
+  T result;
+  env field_env = env_lookup(struct_env,type_tag(c_type)->name,FALSE);
+
+  // Struct hasn't been seen yet, make an env for its fields and add it
+  if (field_env == NULL) {
+    field_env = new_env(analysis_rgn,NULL);
+    env_add(struct_env,type_tag(c_type)->name,field_env);
+  }
+  assert(field_env);
+  assert(env_lookup(struct_env,type_tag(c_type)->name,FALSE));
+
+  // Now check to see if that particular field has a type yet
+  result = env_lookup(field_env,name,FALSE);
+  
+  if (result == NULL) {
+    var_info info;
+    char distname[MAX_STR];
+    snprintf(distname,MAX_STR,"%s->%s",type_tag(c_type)->name,name);
+    // T result = pta_make_ref(distname);
+    info = new_var(distname,field_type,vk_global,TRUE);
+    env_add(field_env,name,info->t_type);
+    result = info->t_type;
+  }
+
+    return result;
+}
+
 static T get_var_ref(const char *name, type c_type, 
 		     var_kind kind, bool is_visible)
 {
@@ -238,6 +272,9 @@ static T get_var_ref(const char *name, type c_type,
   else 
     return new_var(name,c_type,kind,is_visible)->t_type;
 }
+
+
+
 
 static expression make_identifier_expression(location loc,cstring id,bool imp,
 					     data_declaration decl)
@@ -856,7 +893,6 @@ static expr_type analyze_expression(expression e) deletes
 	return (expr_type){result.t_type,e->type};
       }
       break;
-      // TODO
     case kind_cast_list:
       {
 	assert(0);
@@ -866,8 +902,19 @@ static expr_type analyze_expression(expression e) deletes
     case kind_field_ref: // indirects are converted to derefs by the parser
       {
 	field_ref fr = CAST(field_ref,e);
-	expr_type result = promote_to_ptr(analyze_expression(fr->arg1));
-	return (expr_type) {result.t_type,fr->type}; // return the field type
+	
+	if (flag_field_based && type_struct(fr->arg1->type)) {
+	  // I can't remember if analyze_expression can have side effects,
+	  // so do it anyway
+	  analyze_expression(fr->arg1); 
+	  return (expr_type) {get_field_ref(fr->cstring.data,fr->arg1->type,
+					    fr->type), 
+				fr->type};
+	}
+	else {
+	  expr_type result = promote_to_ptr(analyze_expression(fr->arg1));
+	  return (expr_type) {result.t_type,fr->type}; // return the field type
+	}
       }
       break;
 
