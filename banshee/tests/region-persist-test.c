@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
   
   region_init();
   list_init();
-  banshee_region_persistence_init();
   hash_table_init();
+  banshee_region_persistence_init();
   seed_fn_ptr_table(newregion());
 
   node_region = newregion();

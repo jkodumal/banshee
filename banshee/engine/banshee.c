@@ -58,8 +58,9 @@ static void default_error_handler(gen_e e1, gen_e e2, banshee_error_kind k)
 
 void engine_init(void)
 {
-  banshee_region_persistence_init();
+  region_init();
   hash_table_init();
+  banshee_region_persistence_init();
   bounds_init();
   stamp_init();
   list_init();

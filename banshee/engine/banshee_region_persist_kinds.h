@@ -34,8 +34,6 @@ EXTERN_C_BEGIN
 
 #define NUM_REGIONS 32
 
-extern const int num_persistent_regions;
-
 /*****************************************************************************
  *                                                                           *
  *   Initialization                                                          *
@@ -49,8 +47,18 @@ void banshee_region_persistence_init();
  *   Interface                                                               *
  *                                                                           *
  *****************************************************************************/
-region *get_persistent_regions();
-Updater *get_updater_functions();
+/* Return an array of persistent regions, and write the information to
+   filename */
+region *get_persistent_regions(const char *filename);
+
+/* Get a list of updater functions, reading the information from filename */
+Updater *get_updater_functions(const char *filename);
+
+/* Register r as a persistent region, using updater function u */
+void register_persistent_region(region r, Updater u);
+
+/* Unregister r as a persistent region */
+void unregister_persistent_region(region r);
 
 /*****************************************************************************
  *                                                                           *
@@ -152,7 +160,7 @@ int update_sv_info(translation t, void *m);
 int update_setif_var(translation t, void *m);
 
 /* Update functions for termhash.c  */
-int update_hash_entry_region(translation t, void *m); 
+int update_hash_entry(translation t, void *m); 
 int update_term_bucket(translation t, void *m);
 int update_term_hash(translation t, void *m);
 

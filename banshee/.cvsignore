@@ -4,3 +4,7 @@ tmp
 .cdtproject
 .project
 gmon.out
+andersen.out
+data
+offsets
+extras

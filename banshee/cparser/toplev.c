@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 // extern long get_memusage(void);
 extern int banshee_get_time();
 extern void banshee_backtrack(int);
-extern region *get_persistent_regions();
+extern region *get_persistent_regions(const char *filename);
 
 /* Name of program invoked, sans directories.  */
 char *progname;
@@ -1126,7 +1126,7 @@ int main(int argc, char **argv) deletes
   if (flag_points_to && flag_debug_region_serialization)
     {
       begin_time();
-      serialize(get_persistent_regions(), "data", "offsets");
+      serialize(get_persistent_regions("extras"), "data", "offsets");
       end_time(&region_serialization_time);
     }
 

@@ -34,6 +34,7 @@
 #include "utils.h"
 #include "banshee_persist_kinds.h"
 #include "banshee_region_persist_kinds.h"
+
 #define UB(n) ((1<<n)-1)   
 #define CAP(n) (1<<n)      
 #define INITIAL_TABLE_SIZE 8 /* the initial table size is 2^8 */
@@ -68,8 +69,12 @@ struct term_bucket
 /*  inserts: num of elements inserted into the array */ 
 struct term_hash_
 {
+  bool persistent;
   term_bucket * term_buckets;
-  region rgn;
+  region tb_rgn;
+  region he_rgn;
+  region tba_rgn;
+  region st_rgn;
   int ub;
   int size;
   int capacity;
@@ -99,35 +104,50 @@ static const int prime_2 = 1789;
 */
 static const int initial_table_size = INITIAL_TABLE_SIZE;
 
+/* Memory allocation: if rgn is non-null, the table itself will be
+   allocated in rgn, and 4 internal regions will be created, but not
+   registered. Thus, the term hash won't be persistent. Otherwise, the
+   internal regions will be registered. Either way, no memory will be
+   leaked.
+*/
 term_hash make_term_hash(region rgn)
 {
   int ub, n;
   int i;
 
-  region r = NULL;
-  
-  term_hash tab = ralloc(rgn ? rgn : term_hash_region, struct term_hash_);
+  region he_rgn  = newregion(),
+    tb_rgn = newregion(),
+    tba_rgn = newregion(),
+    st_rgn = newregion();
+  term_hash tab = ralloc(rgn ? rgn :term_hash_region, struct term_hash_);
+
+  if (!rgn) {
+    tab->persistent = TRUE;
+    register_persistent_region(he_rgn, update_hash_entry);
+    register_persistent_region(tb_rgn, update_term_bucket);
+    register_persistent_region(tba_rgn, update_ptr_data);
+    register_persistent_region(st_rgn, update_nonptr_data);
+  }
+  else {
+    tab->persistent = FALSE;
+  }
+
 
   ub = UB(initial_table_size);
   n = CAP(initial_table_size);
   
   
-  tab->term_buckets = rarrayalloc(rgn ? r = newregion() : 
-				  banshee_ptr_region, n, 
-				  term_bucket);
+  tab->term_buckets = rarrayalloc(tba_rgn, n, term_bucket);
   
   for (i = 0; i < n; i++)
     {
       tab->term_buckets[i] = NULL;
     }
 
-  
-  if (rgn) {
-    tab->rgn = r;
-  }
-  else {
-    tab->rgn = NULL;
-  }
+  tab->he_rgn =  he_rgn;
+  tab->tb_rgn = tb_rgn;
+  tab->st_rgn = st_rgn;
+  tab->tba_rgn = tba_rgn;
 
   tab->ub = ub;
   tab->size = initial_table_size;
@@ -138,7 +158,10 @@ term_hash make_term_hash(region rgn)
 
 void term_hash_delete(term_hash tab) deletes
 {
-  if (tab->rgn) deleteregion(tab->rgn);
+  deleteregion(tab->he_rgn);
+  deleteregion(tab->tb_rgn);
+  deleteregion(tab->st_rgn);
+  deleteregion(tab->tba_rgn);
 }
 
 gen_e term_hash_find(term_hash tab, stamp stamps[], int len)
@@ -187,9 +210,9 @@ static void insert(term_hash tab, gen_e e, stamp stamps[], int len)
   int i;
 
   
-  entry = ralloc(tab->rgn ? tab->rgn : hash_entry_region, struct hash_entry);
+  entry = ralloc(tab->he_rgn, struct hash_entry);
 
-  stamp_cpy = rarrayalloc(tab->rgn ? tab->rgn : banshee_ptr_region, len, stamp);
+  stamp_cpy = rarrayalloc(tab->st_rgn, len, stamp);
   for (i = 0; i < len; i++)
     {
       stamp_cpy[i] = stamps[i];
@@ -208,7 +231,7 @@ static void insert_entry(term_hash tab, hash_entry entry)
   term_bucket b, new_term_bucket;
   hash_val = hash(tab->ub, entry->stamps, entry->length);
   b = tab->term_buckets[hash_val];
-  new_term_bucket = ralloc(tab->rgn ? tab->rgn : term_bucket_region, 
+  new_term_bucket = ralloc(tab->tb_rgn, 
 			   struct term_bucket);
 
   new_term_bucket->entry = entry;
@@ -227,7 +250,7 @@ static void post_insert(term_hash tab) deletes
 /*  Double the size of the hash table and reinsert all of the elements. */ 
 static void rehash(term_hash tab) deletes
 {
-  region old_rgn = NULL;
+  region old_tb_rgn, old_tba_rgn, old_st_rgn, old_he_rgn = NULL;
   term_bucket * old_term_buckets;
   int i;
   int old_table_size = tab->capacity;
@@ -236,23 +259,43 @@ static void rehash(term_hash tab) deletes
   tab->capacity *= 2;
   tab->ub = UB(++tab->size);
 
-  if (tab->rgn) {
-    old_rgn = tab->rgn;
-    tab->rgn = newregion();
+  old_tb_rgn = tab->tb_rgn;
+  old_tba_rgn = tab->tba_rgn;
+  old_st_rgn = tab->st_rgn;
+  old_he_rgn = tab->he_rgn;
+
+  tab->tb_rgn = newregion();
+  tab->tba_rgn = newregion();
+  tab->st_rgn = newregion();
+  tab->he_rgn = newregion();
+
+  if (tab->persistent) {
+    register_persistent_region(tab->he_rgn, update_hash_entry);
+    register_persistent_region(tab->tb_rgn, update_term_bucket);
+    register_persistent_region(tab->tba_rgn, update_ptr_data);
+    register_persistent_region(tab->st_rgn, update_nonptr_data);
   }
-  
-  tab->term_buckets = rarrayalloc(tab->rgn ? tab->rgn : banshee_ptr_region, 
-				  tab->capacity, term_bucket);
+
+  tab->term_buckets = rarrayalloc(tab->tba_rgn, tab->capacity, term_bucket);
+
   for (i = 0; i < old_table_size; i++)
     {
       if (old_term_buckets[i] != NULL && old_term_buckets[i]->entry != NULL)
 	reinsert(tab, old_term_buckets[i]);
     }
 
-  if (tab->rgn) {
-    deleteregion(old_rgn);
+  if (tab->persistent) {
+    unregister_persistent_region(old_tb_rgn);
+    unregister_persistent_region(old_tba_rgn);
+    unregister_persistent_region(old_st_rgn);
+    unregister_persistent_region(old_he_rgn);
   }
-  
+
+  deleteregion(old_tb_rgn);
+  deleteregion(old_tba_rgn);
+  deleteregion(old_st_rgn);
+  deleteregion(old_he_rgn);
+
 }
 
 static void reinsert(term_hash tab, term_bucket b)
@@ -298,7 +341,7 @@ bool term_hash_serialize(FILE *f, void *obj)
 void *term_hash_deserialize(FILE *f)
 {
   int inserts,i;
-  term_hash result = make_term_hash(permanent);
+  term_hash result = make_term_hash(NULL);
 
   fread((void *)&inserts, sizeof(int), 1, f);
 
@@ -351,7 +394,7 @@ void term_hash_reset()
   term_hash_init();
 }
 
-int update_hash_entry_region(translation t, void *m) 
+int update_hash_entry(translation t, void *m) 
 {
   update_pointer(t, (void **)&((hash_entry)m)->stamps);
   return sizeof(struct hash_entry);

@@ -28,7 +28,10 @@
  *
  */
 
+#include <stdio.h>
 #include "banshee_region_persist_kinds.h"
+#include "persist.h"
+#include "hash.h"
 
 /* A region containing pointers. The update function will call
    update_pointer on adjacent word values */
@@ -38,7 +41,11 @@ region banshee_ptr_region = NULL;
    any of these values */
 region banshee_nonptr_region = NULL;
 
-const int num_persistent_regions = NUM_REGIONS;
+/* Table containing any extra regions that have been registered as
+   persistent-- keys are regions, values are Updaters */
+hash_table extra_regions = NULL;
+
+extern hash_table fn_ptr_table;
 
 void banshee_region_persistence_init()
 {
@@ -46,6 +53,8 @@ void banshee_region_persistence_init()
 
   banshee_ptr_region = newregion();
   banshee_nonptr_region = newregion();
+
+  extra_regions = make_hash_table(permanent, 32, ptr_hash, ptr_eq);
 }
 
 int update_nonptr_data(translation t, void *m)
@@ -59,12 +68,57 @@ int update_ptr_data(translation t, void *m)
   return sizeof(void *);
 }
 
-region *get_persistent_regions()
+void write_extra_info(const char *filename, unsigned long num_regions)
+{
+  hash_table_scanner scan;
+  Updater next_updater = NULL;
+  region next_region = NULL;
+  FILE *f = fopen(filename, "wb");
+
+  assert(f);
+
+  fwrite((void *)&num_regions, sizeof(unsigned long), 1, f);
+  
+
+  hash_table_scan(extra_regions, &scan);
+  assert(fn_ptr_table);
+  while(hash_table_next(&scan, (hash_key *)&next_region, 
+			(hash_data *)&next_updater)) {
+    int id = 0;
+    hash_table_lookup(fn_ptr_table, (hash_key)next_updater, (hash_data *)&id);
+    fwrite((void *)&id, sizeof(int), 1 , f);
+  }
+}
+
+Updater *read_extra_info(const char *filename)
+{
+  unsigned long num_extra_regions = 0, i = 0;
+  int next_id = 0;
+  FILE *f  = fopen(filename, "rb");
+  Updater *result = rarrayalloc(permanent,num_extra_regions + NUM_REGIONS, 
+				Updater);
+
+  assert(f);
+
+  fread((void *)&num_extra_regions, sizeof(unsigned long), 1, f);
+  
+  for (i = 0; i < num_extra_regions; i++) {
+    fread((void *)&next_id, sizeof(int), 1, f); 
+    result[NUM_REGIONS + i] = update_funptr_data(next_id);
+  }
+
+  return result;
+}
+
+region *get_persistent_regions(const char *filename)
 {
 #ifndef NONSPEC
   return NULL;
 #else
-  region *result = rarrayalloc(permanent, NUM_REGIONS+1, region);
+  region *result;
+  unsigned long num_extra_regions = hash_table_size(extra_regions);
+
+  result = rarrayalloc(permanent, num_extra_regions + NUM_REGIONS+1, region);
   result[0] = banshee_nonptr_region;
   result[1] = banshee_ptr_region;
   result[2] = bucket_region;
@@ -103,17 +157,37 @@ region *get_persistent_regions()
 
   result[30] = cons_expr_region;	
   result[31] = term_constant_region; 
-  result[32] = NULL;
+
+  {
+    int i = 0;
+    region next_region;
+    hash_table_scanner scan;
+    hash_table_scan(extra_regions, &scan);
+    
+    while(hash_table_next(&scan, (hash_key *)&next_region, 
+			  NULL)) {
+      result[NUM_REGIONS+i] = next_region;
+      i++;
+    }
+  }
+
+  result[num_extra_regions + NUM_REGIONS] = NULL;
+
+  write_extra_info(filename, num_extra_regions);
+
   return result;
 #endif	/* NONSPEC */
 }
 
-Updater *get_updater_functions()
+Updater *get_updater_functions(const char *filename)
 {
 #ifndef NONSPEC
   return NULL;
 #else 
-  Updater *result = rarrayalloc(permanent, NUM_REGIONS, Updater);
+  Updater *result;
+
+  result = read_extra_info(filename); 
+    //rarrayalloc(permanent, NUM_REGIONS, Updater);
 
   result[0] = update_nonptr_data;
   result[1] = update_ptr_data;
@@ -131,7 +205,7 @@ Updater *get_updater_functions()
   result[11] = update_added_edge_info;
   result[12] = update_setif_var;
   result[13] = update_sv_info;
-  result[14] = update_hash_entry_region; 
+  result[14] = update_hash_entry; 
   
   result[15] = update_term_bucket;
   result[16] = update_term_hash;
@@ -156,4 +230,14 @@ Updater *get_updater_functions()
 
   return result;
 #endif  /* NONSPEC  */
+}
+
+void register_persistent_region(region r, Updater u)
+{
+  hash_table_insert(extra_regions, r, u);
+}
+
+void unregister_persistent_region(region r)
+{
+  hash_table_remove(extra_regions, r);
 }
