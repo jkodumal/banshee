@@ -31,7 +31,7 @@ banshee_bindir = ../bin
 
 DYCKCFL = dyckcfl
 
-TARGETS =  $(DYCKCFL).o mr_$(DYCKCFL).o TAGS
+TARGETS =  $(DYCKCFL).o mr_$(DYCKCFL).o 
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 

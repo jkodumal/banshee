@@ -51,7 +51,7 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 EXES = lambda-test.exe dyckcfl-test.exe dyckcfl-random-test.exe \
           uf-bt-test.exe
 
-TARGETS =  $(EXES) TAGS
+TARGETS =  $(EXES) 
 
 TARGETCHECK = $(patsubst %,check/%,$(EXES))
 

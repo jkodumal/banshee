@@ -33,7 +33,7 @@ BANSHEE= $(banshee_bindir)/banshee.exe
 
 RCA = rca_types
 
-TARGETS =  $(RCA).h $(RCA).c $(RCA).o rca_analyze.o TAGS
+TARGETS =  $(RCA).h $(RCA).c $(RCA).o rca_analyze.o 
 
 TAGFILES = *.c *.h
 

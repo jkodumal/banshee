@@ -33,7 +33,7 @@ BANSHEE = $(banshee_bindir)/banshee.exe
 
 LAMBDA = lambda
 
-TARGETS =  $(LAMBDA).h $(LAMBDA).c $(LAMBDA).o TAGS
+TARGETS =  $(LAMBDA).h $(LAMBDA).c $(LAMBDA).o 
 
 TAGFILES = $(LAMBDA).h $(LAMBDA).c
 

@@ -36,7 +36,7 @@ ANDERSEN = andersen_terms
 ANDERSEN_ST = andersen_terms_st
 
 TARGETS =  andersen.o $(ANDERSEN).h $(ANDERSEN).c $(ANDERSEN).o \
-           $(ANDERSEN_ST).h $(ANDERSEN_ST).c $(ANDERSEN_ST).o TAGS
+           $(ANDERSEN_ST).h $(ANDERSEN_ST).c $(ANDERSEN_ST).o 
 
 TAGFILES = *.c *.h
 

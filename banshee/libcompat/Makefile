@@ -36,7 +36,7 @@ endif
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
-TARGETS = libregions.a TAGS
+TARGETS = libregions.a 
 
 all: $(TARGETS) 
 

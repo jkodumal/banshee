@@ -54,7 +54,7 @@ NSOBJS = $(patsubst %.o,%.ns.o,$(OBJS))
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
-TARGETS = libengine.a libnsengine.a TAGS
+TARGETS = libengine.a libnsengine.a 
 
 ifdef DEBUG
 CFLAGS := -pg -g ${CFLAGS}
