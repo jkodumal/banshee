@@ -46,7 +46,7 @@
  *****************************************************************************/
 
 
-typedef enum {dyck_raw, dyck_inited, dyck_query} dyck_state;
+typedef enum {dyck_raw = 0, dyck_inited = 0, dyck_query = 0} dyck_state;
 
 struct dyck_node_ {
   gen_e node_constant;

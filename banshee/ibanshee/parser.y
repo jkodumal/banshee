@@ -46,7 +46,7 @@ static sort_kind current_row_base_sort;
 
 extern FILE *yyin;
 
-static void ibanshee_error_handler(gen_e e1, gen_e e2, banshee_error_kind bek) 
+void ibanshee_error_handler(gen_e e1, gen_e e2, banshee_error_kind bek) 
 {
   fprintf(stderr,"Warning: ");
   switch(bek) {

@@ -45,4 +45,4 @@ lex.yy.c: lexer.lex
 	flex lexer.lex
 
 clean: 
-	rm -rf *.o parser.tab.h parser.tab.c lex.yy.c gmon.out ../bin/ibanshee.exe ibanshee.exe
+	rm -rf *.o parser.tab.h parser.tab.c lex.yy.c gmon.out ../bin/ibanshee.exe ibanshee.exe *~

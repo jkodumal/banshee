@@ -62,11 +62,12 @@ is linked into banshee itself.
 
 See the COPYRIGHT file for more details.
 
-Known bugs:
+If backspace doesn't delete in ibanshee.exe, try:
+stty erase ^?
+before invoking ibanshee.exe.
 
-- The ibanshee interpreter acts strangely on Windows under cygwin's
-bash shell (backspace won't delete characters, for instance). Calling
-ibanshee.exe from cmd.exe seems to fix the problem.
+
+Known bugs:
 
 
 Send bug reports to jkodumal@cs.berkeley.edu.

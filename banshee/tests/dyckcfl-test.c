@@ -247,5 +247,9 @@ int main()
   test_dyck_isomorphism();
   test_dyck_reduction();
 
+  /* Do it one more time to test queries interspersed between
+     constraint additions */
+  test_dyck_isomorphism();
+
   return 0;
 }
