@@ -110,10 +110,10 @@ def next_log_entry(logfile):
 
 def run_checkout(repository, version, project):
     if (use_bitkeeper):
-	os.system("bk export -r%s %s %s &>/dev/null" % (version, repository, project))
-	os.system("chmod -R %s +w &>/dev/null" % project)
+	os.system("bash -c \"bk export -r%s %s %s &>/dev/null\"" % (version, repository, project))
+	os.system("bash -c \"chmod -R %s +w &>/dev/null\"" % project)
     else:
-	os.system("cvs -d %s co -D \"%s\" %s &>/dev/null" % (repository, version, project))
+	os.system("bash -c \"cvs -d %s co -D \\\"%s\\\" %s &>/dev/null\"" % (repository, version, project))
 
 
 # Get a list of the files with a given extension that have been
@@ -188,10 +188,10 @@ def list_to_string_nolf(list):
     return result
 
 def list_to_pretty_string_nolf(list):
-    if (len(list) == 0):
-	return "  **"
-    result = list[0]
     count = 0
+    if (len(list) == 0):
+	return "  ** NONE"
+    result = "\n  ** " + str(count) + "" + list[0]
     for elt in list[1:]:
 	count = count + 1
 	result = result + "\n  ** " + str(count) +  " " + elt
@@ -247,7 +247,7 @@ def get_new_stack_and_time(modified, removed, state):
     print "Warning: failed to compute rollback time and new stack; presumably the commit just added some files or didn't modify any sources..."
     return (state[-1][1], modified, state)
 
-def write_simulation_data(modified, files, prefix,simfile,modfile):
+def write_simulation_data(version, modified, files, prefix, simfile, modfile):
     prefiles = []
     for (file,_) in prefix:
 	prefiles.append(file)
@@ -259,8 +259,9 @@ def write_simulation_data(modified, files, prefix,simfile,modfile):
 	preanalyzed_size = int(os.popen("du -sck %s | grep total" % list_to_string_nolf(prefiles)).readlines()[0].split()[0])
     else:
 	preanalyzed_size = 0
+    modfile.write("version: %s all files : %s\n#####" % (version, list_to_pretty_string_nolf(prefiles + files )))
     modfile.write("modified files: %s\n#####\n" % list_to_pretty_string_nolf(modified) )
-    modfile.write("analyzed files: %s\n#####\n" % list_to_pretty_string_nolf(files) )
+    modfile.write("analyzed files: %s\n##########\n" % list_to_pretty_string_nolf(files) )
     simfile.write("analyzed: %d total: %d percent: %f\n" % (reanalysis_size,reanalysis_size + preanalyzed_size, float(reanalysis_size) / float(reanalysis_size + preanalyzed_size)))
 
 # Entry point 
@@ -291,7 +292,10 @@ def main():
 	sys.exit(1)
     # run Andersen's analysis, save the state and output 
     files = list_to_string(get_filelist(project,extension))
-    cmd = "%s -fserialize-constraints %s 2>/dev/null" % (analysis,files)
+    cmd = "%s -frserialize-constraints %s 2>/dev/null" % (analysis,files)
+    cmd_all = "bash -c \"%s -frserialize-constraints %s &> out/%s_all_%s.out\"" % (analysis, files, project, entrynum)
+    print cmd_all
+    os.system(cmd_all)
     output = os.popen(cmd).readlines()
     process_andersen_output(start_with_entry,output,[])
     # move the analysis to the _prev directory
@@ -314,7 +318,7 @@ def main():
 	banshee_state = get_banshee_state(statefile)
  	version,_ = next_log_entry(logfile)
 	print "Checking out %s" % version
-	os.system("cvs -d %s co -D \"%s\" %s &>/dev/null" % (repository, version, project))
+	run_checkout(repository, version, project)
 	build_error = os.system("%s %s" % (compilescript, project))
 	if (build_error):
 	    print "Build error -- skipping this commit"
@@ -328,11 +332,17 @@ def main():
 	removed = get_removed_files(modified, get_modified_files(project, project_prev,extension))
 	time,files,prefix = get_new_stack_and_time(modified,removed, banshee_state)
 	print "Backtracking to : %s" % time
+	prefiles = []
+	for (file,_) in prefix:
+	    prefiles.append(file)
+	cmd_all = "bash -c \"%s -frserialize-constraints %s &> out/%s_all_%d.out\"" % (analysis, list_to_string_nolf(prefiles + files), project, current)
 	cmd = "%s -frserialize-constraints -frdeserialize-constraints -fback%s %s 2>/dev/null" % (analysis, time, list_to_string_nolf(files))
 	#print cmd
 	output = os.popen(cmd).readlines()
 	process_andersen_output(current,output,prefix)
-	write_simulation_data(modified, files, prefix, simfile, modfile)
+	print cmd_all
+	os.system(cmd_all)
+	write_simulation_data(version, modified, files, prefix, simfile, modfile)
   	os.system("rm -rf %s" % project_prev)
 	os.system("mv %s %s" % (project, project_prev))
 

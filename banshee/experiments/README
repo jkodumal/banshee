@@ -124,7 +124,7 @@ make
 2002-05-29 14:41 -0700
 
 
-"2002-10-27 14:40" this works with
+"2002-10-27 14:40" This works with
 
 aclocal
 autoconf
@@ -136,3 +136,12 @@ running the analysis:
 
 export GCC_SUBST
 ./run-bt-experiment.py -c ./default_compile.sh -d /home/cs/jfoster/cvsroot/ -p cqual -l logs/cqual.log -o cqual_run.out -e --start-with 0 --end-with 10 
+
+./configure CC="/moa/sc1/jkodumal/work/banshee/experiments/gcc_subst.py" 
+
+* Linux kernel 2.4
+
+* Todo
+
+-- update the regions so that region serialization times are accurate
+-- possibly reverse the list of modifieds pushed onto the stack
