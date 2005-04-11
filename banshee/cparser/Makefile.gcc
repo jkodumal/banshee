@@ -60,4 +60,4 @@ parser_sg_nt.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
 
 
 clean:
-	rm -f $(OBJS) parser.exe parser_st.exe parser_sg.exe parser_sg_nt.exe *~
+	rm -f $(OBJS) parser.exe parser_st.exe parser_ns.exe parser_sg.exe parser_sg_nt.exe *~
