@@ -1335,6 +1335,8 @@ void setif_rollback(banshee_rollback_info info)
   assert(tinfo->kind = setif_sort);
 
   lazy_invalidate_tlb_cache();
+  term_hash_delete(setif_hash);
+  setif_hash = make_term_hash(NULL);
   
   hash_table_scan(tinfo->added_edges, &hash_scan);
   while(hash_table_next(&hash_scan,(hash_key *)&st,

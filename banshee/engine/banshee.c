@@ -181,7 +181,7 @@ void banshee_rollback()
   if (banshee_clock > 0) {
 
     uf_rollback();
-    
+
     while(1) {
       if (banshee_rollback_stack_empty(rb_stack)) break;
       info = banshee_rollback_stack_head(rb_stack);
