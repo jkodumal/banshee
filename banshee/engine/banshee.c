@@ -72,7 +72,7 @@ void engine_init(void)
   engine_region = newregion();
 
   hash_table_init();
-  seed_fn_ptr_table(engine_region);
+  seed_fn_ptr_table(permanent);
 
   banshee_region_persistence_init();
   bounds_init();

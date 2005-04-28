@@ -165,7 +165,7 @@ let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) =
   let sort_resets = foldr 
       (function ((e,s),acc) -> (s#reset e) @ acc) [] sorts in 
   let init_body = init_engine :: sort_inits in
-  let reset_body = sort_resets @ [reset_engine] in
+  let reset_body = reset_engine :: sort_resets in
   let stats_body = [stats_engine] in
   let graph_body = [print_graph] in
   let serialize_body = [serialize_engine] in

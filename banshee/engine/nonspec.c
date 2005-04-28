@@ -1291,11 +1291,11 @@ void nonspec_reset(void)
   gproj_pat_region = newregion();
   gen_e_ptr_region = newregion();
 
+  engine_reset();
   flowrow_reset();
   setst_reset();
   setif_reset();
   term_reset();
-  engine_reset();
 }
 
 int update_gen_e_ptr(translation t, void *m)

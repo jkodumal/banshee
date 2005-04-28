@@ -1775,6 +1775,8 @@ int update_var_info(translation t, void *m)
 void analysis_init() deletes
 {
   pta_init();
+  // DEBUG: 
+  // pta_reset();
   analysis_rgn = newregion();
 /*   global_var_env = new_env(analysis_rgn,NULL); */
 

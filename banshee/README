@@ -7,6 +7,7 @@ to solve many kinds of constraints, it has only been extensively
 tested on Andersen's-style points-to analysis.
 
 To build banshee, the following must be installed: 
+
  --- ocaml (see http://caml.inria.fr)
  --- gcc (should be standard)
  --- indent (should be standard)
@@ -17,8 +18,11 @@ line in this directory. If everything succeeds, the following targets
 will be built:
 
  --- engine/libnsengine.a
+
  --- engine/libengine.a
+
  --- bin/banshee.exe
+
  --- bin/ibanshee.exe
 
 The first library is the nonspecialized constraint resolution
@@ -41,11 +45,17 @@ out of date. This will hopefully be remedied soon.
 
 Other useful make targets:
 
-'make check' will verify your build. 
-'make banshee' will build banshee without building any test applications
-'make docs' will just build the documentation
-'make points-to' will build the points-to analysis application and dependencies
-'make ibanshee' will build the iBanshee interpreter and dependencies
+ --- 'make check' will verify your build.
+
+ --- 'make banshee' will build banshee without building any test
+     applications
+
+ --- 'make docs' will just build the documentation
+
+ --- 'make points-to' will build the points-to analysis application
+     and dependencies
+
+ --- 'make ibanshee' will build the iBanshee interpreter and dependencies
 
 banshee should build and run on Linux, FreeBSD, Windows (with cygwin)
 and MacOS X. On FreeBSD, make sure to use 'gmake' instead of 'make'
@@ -72,26 +82,26 @@ before invoking ibanshee.exe.
 
 Known bugs:
 
---- Projection merging and the DyckCFL API don't work properly (the
-    bug has to do with group projections and merging). TURN OFF
-    projection merging if using the DyckCFL API with globals. If
-    you're not using globals, this won't matter, because group
-    projections won't be used. Projection merging doesn't improve the
-    DyckCFL library's performance, anyway.
+ --- Projection merging and the DyckCFL API don't work properly (the
+     bug has to do with group projections and merging). TURN OFF
+     projection merging if using the DyckCFL API with globals. If
+     you're not using globals, this won't matter, because group
+     projections won't be used. Projection merging doesn't improve the
+     DyckCFL library's performance, anyway.
 
---- Banshee ships with two region-based memory management libraries:
-    libcompat and rlib. There is a serious performance bug with
-    rlib. Unfortunately, region-based persistence
-    (serialization/deserialization) is only supported with rlib. You
-    can use rlib by doing: 'make clean all RLIB=1'. Region persistence
-    is otherwise unsupported.
+ --- Banshee ships with two region-based memory management libraries:
+     libcompat and rlib. There is a serious performance bug with
+     rlib. Unfortunately, region-based persistence
+     (serialization/deserialization) is only supported with rlib. You
+     can use rlib by doing: 'make clean all RLIB=1'. Region persistence
+     is otherwise unsupported.
 
---- Hashset (hashset.c) sometimes doesn't terminate. By default,
-    banshee doesn't use hashset: it uses a bounds representation based
-    on hash.c (hash_bounds.c, as opposed to the hashset based
-    bounds.c). However, the hashset-based bounds representation is
-    about twice as fast as the hash-based bounds representation. If
-    you want to try out the hashset-based bounds representation, do
-    'make clean all check NO_HASH_BOUNDS=1'.
+ --- Hashset (hashset.c) sometimes doesn't terminate. By default,
+     banshee doesn't use hashset: it uses a bounds representation based
+     on hash.c (hash_bounds.c, as opposed to the hashset based
+     bounds.c). However, the hashset-based bounds representation is
+     about twice as fast as the hash-based bounds representation. If
+     you want to try out the hashset-based bounds representation, do
+     'make clean all check NO_HASH_BOUNDS=1'.
 
 Send bug reports to jkodumal@cs.berkeley.edu.
