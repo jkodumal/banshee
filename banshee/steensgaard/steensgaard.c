@@ -209,12 +209,14 @@ T pta_join(T t1, T t2) {
   else {
     T ptr;
     L fun;  
+    struct contents_type_ c1;
+    struct contents_type_ c2;
     
     ptr = T_fresh("join_ptr");
     fun = L_fresh("join_fun");
     
-    struct contents_type_ c1 = decompose_ref_or_fresh(t1);
-    struct contents_type_ c2 = decompose_ref_or_fresh(t2);
+    c1 = decompose_ref_or_fresh(t1);
+    c2 = decompose_ref_or_fresh(t2);
     
     T_cunify_hook(c1.ptr, ptr);
     T_cunify_hook(c2.ptr, ptr);

@@ -147,10 +147,10 @@ void term_hash_delete(term_hash tab) deletes
 gen_e term_hash_find(term_hash tab, stamp stamps[], int len)
 {
   int hash_val;
+  term_bucket b;
 
   if (!flag_hash_cons) return NULL;
 
-  term_bucket b;
   hash_val = hash(tab->ub, stamps, len);
   assert(hash_val < tab->capacity);
   b = tab->term_buckets[hash_val];
