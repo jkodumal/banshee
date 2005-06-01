@@ -25,6 +25,14 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+OS:=$(shell uname)
+
+ifeq ($(OS), Darwin)
+	jni_dir = /System/Library/Frameworks/JavaVM.framework/Headers 
+else 
+	jni_dir = /usr/local/java/include/
+endif
+
 ifndef RLIB
 region_dir = ../libcompat
 else
@@ -50,12 +58,22 @@ CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr= -DNONSPEC -Wall -Werror 
 endif
 
-.PHONY: clean
+.PHONY: clean detect
 
-all: $(TARGETS) #TAGS
+all: detect $(TARGETS) 
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)
+
+detect:
+	@echo "OS is $(OS)"
+
+jdyckcfl:
+	javac JDyckCFL.java
+	javah -jni JDyckCFL
+	$(CC) -c -I$(engine_dir) -I$(region_dir) -I$(jni_dir) -Ddeletes= \
+	-Dtraditional= -Dsameregion= -Dparentptr= -DNONSPEC -Wall JDyckCFLImp.c
+	$(CC) -dynamiclib -o libjdyckcfl.jnilib dyckcfl.o JDyckCFLImp.o $(engine_dir)/libnsengine.a $(region_dir)/libregions.a -framework JavaVM
 
 clean:
 	rm -f $(TARGETS) *~

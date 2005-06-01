@@ -7,7 +7,7 @@ static dyck_node node_id_to_node(jlong nodeID) {
   return (dyck_node)nodeID;
 }
 
-satic jlong node_to_node_id(dyck_node n) {
+static jlong node_to_node_id(dyck_node n) {
   return (jlong)n;
 }
 
