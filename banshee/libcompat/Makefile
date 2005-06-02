@@ -28,10 +28,9 @@
 CC=gcc
 
 ifdef DEBUG_RALLOC
-#CFLAGS = -Wall -Ddeletes="" -g -pg
-CFLAGS = -g -pg -Wall -Ddeletes="" -DDEBUG_RALLOC -DNDEBUG -DNMEMDEBUG  -Werror
+CFLAGS = -g -pg -Wall -Ddeletes="" -DDEBUG_RALLOC -DNDEBUG -DNMEMDEBUG  -Werror -fno-common
 else
-CFLAGS = -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG -Werror 
+CFLAGS = -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG -Werror -fno-common
 endif
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)

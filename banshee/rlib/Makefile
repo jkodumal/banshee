@@ -2,9 +2,9 @@ CC=gcc
 #CFLAGS = -O9 -Wall -Ddeletes=""
 
 ifndef DEBUG
-CFLAGS = -O9 -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG
+CFLAGS = -O9 -Wall -Ddeletes="" -DNMEMDEBUG -DNDEBUG -fno-common
 else
-CFLAGS = -Wall -Ddeletes="" -g -pg
+CFLAGS = -Wall -Ddeletes="" -g -pg -fno-common
 endif
 
 ifdef REGION_MAIN

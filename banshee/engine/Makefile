@@ -43,7 +43,7 @@ endif
 CC = gcc
 
 CFLAGS = -I. -I$(region_dir) -Ddeletes= -Dtraditional= -Dsameregion= \
-	 -Dparentptr= -Wall -Werror -fno-strict-aliasing
+	 -Dparentptr= -Wall -Werror -fno-strict-aliasing -fno-common
 
 ifndef NO_BANSHEE_ROLLBACK
 CFLAGS := -DBANSHEE_ROLLBACK ${CFLAGS}

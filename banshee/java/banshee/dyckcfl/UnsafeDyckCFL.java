@@ -1,9 +1,11 @@
+package banshee.dyckcfl;
+
 // A wrapper around the DyckCFL Banshee API. For efficiency, this code
 // assumes that longs are big enough to store C pointers. Then each
 // long (really, a C address), is a unique ID for a node. This
 // minimizes native->java conversion, but is hardly safe.
 
-class JDyckCFL {
+public class UnsafeDyckCFL {
 
     // Initializer block ensures the dyckCFL library is initialized
     // when this class is loaded
@@ -12,7 +14,7 @@ class JDyckCFL {
 	initialize();
     }
 
-    public JDyckCFL() {
+    public UnsafeDyckCFL() {
     }
 
     private static native void initialize();
@@ -38,7 +40,7 @@ class JDyckCFL {
     public native boolean checkPNReaches(long node1, long node2);
 
     public static void main(String args[]) {
-	JDyckCFL cflEngine = new JDyckCFL();
+	UnsafeDyckCFL cflEngine = new UnsafeDyckCFL();
 	long n1 = cflEngine.makeTaggedNode("foo");
 	long n2 = cflEngine.makeTaggedNode("bar");
 	long n3 = cflEngine.makeTaggedNode("baz");
