@@ -66,7 +66,7 @@ dyckcfl: banshee
 	$(MAKE) -C dyckcfl
 
 java: banshee dyckcfl
-	$(MAKE) -c java
+	$(MAKE) -C java
 
 tests: banshee rca andersen steensgaard lambda dyckcfl
 	$(MAKE) -C tests
