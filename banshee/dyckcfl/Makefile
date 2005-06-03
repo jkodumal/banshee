@@ -58,15 +58,15 @@ CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
          -Dsameregion= -Dparentptr= -DNONSPEC -Wall -Werror 
 endif
 
-.PHONY: clean detect
+.PHONY: clean 
 
-all: detect $(TARGETS) 
+all: $(TARGETS) 
 
 TAGS: $(TAGFILES)
 	etags $(TAGFILES)
 
-detect:
-	@echo "OS is $(OS)"
+#detect:
+#	@echo "OS is $(OS)"
 
 #jdyckcfl:
 #	javac JDyckCFL.java
