@@ -116,5 +116,6 @@ clean:
 	$(MAKE) -C tests -f pta_test.mk clean
 	$(MAKE) -C tests -f ibanshee_test.mk clean
 	$(MAKE) -C ibanshee clean
+	$(MAKE) -C java clean
 	rm -rf *~ data statics offsets extras
 

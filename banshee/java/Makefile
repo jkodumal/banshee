@@ -31,4 +31,6 @@ jdyckcfl: java
 	$(CC) -dynamiclib -o libjdyckcfl.jnilib $(dyckcfl_dir)/dyckcfl.o UnsafeDyckCFLImp.o $(engine_dir)/libnsengine.a $(region_dir)/libregions.a -framework JavaVM
 
 clean:
-	rm -f *.o libjdyckcfl.jnilib
+	rm -f *.o libjdyckcfl.jnilib banshee_dyckcfl_UnsafeDyckCFL.h 
+	rm -f `find . -name \*.class`
+	rm -f `find . -name \*~`
