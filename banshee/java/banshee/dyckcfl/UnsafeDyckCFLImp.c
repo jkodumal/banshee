@@ -116,12 +116,6 @@ JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeCloseEdge
 
 }
 
-JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_finishedAddingEdges
-  (JNIEnv *env, jclass clazz) { 
-
-  dyck_finished_adding();
-}
-
 JNIEXPORT jboolean JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_checkReaches
   (JNIEnv *env, jclass clazz, jlong nodeID1, jlong nodeID2) { 
   

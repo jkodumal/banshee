@@ -69,22 +69,26 @@ public class UnsafeDyckCFL {
 
     public static native void makeCloseEdge(long node1, long node2, int index);
 
-    public static native void finishedAddingEdges();
-
     public static native boolean checkReaches(long node1, long node2);
     
     public static native boolean checkPNReaches(long node1, long node2);
 
     public static void main(String args[]) {
-	long n1 = UnsafeDyckCFL.makeTaggedNode("foo");
-	long n2 = UnsafeDyckCFL.makeTaggedNode("bar");
-	long n3 = UnsafeDyckCFL.makeTaggedNode("baz");
+	long n0 = UnsafeDyckCFL.makeTaggedNode("foo");
+	long n1 = UnsafeDyckCFL.makeTaggedNode("bar");
+	long n2 = UnsafeDyckCFL.makeTaggedNode("baz");
+	long n3 = UnsafeDyckCFL.makeTaggedNode("bum");
+	long n4 = UnsafeDyckCFL.makeTaggedNode("blog");
+
+	UnsafeDyckCFL.makeOpenEdge(n0,n1,1);
 	UnsafeDyckCFL.makeSubtypeEdge(n1,n2);
-	UnsafeDyckCFL.finishedAddingEdges();
+	UnsafeDyckCFL.makeCloseEdge(n2,n3,1);
+	UnsafeDyckCFL.makeCloseEdge(n2,n4,2);
+
 	System.out.println("Checking reachability (should be true): " 
-			   + UnsafeDyckCFL.checkReaches(n1,n2));
+			   + UnsafeDyckCFL.checkReaches(n0,n3));
 	System.out.println("Checking reachability (should be false): " 
-			   + UnsafeDyckCFL.checkReaches(n1,n3));
+			   + UnsafeDyckCFL.checkReaches(n0,n4));
     }
 
 }

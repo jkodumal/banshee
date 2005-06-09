@@ -77,11 +77,6 @@ public class DyckCFL {
 	UnsafeDyckCFL.makeCloseEdge(node1.nodeID, node2.nodeID, index);
     }
 
-    /** Prepares the graph for reachability queries. */
-    public void finishedAddingEdges() {
-	UnsafeDyckCFL.finishedAddingEdges();
-    }
-
     /** Returns true if there is a matched path between node1 and node2. */
     public boolean checkReaches(DyckNode node1, DyckNode node2) {
 	return UnsafeDyckCFL.checkReaches(node1.nodeID, node2.nodeID);
