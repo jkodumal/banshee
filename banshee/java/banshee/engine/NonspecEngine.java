@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2000-2004
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -27,18 +27,34 @@
  * SUCH DAMAGE.
  *
  */
-package banshee.dyckcfl;
+package banshee.engine;
 
-class DyckNode {
-    protected String name;
-    transient long nodeID;
 
-    DyckNode(String name, long nodeID) {
-	this.name = name;
-	this.nodeID = nodeID;
+/**
+ * A nonspecialized constraint engine
+ *
+ * @author John Kodumal
+ */
+public class NonspecEngine implements UnsafeErrorHandler {
+    private static ErrorHandler errorHandler;
+
+
+    public static void eliminateCycles(boolean value) {
+	UnsafeNonspecEngine.eliminateCycles(value);
+    }
+    
+    public static void mergeProjections(boolean value) {
+	UnsafeNonspecEngine.mergeProjections(value);
+    }
+    
+    public static void occursCheck(boolean value) {
+	UnsafeNonspecEngine.occursCheck(value);
     }
 
-    public String getName() {
-	return name;
+    // TODO: have this call the static safe error handler. This will
+    // require user data in expressions!
+    public final void unsafeHandleError(long e1, long e2, ErrorKind k) {
     }
+
+
 }

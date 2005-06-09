@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2000-2004
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -27,18 +27,24 @@
  * SUCH DAMAGE.
  *
  */
-package banshee.dyckcfl;
+package banshee.engine;
 
-class DyckNode {
-    protected String name;
-    transient long nodeID;
 
-    DyckNode(String name, long nodeID) {
-	this.name = name;
-	this.nodeID = nodeID;
+public class SignatureElement {
+    VarianceKind variance;
+    SortKind sort;
+
+    public SignatureElement(VarianceKind variance, SortKind sort) {
+	this.variance = variance;
+	this.sort = sort;
     }
 
-    public String getName() {
-	return name;
+    public VarianceKind getVariance() {
+	return variance;
+    }
+
+    public SortKind getSort() {
+	return sort;
     }
 }
+

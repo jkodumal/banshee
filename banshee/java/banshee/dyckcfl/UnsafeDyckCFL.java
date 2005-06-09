@@ -34,10 +34,17 @@ package banshee.dyckcfl;
 // long (really, a C address), is a unique ID for a node. This
 // minimizes native->java conversion, but is hardly safe.
 
+/**
+ * A wrapper around the Banshee DyckCFL API. This code assumes that
+ * longs are big enough to store C pointers. Each long is a valid C
+ * address for a node. While this scheme is efficient, it is not
+ * safe.
+ *
+ * @author John Kodumal
+ */
+
 public class UnsafeDyckCFL {
 
-    // Initializer block ensures the dyckCFL library is initialized
-    // when this class is loaded
     static {
 	System.loadLibrary("jdyckcfl");
 	initialize();
@@ -50,33 +57,34 @@ public class UnsafeDyckCFL {
 
     public static native void printDyckConstraints(boolean value);
 
-    public native long makeTaggedNode(String name);
+    public static native long makeTaggedNode(String name);
 
-    public native long makeUntaggedNode(String name);
+    public static native long makeUntaggedNode(String name);
 
-    public native void markNodeGlobal(long node);
+    public static native void markNodeGlobal(long node);
 
-    public native void makeSubtypeEdge(long node1, long node2);
+    public static native void makeSubtypeEdge(long node1, long node2);
 
-    public native void makeOpenEdge(long node1, long node2, int index);
+    public static native void makeOpenEdge(long node1, long node2, int index);
 
-    public native void makeCloseEdge(long node1, long node2, int index);
+    public static native void makeCloseEdge(long node1, long node2, int index);
 
-    public native void finishedAddingEdges();
+    public static native void finishedAddingEdges();
 
-    public native boolean checkReaches(long node1, long node2);
+    public static native boolean checkReaches(long node1, long node2);
     
-    public native boolean checkPNReaches(long node1, long node2);
+    public static native boolean checkPNReaches(long node1, long node2);
 
     public static void main(String args[]) {
-	UnsafeDyckCFL cflEngine = new UnsafeDyckCFL();
-	long n1 = cflEngine.makeTaggedNode("foo");
-	long n2 = cflEngine.makeTaggedNode("bar");
-	long n3 = cflEngine.makeTaggedNode("baz");
-	cflEngine.makeSubtypeEdge(n1,n2);
-	cflEngine.finishedAddingEdges();
-	System.out.println("Checking reachability (should be true): " + cflEngine.checkReaches(n1,n2));
-	System.out.println("Checking reachability (should be false): " + cflEngine.checkReaches(n1,n3));
+	long n1 = UnsafeDyckCFL.makeTaggedNode("foo");
+	long n2 = UnsafeDyckCFL.makeTaggedNode("bar");
+	long n3 = UnsafeDyckCFL.makeTaggedNode("baz");
+	UnsafeDyckCFL.makeSubtypeEdge(n1,n2);
+	UnsafeDyckCFL.finishedAddingEdges();
+	System.out.println("Checking reachability (should be true): " 
+			   + UnsafeDyckCFL.checkReaches(n1,n2));
+	System.out.println("Checking reachability (should be false): " 
+			   + UnsafeDyckCFL.checkReaches(n1,n3));
     }
 
 }

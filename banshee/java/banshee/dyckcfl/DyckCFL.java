@@ -34,11 +34,6 @@ package banshee.dyckcfl;
  * @author John Kodumal
  */
 public class DyckCFL {
-    private UnsafeDyckCFL cflEngine;
-
-    public DyckCFL() {
-	cflEngine = new UnsafeDyckCFL();
-    }
 
     /** Toggles constraint printing. */
     public static void printDyckConstraints(boolean value) {
@@ -47,7 +42,7 @@ public class DyckCFL {
 
     /** Creates a new tagged node with the given name. */
     public DyckNode makeTaggedNode(String name) {
-	long id = cflEngine.makeTaggedNode(name);
+	long id = UnsafeDyckCFL.makeTaggedNode(name);
 	return new DyckNode(name, id);
     }
 
@@ -58,43 +53,43 @@ public class DyckCFL {
      *  efficient as a result.
      */
     public DyckNode makeUntaggedNode(String name) {
-	long id = cflEngine.makeUntaggedNode(name);
+	long id = UnsafeDyckCFL.makeUntaggedNode(name);
 	return new DyckNode(name, id);
     }
 
     /** Marks a node global. */
     public void markNodeGlobal(DyckNode node) {
-	cflEngine.markNodeGlobal(node.nodeID);
+	UnsafeDyckCFL.markNodeGlobal(node.nodeID);
     }
 
     /** Make a subtype edge between two nodes. */
     public void makeSubtypeEdge(DyckNode node1, DyckNode node2) {
-	cflEngine.makeSubtypeEdge(node1.nodeID, node2.nodeID);
+	UnsafeDyckCFL.makeSubtypeEdge(node1.nodeID, node2.nodeID);
     }
 
     /** Make an edge (_{index} between two nodes. */
     public void makeOpenEdge(DyckNode node1, DyckNode node2, int index) {
-	cflEngine.makeOpenEdge(node1.nodeID, node2.nodeID, index);
+	UnsafeDyckCFL.makeOpenEdge(node1.nodeID, node2.nodeID, index);
     }
 
     /** Make an edge )_{index} between two nodes. */
     public void makeCloseEdge(DyckNode node1, DyckNode node2, int index) {
-	cflEngine.makeCloseEdge(node1.nodeID, node2.nodeID, index);
+	UnsafeDyckCFL.makeCloseEdge(node1.nodeID, node2.nodeID, index);
     }
 
     /** Prepares the graph for reachability queries. */
     public void finishedAddingEdges() {
-	cflEngine.finishedAddingEdges();
+	UnsafeDyckCFL.finishedAddingEdges();
     }
 
     /** Returns true if there is a matched path between node1 and node2. */
     public boolean checkReaches(DyckNode node1, DyckNode node2) {
-	return cflEngine.checkReaches(node1.nodeID, node2.nodeID);
+	return UnsafeDyckCFL.checkReaches(node1.nodeID, node2.nodeID);
     }
     
     /** Returns true if there is a PN path between node1 and node2. */
     public boolean checkPNReaches(DyckNode node1, DyckNode node2) {
-	return cflEngine.checkPNReaches(node1.nodeID, node2.nodeID);
+	return UnsafeDyckCFL.checkPNReaches(node1.nodeID, node2.nodeID);
     }
     
 }

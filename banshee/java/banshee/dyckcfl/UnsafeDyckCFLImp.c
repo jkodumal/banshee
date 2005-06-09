@@ -51,24 +51,14 @@ JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_initialize
   dyck_init(TRUE);
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    print_dyck_constraints
- * Signature: (Z)V
- */
 JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_printDyckConstraints
   (JNIEnv *env, jclass clazz, jboolean enablePrint) {
   if (enablePrint) flag_dyck_print_constraints = TRUE;
   else flag_dyck_print_constraints = FALSE;
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    makeTaggedNode
- * Signature: (Ljava/lang/String;)J
- */
 JNIEXPORT jlong JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeTaggedNode
-  (JNIEnv *env, jobject clazz, jstring name) {
+  (JNIEnv *env, jclass clazz, jstring name) {
 
   const char *str = (*env)->GetStringUTFChars(env, name, 0);
   dyck_node result = make_tagged_dyck_node(str);
@@ -77,13 +67,8 @@ JNIEXPORT jlong JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeTaggedNode
   return node_to_node_id(result);
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    makeUntaggedNode
- * Signature: (Ljava/lang/String;)J
- */
 JNIEXPORT jlong JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeUntaggedNode
-  (JNIEnv *env, jobject clazz, jstring name) { 
+  (JNIEnv *env, jclass clazz, jstring name) { 
 
   const char *str = (*env)->GetStringUTFChars(env, name, 0);
   dyck_node result = make_untagged_dyck_node(str);
@@ -92,25 +77,15 @@ JNIEXPORT jlong JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeUntaggedNode
   return node_to_node_id(result);
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    markNodeGlobal
- * Signature: (J)V
- */
 JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_markNodeGlobal
-  (JNIEnv *env, jobject clazz, jlong nodeID) { 
+  (JNIEnv *env, jclass clazz, jlong nodeID) { 
 
   dyck_node n = node_id_to_node(nodeID);
   mark_dyck_node_global(n);
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    makeSubtypeEdge
- * Signature: (JJ)V
- */
 JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeSubtypeEdge
-  (JNIEnv *env, jobject clazz, jlong nodeID1, jlong nodeID2) { 
+  (JNIEnv *env, jclass clazz, jlong nodeID1, jlong nodeID2) { 
 
   dyck_node n1, n2;
 
@@ -120,13 +95,8 @@ JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeSubtypeEdge
   make_dyck_subtype_edge(n1, n2);
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    makeOpenEdge
- * Signature: (JJI)V
- */
 JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeOpenEdge
-  (JNIEnv *env, jobject clazz, jlong nodeID1, jlong nodeID2 , jint index) { 
+  (JNIEnv *env, jclass clazz, jlong nodeID1, jlong nodeID2 , jint index) { 
 
   dyck_node n1, n2;
   n1 = node_id_to_node(nodeID1);
@@ -136,13 +106,8 @@ JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeOpenEdge
 
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    makeCloseEdge
- * Signature: (JJI)V
- */
 JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeCloseEdge
-  (JNIEnv *env, jobject clazz, jlong nodeID1, jlong nodeID2, jint index) { 
+  (JNIEnv *env, jclass clazz, jlong nodeID1, jlong nodeID2, jint index) { 
 
   dyck_node n1, n2;
   n1 = node_id_to_node(nodeID1);
@@ -151,24 +116,14 @@ JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_makeCloseEdge
 
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    finishedAddingEdges
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_finishedAddingEdges
-  (JNIEnv *env, jobject clazz) { 
+  (JNIEnv *env, jclass clazz) { 
 
   dyck_finished_adding();
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    checkReaches
- * Signature: (JJ)Z
- */
 JNIEXPORT jboolean JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_checkReaches
-  (JNIEnv *env, jobject clazz, jlong nodeID1, jlong nodeID2) { 
+  (JNIEnv *env, jclass clazz, jlong nodeID1, jlong nodeID2) { 
   
   dyck_node n1, n2;
 
@@ -178,13 +133,8 @@ JNIEXPORT jboolean JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_checkReaches
   return dyck_check_reaches(n1,n2);
 }
 
-/*
- * Class:     banshee_dyckcfl_UnsafeDyckCFL
- * Method:    checkPNReaches
- * Signature: (JJ)Z
- */
 JNIEXPORT jboolean JNICALL Java_banshee_dyckcfl_UnsafeDyckCFL_checkPNReaches
-  (JNIEnv *env, jobject clazz, jlong nodeID1, jlong nodeID2) { 
+  (JNIEnv *env, jclass clazz, jlong nodeID1, jlong nodeID2) { 
 
   dyck_node n1, n2;
 

@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2000-2004
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -27,18 +27,23 @@
  * SUCH DAMAGE.
  *
  */
-package banshee.dyckcfl;
+package banshee.engine;
 
-class DyckNode {
-    protected String name;
-    transient long nodeID;
+/**
+ * Represents a pointer to a C-side Banshee object
+ *
+ * @author John Kodumal
+ */
+abstract class BansheeObject {
+    private transient long cAddr;
 
-    DyckNode(String name, long nodeID) {
-	this.name = name;
-	this.nodeID = nodeID;
+    BansheeObject(long addr) {
+	this.cAddr = addr;
+    }
+    
+    /** Provides read-only access to the C-side pointer address */
+    protected final long getAddress() {
+	return cAddr;
     }
 
-    public String getName() {
-	return name;
-    }
 }
