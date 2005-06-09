@@ -29,14 +29,11 @@
  */
 
 /*
-  call_s_inclusion, call_s_unify : called only from the top-level, must do a 
-  setjmp, returns an error code (handles exceptions)
-
   call_ denotes a sort check (i.e. inclusion between e1 and e2 where the sorts
   of e1 and e2 are unknown or untrusted)
 
   _ind denotes induced, i.e. a constraint not introduced at the top level
-  for induced inclusions/equations, no sort checks or setjmps are necessary.
+  for induced inclusions/equations, no sort checks are necessary.
   the invariant is that the non-induced relations are ONLY called from the
   toplevel. induced functions must have the signature
   gen_e * gen_e -> void 

@@ -120,6 +120,8 @@ void make_dyck_close_edge_for_cluster(dyck_node n1, dyck_node n2, int index);
  *****************************************************************************/
 
 // Must be called before any queries and after all nodes/edges have been added
+// NOTE: only true of the mr_dyckcfl implementation. No need to call
+// this with dyckcfl.c
 void dyck_finished_adding(void);
 
 // Return true if n1 reaches n2 by standard dyck reachability

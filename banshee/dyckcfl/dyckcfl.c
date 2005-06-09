@@ -45,7 +45,7 @@
  *                                                                           *
  *****************************************************************************/
 
-
+/* NOTE: the states aren't relevant. This solver is completely online */
 typedef enum {dyck_raw = 0, dyck_inited = 0, dyck_query = 0} dyck_state;
 
 struct dyck_node_ {
