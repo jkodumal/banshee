@@ -44,51 +44,55 @@ package banshee.dyckcfl;
  */
 
 public class UnsafeDyckCFL {
+    private static UnsafeDyckCFL instance = new UnsafeDyckCFL();
 
     static {
 	System.loadLibrary("jdyckcfl");
 	initialize();
     }
 
-    public UnsafeDyckCFL() {
-    }
+    private UnsafeDyckCFL() { }
+
+    public static UnsafeDyckCFL v() { return instance; }
 
     private static native void initialize();
 
-    public static native void printDyckConstraints(boolean value);
+    public native void printDyckConstraints(boolean value);
 
-    public static native long makeTaggedNode(String name);
+    public native long makeTaggedNode(String name);
 
-    public static native long makeUntaggedNode(String name);
+    public native long makeUntaggedNode(String name);
 
-    public static native void markNodeGlobal(long node);
+    public native void markNodeGlobal(long node);
 
-    public static native void makeSubtypeEdge(long node1, long node2);
+    public native void makeSubtypeEdge(long node1, long node2);
 
-    public static native void makeOpenEdge(long node1, long node2, int index);
+    public native void makeOpenEdge(long node1, long node2, int index);
 
-    public static native void makeCloseEdge(long node1, long node2, int index);
+    public native void makeCloseEdge(long node1, long node2, int index);
 
-    public static native boolean checkReaches(long node1, long node2);
+    public native boolean checkReaches(long node1, long node2);
     
-    public static native boolean checkPNReaches(long node1, long node2);
+    public native boolean checkPNReaches(long node1, long node2);
 
     public static void main(String args[]) {
-	long n0 = UnsafeDyckCFL.makeTaggedNode("foo");
-	long n1 = UnsafeDyckCFL.makeTaggedNode("bar");
-	long n2 = UnsafeDyckCFL.makeTaggedNode("baz");
-	long n3 = UnsafeDyckCFL.makeTaggedNode("bum");
-	long n4 = UnsafeDyckCFL.makeTaggedNode("blog");
+	UnsafeDyckCFL cflEngine = UnsafeDyckCFL.v();;
 
-	UnsafeDyckCFL.makeOpenEdge(n0,n1,1);
-	UnsafeDyckCFL.makeSubtypeEdge(n1,n2);
-	UnsafeDyckCFL.makeCloseEdge(n2,n3,1);
-	UnsafeDyckCFL.makeCloseEdge(n2,n4,2);
+	long n0 = cflEngine.makeTaggedNode("foo");
+	long n1 = cflEngine.makeTaggedNode("bar");
+	long n2 = cflEngine.makeTaggedNode("baz");
+	long n3 = cflEngine.makeTaggedNode("bum");
+	long n4 = cflEngine.makeTaggedNode("blog");
+
+	cflEngine.makeOpenEdge(n0,n1,1);
+	cflEngine.makeSubtypeEdge(n1,n2);
+	cflEngine.makeCloseEdge(n2,n3,1);
+	cflEngine.makeCloseEdge(n2,n4,2);
 
 	System.out.println("Checking reachability (should be true): " 
-			   + UnsafeDyckCFL.checkReaches(n0,n3));
+			   + cflEngine.checkReaches(n0,n3));
 	System.out.println("Checking reachability (should be false): " 
-			   + UnsafeDyckCFL.checkReaches(n0,n4));
+			   + cflEngine.checkReaches(n0,n4));
     }
 
 }
