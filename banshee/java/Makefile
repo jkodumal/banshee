@@ -27,12 +27,12 @@
 
 OS:=$(shell uname)
 
-ifeq ($(OS), Darwin)
-	jni_dir = /System/Library/Frameworks/JavaVM.framework/Headers 
+#ifeq ($(OS), Darwin)
+#	jni_dir = /System/Library/Frameworks/JavaVM.framework/Headers 
 # TODO --- this is not a platform agnostic way of finding the jni headers
-else 
-	jni_dir = /usr/local/java/include/
-endif
+#else 
+	jni_dir = $(JAVA_HOME)/include/
+#endif
 
 ifndef RLIB
 region_dir = ../libcompat
