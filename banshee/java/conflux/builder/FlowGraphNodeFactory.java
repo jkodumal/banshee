@@ -27,39 +27,24 @@
  * SUCH DAMAGE.
  *
  */
-package conflux;
+package conflux.builder;
 
-import soot.*;
-import java.util.*;
-import conflux.builder.FlowGraphBuilder;
+import conflux.flowgraph.*;
+import soot.jimple.AbstractJimpleValueSwitch;
 
-public class ConfluxTransformer extends SceneTransformer {
-    static ConfluxTransformer instance = new ConfluxTransformer();
 
-    private ConfluxTransformer() { }
+/** Builds flow graph nodes for each Soot value
+ *
+ * @author John Kodumal
+ */
+public class FlowGraphNodeFactory extends AbstractJimpleValueSwitch {
+    FlowGraph fg;
+    MethodFlowGraph mfg;
 
-    public static ConfluxTransformer v() { 
-	return instance; 
+    public FlowGraphNodeFactory(FlowGraph fg, MethodFlowGraph mfg) {
+	this.fg = fg;
+	this.mfg = mfg;
     }
 
-    protected void internalTransform(String phaseName, Map options) {
-        final String output_dir = SourceLocator.v().getOutputDir();
-
-	G.v().out.println("Starting ConFLux...");
-	
-        // Build flow graph
-        FlowGraphBuilder builder = new FlowGraphBuilder();
-	
-	Date startFG = new Date();
-	builder.build();
-	Date endFG = new Date();
-	reportTime("Initial flow graph", startFG, endFG);
-
-    }
-
-    protected static void reportTime( String desc, Date start, Date end ) {
-        long time = end.getTime()-start.getTime();
-        G.v().out.println( "[ConFLux] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
-    }
 
 }

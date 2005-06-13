@@ -27,39 +27,16 @@
  * SUCH DAMAGE.
  *
  */
-package conflux;
+package conflux.flowgraph;
 
-import soot.*;
-import java.util.*;
-import conflux.builder.FlowGraphBuilder;
+/**
+ * Node representing an abstract location in a flow graph
+ *
+ * @author John Kodumal
+ */
+public class AbslocNode extends FlowGraphNode  {
 
-public class ConfluxTransformer extends SceneTransformer {
-    static ConfluxTransformer instance = new ConfluxTransformer();
-
-    private ConfluxTransformer() { }
-
-    public static ConfluxTransformer v() { 
-	return instance; 
+    public AbslocNode(String name) {
+	super(name,true);
     }
-
-    protected void internalTransform(String phaseName, Map options) {
-        final String output_dir = SourceLocator.v().getOutputDir();
-
-	G.v().out.println("Starting ConFLux...");
-	
-        // Build flow graph
-        FlowGraphBuilder builder = new FlowGraphBuilder();
-	
-	Date startFG = new Date();
-	builder.build();
-	Date endFG = new Date();
-	reportTime("Initial flow graph", startFG, endFG);
-
-    }
-
-    protected static void reportTime( String desc, Date start, Date end ) {
-        long time = end.getTime()-start.getTime();
-        G.v().out.println( "[ConFLux] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
-    }
-
 }

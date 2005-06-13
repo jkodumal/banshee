@@ -27,39 +27,66 @@
  * SUCH DAMAGE.
  *
  */
-package conflux;
+package conflux.flowgraph;
 
 import soot.*;
-import java.util.*;
-import conflux.builder.FlowGraphBuilder;
 
-public class ConfluxTransformer extends SceneTransformer {
-    static ConfluxTransformer instance = new ConfluxTransformer();
+/**
+ * Class representing an entire flow graph
+ *
+ * @author John Kodumal
+ */
+public class FlowGraph implements PointsToAnalysis {
 
-    private ConfluxTransformer() { }
 
-    public static ConfluxTransformer v() { 
-	return instance; 
+
+    // TODO PointsToAnalysis interface
+
+    /** Returns the set of objects pointed to by variable l. */
+    // TODO
+    public PointsToSet reachingObjects( Local l ) {
+	return null;
     }
 
-    protected void internalTransform(String phaseName, Map options) {
-        final String output_dir = SourceLocator.v().getOutputDir();
-
-	G.v().out.println("Starting ConFLux...");
-	
-        // Build flow graph
-        FlowGraphBuilder builder = new FlowGraphBuilder();
-	
-	Date startFG = new Date();
-	builder.build();
-	Date endFG = new Date();
-	reportTime("Initial flow graph", startFG, endFG);
-
+    /** Returns the set of objects pointed to by variable l in context c. */
+    // TODO
+    public PointsToSet reachingObjects( Context c, Local l ) {
+	return null;
     }
 
-    protected static void reportTime( String desc, Date start, Date end ) {
-        long time = end.getTime()-start.getTime();
-        G.v().out.println( "[ConFLux] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
+    /** Returns the set of objects pointed to by static field f. */
+    // TODO
+    public PointsToSet reachingObjects( SootField f ) {
+	return null;
     }
+
+    /** Returns the set of objects pointed to by instance field f
+     * of the objects in the PointsToSet s. */
+    // TODO
+    public PointsToSet reachingObjects( PointsToSet s, SootField f ) {
+	return null;
+    }
+
+    /** Returns the set of objects pointed to by instance field f
+     * of the objects pointed to by l. */
+    // TODO
+    public PointsToSet reachingObjects( Local l, SootField f ) {
+	return null;
+    }
+
+    /** Returns the set of objects pointed to by instance field f
+     * of the objects pointed to by l in context c. */
+    // TODO
+    public PointsToSet reachingObjects( Context c, Local l, SootField f ) {
+	return null;
+    }
+
+    /** Returns the set of objects pointed to by elements of the arrays
+     * in the PointsToSet s. */
+    // TODO
+    public PointsToSet reachingObjectsOfArrayElement( PointsToSet s ) {
+	return null;
+    }
+
 
 }

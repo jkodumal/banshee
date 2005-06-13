@@ -29,7 +29,7 @@
  */
 package banshee.dyckcfl;
 
-class DyckNode {
+public class DyckNode {
     protected String name;
     transient long nodeID;
 

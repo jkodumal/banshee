@@ -27,39 +27,26 @@
  * SUCH DAMAGE.
  *
  */
-package conflux;
+package conflux.flowgraph;
 
-import soot.*;
-import java.util.*;
-import conflux.builder.FlowGraphBuilder;
+import banshee.dyckcfl.*;
 
-public class ConfluxTransformer extends SceneTransformer {
-    static ConfluxTransformer instance = new ConfluxTransformer();
+/**
+ * A generic node in a flow graph
+ *
+ * @author John Kodumal
+ */
+public abstract class FlowGraphNode {
+    protected DyckNode dyckNode;
+    private static DyckCFL cflEngine = DyckCFL.v();
 
-    private ConfluxTransformer() { }
-
-    public static ConfluxTransformer v() { 
-	return instance; 
-    }
-
-    protected void internalTransform(String phaseName, Map options) {
-        final String output_dir = SourceLocator.v().getOutputDir();
-
-	G.v().out.println("Starting ConFLux...");
-	
-        // Build flow graph
-        FlowGraphBuilder builder = new FlowGraphBuilder();
-	
-	Date startFG = new Date();
-	builder.build();
-	Date endFG = new Date();
-	reportTime("Initial flow graph", startFG, endFG);
-
-    }
-
-    protected static void reportTime( String desc, Date start, Date end ) {
-        long time = end.getTime()-start.getTime();
-        G.v().out.println( "[ConFLux] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
+    protected FlowGraphNode(String name, boolean tagged) {
+	if (tagged) {
+	    dyckNode = cflEngine.makeTaggedNode(name);
+	}
+	else {
+	    dyckNode = cflEngine.makeUntaggedNode(name);
+	}
     }
 
 }

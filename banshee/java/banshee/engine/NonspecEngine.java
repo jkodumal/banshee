@@ -52,7 +52,8 @@ public class NonspecEngine implements UnsafeErrorHandler {
     }
 
     // TODO: have this call the static safe error handler. This will
-    // require user data in expressions!
+    // require user data in expressions, in order to translate from
+    // longs back to the appropriate Java objects
     public final void unsafeHandleError(long e1, long e2, ErrorKind k) {
     }
 
