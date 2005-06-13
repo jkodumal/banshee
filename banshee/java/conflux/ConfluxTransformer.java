@@ -53,13 +53,12 @@ public class ConfluxTransformer extends SceneTransformer {
 	Date startFG = new Date();
 	builder.build();
 	Date endFG = new Date();
-	reportTime("Initial flow graph", startFG, endFG);
+	computeTime("Initial flow graph", startFG, endFG);
 
     }
 
-    protected static void reportTime( String desc, Date start, Date end ) {
-        long time = end.getTime()-start.getTime();
-        G.v().out.println( "[ConFLux] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
+    protected static void computeTime(String task, Date start, Date end) {
+	long time = end.getTime()- start.getTime();
+	G.v().out.println("[ConFLux] " + task + " time: " + time/1000 + "." + (time/100)%10 + " seconds.");
     }
-
 }
