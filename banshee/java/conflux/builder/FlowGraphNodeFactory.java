@@ -30,8 +30,8 @@
 package conflux.builder;
 
 import conflux.flowgraph.*;
-import soot.jimple.AbstractJimpleValueSwitch;
-
+import soot.jimple.*;
+import soot.*;
 
 /** Builds flow graph nodes for each Soot value
  *
@@ -46,5 +46,28 @@ public class FlowGraphNodeFactory extends AbstractJimpleValueSwitch {
 	this.mfg = mfg;
     }
 
+    // TODO
+    public final void handleStmt(Stmt s) {
+	if (s.containsInvokeExpr()) {
+	    return;
+	}
+	s.apply( new AbstractStmtSwitch() {
+		public final void caseAssignStmt(AssignStmt as) {
+		    Value l = as.getLeftOp();
+		    Value r = as.getRightOp();
+		    if ( !( l.getType() instanceof RefLikeType)) return;
+		    l.apply(FlowGraphNodeFactory.this);
+		    FlowGraphNode dest = getFlowGraphNode();
+		    r.apply(FlowGraphNodeFactory.this);
+		    FlowGraphNode src = getFlowGraphNode();
+		    mfg.addSubtypeEdge(src, dest);
+		}
+	    } );		
+    }
+
+    public final FlowGraphNode getFlowGraphNode() {
+	return (FlowGraphNode) getResult();
+    }
 
 }
+

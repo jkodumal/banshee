@@ -42,9 +42,7 @@ so eg
 
 java soot.Main foo -p cg.spark option:value,option:value,option:value
 
-java soot.Main foo -cp classpath -p cg.spark enabled:true -p cg context:objsens
-
-context: kcfa, kobjsens
+java soot.Main foo -cp classpath -p cg.spark enabled:true 
 
 Also, you probably need to increase the java heap size:
 

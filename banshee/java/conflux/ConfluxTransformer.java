@@ -32,6 +32,7 @@ package conflux;
 import soot.*;
 import java.util.*;
 import conflux.builder.FlowGraphBuilder;
+import conflux.flowgraph.*;
 
 public class ConfluxTransformer extends SceneTransformer {
     static ConfluxTransformer instance = new ConfluxTransformer();
@@ -51,6 +52,7 @@ public class ConfluxTransformer extends SceneTransformer {
         FlowGraphBuilder builder = new FlowGraphBuilder();
 	
 	Date startFG = new Date();
+	final FlowGraph flowGraph = builder.setup(options);
 	builder.build();
 	Date endFG = new Date();
 	computeTime("Initial flow graph", startFG, endFG);

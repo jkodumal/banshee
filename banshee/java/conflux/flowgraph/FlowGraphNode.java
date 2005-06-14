@@ -49,4 +49,12 @@ public abstract class FlowGraphNode {
 	}
     }
 
+    protected DyckNode getDyckNode() {
+	return dyckNode;
+    }
+
+    public void addSubtypeEdge(FlowGraphNode to) {
+	cflEngine.makeSubtypeEdge(getDyckNode(),to.getDyckNode());
+    }
+
 }

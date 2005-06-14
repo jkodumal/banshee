@@ -30,14 +30,31 @@
 package conflux.builder;
 
 import soot.*;
+import java.util.*;
+import conflux.flowgraph.*;
 
 /** Builds a context-sensitive type-based flow graph
  *
  * @author John Kodumal
  */
 public class FlowGraphBuilder {
+    FlowGraph fg;
+
 
     public FlowGraphBuilder() {
+    }
+
+    /** Jimplify all methods; useful for separating Jimplification
+     * time from analysis time
+     */
+    // TODO
+    public void preJimplify() {
+    }
+
+    public FlowGraph setup(Map options) {
+	fg = new FlowGraph();
+
+	return fg;
     }
 
     /** Fills in the flow graph */

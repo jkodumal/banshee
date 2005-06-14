@@ -35,4 +35,9 @@ package conflux.flowgraph;
  */
 public class MethodFlowGraph {
 
+
+    public void addSubtypeEdge(FlowGraphNode src, FlowGraphNode dest) {
+	src.addSubtypeEdge(dest);
+    }
+
 }
