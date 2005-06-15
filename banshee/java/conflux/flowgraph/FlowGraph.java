@@ -29,7 +29,10 @@
  */
 package conflux.flowgraph;
 
+import java.util.*;
 import soot.*;
+import soot.util.*;
+
 
 /**
  * Class representing an entire flow graph
@@ -38,7 +41,11 @@ import soot.*;
  */
 public class FlowGraph implements PointsToAnalysis {
 
-
+    // A map from Locals to FlowGraphNodes
+    private LargeNumberedMap localToNodeMap = 
+	new LargeNumberedMap(Scene.v().getLocalNumberer());
+    private Map identToNodeMap = 
+	new HashMap(1024);
 
     // TODO PointsToAnalysis interface
 
@@ -87,6 +94,46 @@ public class FlowGraph implements PointsToAnalysis {
     public PointsToSet reachingObjectsOfArrayElement( PointsToSet s ) {
 	return null;
     }
+    
+    /** Create or find the appropriate RefTypeNode */
+    public FlowGraphNode makeRefTypeNode(Object ident, Type typ,
+					 SootMethod enclosingMethod) {
+	if (ident instanceof Local) {
+	    Local local = (Local)ident;
+	    if (local.getNumber() == 0) Scene.v().getLocalNumberer().add(local);
+	    FlowGraphNode result = (FlowGraphNode)localToNodeMap.get(local);
+	    if (result == null) {
+		localToNodeMap.put(local, 
+				   result = new RefTypeNode(local.getName(),
+							      typ));
+	    }
+	    return result;
+	}
+	else {
+	    FlowGraphNode result = (FlowGraphNode)identToNodeMap.get(ident);
+	    if (result == null) {
+		// TODO -- use something better than toString to name the node
+		identToNodeMap.put(ident, 
+				   result = new RefTypeNode(ident.toString(),
+							    typ));
 
+	    }
+	    return result;
+	}
+	
+    }
 
+    // TODO
+    public FlowGraphNode makeAbslocNode(Object ident, Type typ,
+					SootMethod enclosingMethod) {
+	return null;
+    }
+
+    // Make the field ref, and draw the labeled edges back to the base
+    // TODO
+    public FlowGraphNode makeFieldRefNode(FlowGraphNode base, SootField field,
+					  SootMethod method) {
+	return null;
+    }
+    
 }

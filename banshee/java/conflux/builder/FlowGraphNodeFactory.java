@@ -32,6 +32,10 @@ package conflux.builder;
 import conflux.flowgraph.*;
 import soot.jimple.*;
 import soot.*;
+import soot.toolkits.scalar.Pair;
+import soot.jimple.spark.pag.Parm;
+import soot.util.*;
+
 
 /** Builds flow graph nodes for each Soot value
  *
@@ -40,10 +44,17 @@ import soot.*;
 public class FlowGraphNodeFactory extends AbstractJimpleValueSwitch {
     FlowGraph fg;
     MethodFlowGraph mfg;
+    SootMethod currentMethod;
 
     public FlowGraphNodeFactory(FlowGraph fg, MethodFlowGraph mfg) {
 	this.fg = fg;
 	this.mfg = mfg;
+	setCurrentMethod(mfg.getMethod());
+    }
+
+    // TODO
+    private void setCurrentMethod(SootMethod m) {
+	currentMethod = m;
     }
 
     // TODO
@@ -67,6 +78,52 @@ public class FlowGraphNodeFactory extends AbstractJimpleValueSwitch {
 
     public final FlowGraphNode getFlowGraphNode() {
 	return (FlowGraphNode) getResult();
+    }
+
+    public final FlowGraphNode caseThis() {
+	FlowGraphNode result = 
+	    fg.makeRefTypeNode(
+			       new Pair(currentMethod,
+					PointsToAnalysis.THIS_NODE),
+			       currentMethod.getDeclaringClass().getType(), currentMethod );
+	return result;
+    }
+
+    public final FlowGraphNode caseParm(int index) {
+	FlowGraphNode result = 
+	    fg.makeRefTypeNode(
+			       new Pair(currentMethod, 
+					new Integer(index)),
+			       currentMethod.getParameterType( index ), currentMethod);
+	return result;
+    }
+
+    public final FlowGraphNode caseRet() {
+	FlowGraphNode result =
+	    fg.makeRefTypeNode(
+			       Parm.v( currentMethod, 
+				       PointsToAnalysis.RETURN_NODE ), 
+			       currentMethod.getReturnType(), 
+			       currentMethod);
+	return result;
+    }
+
+    public final void caseLocal(Local l) {
+	setResult(fg.makeRefTypeNode(l, l.getType(), currentMethod));
+    }
+
+    public final void caseNewExpr(NewExpr ne) {
+	setResult(fg.makeAbslocNode(ne, ne.getType(), currentMethod));
+    }
+
+    public final void caseInstanceFieldRef(InstanceFieldRef ifr) {
+	// visit the base, get the resulting node, then search for the
+	// named field with the base node as the identity
+	ifr.getBase().apply(this);
+	FlowGraphNode base = getFlowGraphNode();
+	
+	fg.makeFieldRefNode(base, ifr.getField(),
+				currentMethod);
     }
 
 }

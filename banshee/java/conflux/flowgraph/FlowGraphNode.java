@@ -30,6 +30,8 @@
 package conflux.flowgraph;
 
 import banshee.dyckcfl.*;
+import conflux.util.IndexManager;
+import soot.Type; 
 
 /**
  * A generic node in a flow graph
@@ -39,14 +41,16 @@ import banshee.dyckcfl.*;
 public abstract class FlowGraphNode {
     protected DyckNode dyckNode;
     private static DyckCFL cflEngine = DyckCFL.v();
+    protected Type sootType;
 
-    protected FlowGraphNode(String name, boolean tagged) {
+    protected FlowGraphNode(String name, Type type, boolean tagged) {
 	if (tagged) {
 	    dyckNode = cflEngine.makeTaggedNode(name);
 	}
 	else {
 	    dyckNode = cflEngine.makeUntaggedNode(name);
 	}
+	sootType = type;
     }
 
     protected DyckNode getDyckNode() {
@@ -57,4 +61,21 @@ public abstract class FlowGraphNode {
 	cflEngine.makeSubtypeEdge(getDyckNode(),to.getDyckNode());
     }
 
+    public void addNegInstantiationEdge(FlowGraphNode to, int index) {
+	cflEngine.makeOpenEdge(getDyckNode(), to.getDyckNode(), index);
+    }
+    
+    public void addPosInstantiationEdge(FlowGraphNode to, int index) {
+	cflEngine.makeCloseEdge(getDyckNode(), to.getDyckNode(), index);
+    }
+
+    public void makeFieldReadEdge(FlowGraphNode to, String fieldName) {
+	cflEngine.makeOpenEdge(getDyckNode(), to.getDyckNode(), 
+			       IndexManager.v().getIndex(fieldName));
+    }
+
+    public void addFieldWriteEdge(FlowGraphNode to, String fieldName) {
+	cflEngine.makeCloseEdge(getDyckNode(), to.getDyckNode(),
+				IndexManager.v().getIndex(fieldName));
+    }
 }

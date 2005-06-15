@@ -29,6 +29,8 @@
  */
 package conflux.flowgraph;
 
+import soot.Type;
+
 /**
  * Node representing an abstract location in a flow graph
  *
@@ -36,7 +38,7 @@ package conflux.flowgraph;
  */
 public class AbslocNode extends FlowGraphNode  {
 
-    public AbslocNode(String name) {
-	super(name,true);
+    public AbslocNode(String name, Type type) {
+	super(name, type, true);
     }
 }

@@ -27,26 +27,38 @@
  * SUCH DAMAGE.
  *
  */
-package conflux.flowgraph;
+package conflux.util;
+import java.util.Hashtable;
 
-import soot.*;
-
-/** Flow graph for a single method
+/** A simple utility class that uses a hash table to map objects to
+ * integer indices.
  *
  * @author John Kodumal
  */
-public class MethodFlowGraph {
+public class IndexManager {
+    private static int nextIndex;
+    private static Hashtable stringIndexer;
+    private static IndexManager instance = new IndexManager();
 
 
-    public void addSubtypeEdge(FlowGraphNode src, FlowGraphNode dest) {
-	src.addSubtypeEdge(dest);
+    private IndexManager() {
+	nextIndex = 0;
+	stringIndexer = new Hashtable(64);
     }
-    
-    // TODO
-    public SootMethod getMethod() {
-	return null;
+
+    public static IndexManager v() {
+	return instance;
     }
 
-
-
+    public int getIndex(Object o) {
+	int index;
+	if (! stringIndexer.containsKey(o)) {
+	    index = nextIndex++;
+	    stringIndexer.put(o, new Integer(index));
+	}
+	else { 
+	    index = ((Integer)stringIndexer.get(o)).intValue();
+	}
+	return index;
+    }
 }

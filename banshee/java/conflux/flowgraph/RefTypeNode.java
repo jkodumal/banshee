@@ -29,6 +29,8 @@
  */
 package conflux.flowgraph;
 
+import soot.Type;
+
 /**
  * Node representing reference type (class or array) in a flow graph
  *
@@ -36,7 +38,7 @@ package conflux.flowgraph;
  */
 public class RefTypeNode extends FlowGraphNode  {
 
-    public RefTypeNode(String name) {
-	super(name, false);
+    public RefTypeNode(String name, Type type) {
+	super(name, type, false);
     }
 }
