@@ -94,6 +94,10 @@ ifdef RLIB
 endif
 	@echo "SUCCESS: All check targets passed."
 
+rpersist_check:
+	$(MAKE) -C tests -f pta_test.mk pta-rpersist-regr
+	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-rpersist
+
 perf:
 	$(MAKE) -C tests -f pta_perf.mk
 
