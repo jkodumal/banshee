@@ -97,6 +97,7 @@ endif
 rpersist_check:
 	$(MAKE) -C tests -f pta_test.mk pta-rpersist-regr
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-rpersist
+	@echo "SUCCESS: All region persistence check targets passed."
 
 perf:
 	$(MAKE) -C tests -f pta_perf.mk
