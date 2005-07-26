@@ -25,8 +25,10 @@
 % OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 % SUCH DAMAGE.
 
+%\documentclass{sig-alternate}
 \documentclass{article}
-\usepackage{fullpage}
+%\usepackage{fullpage}
+\usepackage{theorem}
 
 \newcommand{\bane}{\textsc{Bane}}
 \newcommand{\banshee}{\textsc{Banshee}}
@@ -35,8 +37,9 @@
 \newcommand{\file}[1]{\texttt{\textbf{[#1]}}}
 \newcommand{\cmd}[1]{\texttt{\textbf{#1}}}
 \newcommand{\var}[1]{\mathcal{#1}}
-\newtheorem{example}{Example}
 
+{\theorembodyfont{\rmfamily}
+\newtheorem{example}{Example}
 
 \title{Banshee Tutorial and User Manual}
 \author{John Kodumal}
@@ -51,7 +54,7 @@ constraint-based program analyses. \banshee{}, like its predecessor
 \bane{} \cite{aiken:tic98}, is based on \emph{mixed constraints},
 allowing users to design their own ad-hoc analysis formalisms by
 mixing standard, well understood constraint languages
-\cite{aiken:sas97}. \banshee{}'s main innovation is its use of an
+\cite{fahndrich:sas97}. \banshee{}'s main innovation is its use of an
 analysis specification language to \emph{specialize} the constraint
 resolution engine for specific program analyses. This approach yields
 several distinct advantages over previous toolkits:
@@ -74,7 +77,8 @@ several distinct advantages over previous toolkits:
 Other novel features in \banshee{} include an efficient implementation
 of persistence (constraint systems can be quickly saved/loaded), and a
 backtracking capability (constraint systems can be ``rolled back'' to
-any previous state).
+any previous state) that can be used for "poor-man's incremental
+analysis" \cite{kodumal:sas05}.
 
 There are a number of ways for an analysis designer to use
 \banshee{}. These will be explained in detail later, but we provide an
@@ -83,9 +87,9 @@ overview here:
 \item \textbf{As a specialized library.} Here, the analysis designer
   writes a short specification file describing the constraint language
   needed for her analysis. The \banshee{} code generator
-  \file{bin/banshee.exe} is invoked on this file and produces a specialized
-  constraint solver interface. The analysis client and the specialized
-  interface are then linked with a backend C library
+  \file{bin/banshee.exe} is invoked on this file and produces a
+  specialized constraint solver interface. The analysis client and the
+  specialized interface are then linked with a backend C library
   \file{engine/libengine.a}.
 \item \textbf{As a generic library.} Here, the analysis designer
   simply links their client to a C library
@@ -93,13 +97,13 @@ overview here:
   (nonspecialized) interface \file{engine/nonspec.h}. The advantages
   and disadvantages of these first two approaches will be explained in
   a later section (Section ????).
-\item \textbf{As an interpreter.} \banshee{} now comes with an
+\item \textbf{As an interpreter.} \banshee{} comes with an
   interpreter, \ibanshee{} \file{bin/ibanshee.exe}. \ibanshee{} allows
   the designer to interact with \banshee{} by typing in constraints
   directly. This is a handy tool for learning about set
   constraints. It's also a low overhead way of interfacing with
-  \banshee{}, especially if the analysis client is written in a
-  language other than C.
+  \banshee{}, especially if the client is written in a language other
+  than C.
 \item \textbf{As a context-free language reachability engine.}
   \banshee{} also includes a wrapper API \file{dyckcfl/dyckcfl.h} that
   implements a very efficient reduction from a restricted class of
@@ -107,6 +111,12 @@ overview here:
   analysis problems fall into this restricted class, so we have
   implemented an API to express these problems.
 \end{itemize}
+
+We are also working on foreign function interfaces for
+\banshee{}. These would simplify writing analyses in languages other
+than C. Currently, there is a Java interface (via JNI) for the
+context-free language reachability API. We plan to have Java and
+O'Caml interfaces for the entire \banshee{} system soon.
 
 \section{Building \banshee{}}
 
@@ -121,13 +131,16 @@ Here is a list of the software packages required to build \banshee{}:
 \item Python, version 2.3.3 or later (should be standard)
 \item indent (should be standard)
 \item etags (should be standard)
+\item flex (should be standard)
+\item bison (should be standard)
 \end{itemize}
 
 \subsection{Building}
 
-You can then build banshee by typing 'make' or 'gmake' at the command
-line at the top level in the source tree. If everything succeeds, the
-following targets will be built:
+You can then build banshee by typing \texttt{make all check} or
+\texttt{gmake all check} at the command line in the top level of the
+source tree. If everything succeeds, make will report \texttt{SUCCESS:
+  All check targets passed.} and the following targets will be built:
 
 \begin{itemize}
 \item \file{bin/banshee.exe}, the \banshee{} code generator, and
@@ -139,7 +152,7 @@ following targets will be built:
 \item \file{bin/ibanshee.exe}. This target is \ibanshee{}, the
   \banshee{} interpreter.
 \item \file{dyckcfl/dyckcfl.o}. This object file is required (in
-  addition to \file{engine/libnsengine.a} to use \banshee{} as a
+  addition to \file{engine/libnsengine.a}) to use \banshee{} as a
   context-free language reachability engine.
 \end{itemize}
 
@@ -151,7 +164,7 @@ following targets will be built:
 There are other potentially useful make targets:
 
 \begin{itemize}
-\item \cmd{make check} will verify your build. 
+\item \cmd{make check} will verify your build.
 \item \cmd{make banshee} will build banshee without building any test
   applications.
 \item \cmd{make docs} will just build the documentation.
@@ -172,10 +185,10 @@ and demonstrate how to express some simple problems in
 \ibanshee{}. For those who have some familiarity with set constraints,
 this tutorial covers the simple term-set model of set constraints. The
 complete \banshee{} system supports a much richer model--- we refer
-the interested reader to \cite{Manuel's thesis ????} for further
+the interested reader to \cite{fahndrich:thesis} for further
 details.
 
-\subsection{Terms}
+\subsection{Expressions}
 
 We'll begin our discussion with a few definitions. A \emph{ranked
   alphabet} is a finite set of constructors and a function
@@ -187,7 +200,7 @@ also assume that there is a special set of constants called
 use $\var{X}, \var{Y}, \var{Z}, \ldots$ to range over variables.
 
 Think of a ranked alphabet as a set of building blocks for making
-\emph{terms} (or trees). 
+\emph{expressions} (or trees). 
 
 \begin{example}
 Suppose our alphabet is the set of constructors:
@@ -195,27 +208,28 @@ Suppose our alphabet is the set of constructors:
 f,g,c
 \]
 with $arity(f) =2$, $arity(g) = 1$, $arity(c) = 0$. This alphabet
-defines a set of terms over $f,g,c$, which we can build in the natural
-way. Examples of terms are $f(\var{X},\var{Y}), f(g(c()),c())$,
-$f(c(),c())$, $g(f(c(),c()))$. The last three terms are \emph{ground
-  terms}, which are terms that don't contain any variables. As
-shorthand, we'll often use $c$ instead of $c()$ for constants.
+defines a set of expressions over $f,g,c$, which we can build in the
+natural way. Examples of expressions are $f(\var{X},\var{Y}),
+f(g(c()),c())$, $f(c(),c())$, $g(f(c(),c()))$. The last three
+expressions are \emph{ground terms}, which are expressions that don't
+contain any variables. As shorthand, we'll often use $c$ instead of
+$c()$ for constants.
 \end{example}
 
-More formally, the set of \emph{terms} over a ranked alphabet and set
-of variables is defined inductively:
+More formally, the set of expressions over a ranked alphabet and set of
+variables is defined inductively:
 \begin{itemize}
-\item $\var{X},\var{Y},\var{Z},\ldots$ are all terms
-\item $c$ is a term if $arity(c) = 0$
-\item $f(t_1,\ldots,t_n)$ is a term if $arity(f) = n$ and
-  $t_1,\ldots,t_n$ are terms
+\item $\var{X},\var{Y},\var{Z},\ldots$ are all expressions
+\item $c$ is an expression if $arity(c) = 0$
+\item $f(t_1,\ldots,t_n)$ is an expression if $arity(f) = n$ and
+  $t_1,\ldots,t_n$ are expressions
 \end{itemize}
 
-\subsection{Expressing terms in \ibanshee{}}
+\subsection{Expressions in \ibanshee{}}
 
 Before proceeding further, we'll pause and explain how to declare
 constructors and variables in \ibanshee{}. Both constructors and
-variables must be declared before using them. \ibanshee{} constructors
+variables must be declared before use. \ibanshee{} constructors
 must begin with an upper or lower case letter, followed by a string of
 letters, numbers, or underscores. Declaring a constant is
 simple \footnote{The \texttt{[0] >} is \ibanshee{}'s prompt. If you
@@ -245,8 +259,8 @@ constructor: f
 This declares a binary constructor $f$. Notice the plus signs before
 the sort declarations in this example. These are \emph{variance}
 declarations. We'll defer discussion of variance declarations until
-later, as well. For now, we'll just restrict ourselves to
-\emph{positive} variances, which are specified with \texttt{+}.
+later. For now, we'll just restrict ourselves to \emph{positive}
+variances, which are specified with \texttt{+}.
 
 Variables are declared just as constants. However, \ibanshee{}
 syntactically distinguishes variables from constructors by forcing you
@@ -264,22 +278,23 @@ variables. There is no need to declare other terms explicitly. In
 other words, once you've defined \texttt{f} and \texttt{'x} as in the
 preceeding examples, you can refer to a term like $\texttt{f('x,'x)}$
 without declaring it first. Of course, we have yet to explain how to
-do anything useful with terms... so without further ado, let's talk
+do anything useful with expressions... so without further ado, let's talk
 about constraints!
 
-\subsection{Set constraints}
+\subsection{Constraints}
 
-Set constraints are inclusion relations between terms. A set
-constraint is a relation of the form $t_1 \subseteq t_2$, where $t_1$
-and $t_2$ are terms. A system of set constraints is a finite
-conjunction of set constraints. A solution $S$ of a system of
-constraints is a mapping from variables to sets of ground terms such
-that all inclusion relations are satisfied. Let's see an example:
+Constraints are inclusion relations between expressions. A set
+constraint is a relation of the form $e_1 \subseteq e_2$, where $e_1$
+and $e_2$ are expressions. A system of constraints is a finite
+conjunction of constraints. A solution $S$ of a system of constraints
+is a mapping from variables to sets of ground terms such that all
+inclusion relations are satisfied. Let's see an example:
 
 \begin{example}
 Suppose that we have $f,g,c$ as constructors with $arity(f) = 2$,
-$arity(g) = 1$, and $arity(c) = 0$ as before. Now consider the
-following system of constraints:
+$arity(g) = 1$, and $arity(c) = 0$ as before, along with variables
+$\var{X}$ and $\var{Y}$. Now consider the following system of
+constraints:
 \[
 f(\var{X},g(\var{X})) \subseteq f(\var{Y},\var{Y})
 \]
@@ -299,12 +314,12 @@ least and greatest solutions will be unique (assuming there are any
 solutions at all!). In the previous example, the solution $S$ is
 least.
 
-\subsection{Set constraints in \ibanshee{}}
+\subsection{Constraints in \ibanshee{}}
 
 Creating a system of constraints in \ibanshee{} is
 straightforward. After defining a set of constructors and variables,
-you can build terms over those constructors and variables and add
-constraints. We'll continue with an \ibanshee{} program that
+you can build expressions over those constructors and variables and
+add constraints. We'll continue with an \ibanshee{} program that
 corresponds to the previous example:
 
 \begin{verbatim}
@@ -349,7 +364,7 @@ g(\var{X}) \subseteq \var{X}
 \[
 c \subseteq \var{X}
 \]
-There is a solution for $\var{X}$, namely $\var{X} = \{c, g(c),
+There is a solution set for $\var{X}$, namely $\var{X} = \{c, g(c),
 g(g(c)),\ldots\}$. However, there are no finite solutions for
 $\var{X}$.
 \end{example}
@@ -374,5 +389,85 @@ and we see that the \texttt{!tlb} command essentially returns the
 right-hand sides of the grammar productions corresponding to the
 solution for a given variable.
 
+\subsection{Banshee Sorts}
+
+\subsubsection{Sets}
+
+\subsubsection{Terms}
+
+\subsubsection{Flowrows}
+
+\subsection{Mixed Constraints}
+
+\section{Using IBanshee}
+
+\section{Using the Engine Generator}
+
+\section{Using the Nonspecialized Engine API} 
+
+\section{Using the Dyck CFL Reachability API}
+
+\section{Reference}
+
+\subsection{IBanshee Quick Reference and Commands}
+
+
+\subsubsection{IBanshee Quick Reference}
+\begin{verbatim}
+
+ident            : [A-Z a-z]([A-Z a-z 0-9 _])*
+integers (i)     : [0-9]+
+
+Variables (v)    : '{ident}
+Constructors (c) : {ident}
+Labels (l)       : {ident}
+Names (n)        : {ident}
+
+Expressions (e)  : v | c | n | c(e1,...,en) | e1 && e2 | e1 || e2
+                 | <l1=e1,...,ln=en [| e]> | 0:s | 1:s | _:s
+                 | pat(c,i,e) | proj(c,i,e) | ( e ) | c^-i(e)
+
+sorts            : basesort | row(basesort)
+
+basesort         : setIF | term
+
+Var decl         : v : sort
+Constructor decl : c(s1,...,sn) : basesort
+Name decl        : n = e 
+Sig (s)          : + sort | - sort | = sort
+
+Constraints      : e1 <= e2 | e1 == e2
+
+Commands         : !help
+                   !tlb e
+                   !ecr e
+                   !undo [i]
+                   !trace [i]
+                   !quit
+                   !save "filename"
+                   !load "filename"
+                   !rsave
+                   !rload
+                   !exit
+\end{verbatim}
+
+\subsubsection{IBanshee Command Description}
+
+\begin{itemize}
+\item \texttt{!help} Print the quick reference
+\item \texttt{!tlb e} Print the transitive lower bounds of \texttt{e}
+\item \texttt{!ecr e} Print the equivalence class representative of \texttt{e}
+\item \texttt{!undo i} Roll back the constraint system to its state at time \texttt{i}
+\item \texttt{!trace i} Set the trace level to depth \texttt{i}. This will print constraints for recursive calls to the constraint solver up to \texttt{i} levels deep. Helpful for debugging.
+\item \texttt{!quit} Exits iBanshee
+\item \texttt{!save "filename"} Saves the current constraint system
+\item \texttt{!load "filename"} Loads the constraint system saved using the \texttt{save} command
+\item \texttt{!rsave} Saves the current constraint system (the filename is currently hardcoded) using region serialization. This is much faster than using \texttt{!save}
+\item \texttt{!rload} Load the constraint system saved with
+  \texttt{rsave}.
+\item \texttt{!exit} Exits iBanshee
+\end{itemize}
+
+\bibliography{banshee-manual}\bibliographystyle{abbrv}
 
 \end{document}
