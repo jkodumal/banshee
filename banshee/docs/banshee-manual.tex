@@ -37,11 +37,14 @@
 \newcommand{\file}[1]{\texttt{\textbf{[#1]}}}
 \newcommand{\cmd}[1]{\texttt{\textbf{#1}}}
 \newcommand{\var}[1]{\mathcal{#1}}
+\newcommand{\id}[1]{{\it #1\/}}
+\newcommand{\bra}[1]{\langle {#1} \rangle}
+\def\kw#1{\hbox{\tt #1}}
 
 {\theorembodyfont{\rmfamily}
 \newtheorem{example}{Example}
 
-\title{Banshee Tutorial and User Manual} \author{John Kodumal
+\title{Banshee Tutorial and Overview} \author{John Kodumal
   (University of California at Berkeley) \\ \texttt{jkodumal@cs.berkeley.edu}}
 
 \begin{document}
@@ -89,7 +92,7 @@ several distinct advantages over previous toolkits:
 Other novel features in \banshee{} include an efficient implementation
 of persistence (constraint systems can be quickly saved/loaded), and a
 backtracking capability (constraint systems can be rolled back to any
-previous state) that can be used for "poor-man's incremental analysis"
+previous state) that can be used for "poor-man's" incremental analysis
 \cite{kodumal:sas05}.
 
 There are a number of ways for an analysis designer to use
@@ -210,7 +213,7 @@ supports a much richer model--- we refer the interested reader to
 
 We'll begin our discussion with a few definitions. A \emph{ranked
   alphabet} is a finite set of constructors and a function
-$arity(...)$ that maps each constructor to a natural number (the
+$arity(...)$ that maps each constructor to a nonnegative integer (the
 \emph{arity} of the constructor). We use $c,d,e,\ldots$ to range over
 constructors. $0$-ary constructors are called \emph{constants}. We
 also assume that there is a special set of constants called
@@ -418,7 +421,8 @@ Recall the notation we used to define the binary constructor
 constructor: fun
 \end{verbatim}
 
-Let's now explain the meaning of the \texttt{+} syntax. We'll start with a simple example:
+Let's explain the meaning of the \texttt{+} syntax. We'll start with a
+simple example:
 
 \begin{example}
 Suppose we have a binary constructor $pair$ that models sets of
@@ -466,8 +470,8 @@ preceeding a sort name with a \texttt{-} sign:
 constructor: fun
 \end{verbatim}
 
-With a little thought, it should be clear that the range of a function
-has positive variance. 
+With a little thought, it's easy to see that the range of a function
+should have positive variance.
 
 Another way of looking at variances is as follows: if $c(\ldots, e_i,
 \ldots) \subseteq c(\ldots, e_i', \ldots)$, with $c$ positive in $i$,
@@ -484,18 +488,126 @@ $e_i'$ contains \emph{exactly} the set $e_i$ ($e_i = e_i'$). In
 constructor: ref
 \end{verbatim}
 
+\subsection{Sorts}
 
+A \banshee{} sort is a combination of
+\begin{itemize}
+        \item a language of expressions,
+        \item a constraint relation between expressions,
+        \item a solution space,
+        \item and a resolution algorithm
+\end{itemize}
 
+Here we give a brief description of the sorts available in \banshee{}.
 
+\subsubsection{Sets in Inductive Form}
 
+Up to this point, we've restricted ourselves to \texttt{setIF}
+expressions. The \texttt{IF} stands for \emph{inductive form}, which
+is a way of representing and solving set constraints efficiently
+\cite{aiken:tic98}. The \texttt{setIF} sort provides inclusion
+constraints between set expressions. The solution space is sets of
+regular trees.
 
-\subsection{Other Sorts}
+\subsubsection{Sets in Subtransitive Form}
+
+\banshee{} also supports subtransitive form, an alternative algorithm
+for solving set constraints \cite{heintze:pldi01}. Other than having a
+different resolution algorithm, \texttt{setST} is identical to
+\texttt{setIF}. 
 
 \subsubsection{Terms}
 
-\subsubsection{Flowrows}
+The \texttt{term} sort provides equality constraints between
+expressions. The solution space is regular trees. The resolution
+algorithm is essentially Robinson's unification algorithm. 
+  
+The \texttt{term} sort also provides conditional equality constraints
+\cite{steensgaard:popl96}. A conditional equality constraint $t_1
+\leq t_2$ is satisfied if either $t_1 = 0$, or $t_1 = t_2$.
+
+\subsubsection{Rows}
+
+A \emph{row} is a finite map from strings to expressions. For each
+sort $s$, \banshee{} provides a corresponding row sort $row(s)$ that
+maps strings to expressions of sort $s$. Rows essentially model
+\emph{records} with any combination of width and depth subtyping. Note
+that \banshee{} does not support rows of rows.
 
 \subsection{Mixed Constraints}
+
+One of the most powerful features of \banshee{} is its support for
+\emph{mixed constraints}. Mixed constraints permit constructors to
+contain subexpressions of different sorts. This allows the user to
+find the "sweet spot" between efficiency and precision when designing
+an analysis. Mixed constraints are easy to use: simply define a
+constructor that uses multiple sorts:
+
+\begin{verbatim}
+[0] > f(+setIF,=term):setIF
+constructor: ref
+\end{verbatim}
+
+With \texttt{f} defined as above, it is possible to add constraints
+between mixed expressions (expressions with subexpressions of
+different sorts):
+
+\begin{verbatim}
+[0] > 'x : setIF
+[0] > 'y : term
+[0] > 'z : setIF
+[0] > c : term
+[0] > f('x, c) <= f('z,'y)
+[1] > !ecr 'y
+c
+\end{verbatim}
+
+\subsection{Backtracking}
+
+\banshee{} has a feature called \emph{backtracking} that allows the
+user to "roll back" the state of a constraint system at any point in
+time. In \ibanshee{}, the number displayed at the prompt tells the
+current "version" of the constraint system. Backtracking allows the
+constraint system to be rolled back to any previous version, by
+specifying the version number:
+
+Let's work with the previous example:
+
+\begin{verbatim}
+[0] > f(+setIF,=term):setIF
+constructor: ref
+[0] > 'x : setIF
+[0] > 'y : term
+[0] > 'z : setIF
+[0] > c : term
+[0] > f('x, c) <= f('z,'y)
+[1] > !ecr 'y
+c
+\end{verbatim}
+
+Notice that the version number is incremented after the addition of
+the constraint \texttt{f('x,c) <= f('z,'y)}. That means that the
+constraint system's version prior to the addition of that constraint
+is \texttt{0}, and the version after the constraint addition is
+\texttt{1}. In \ibanshee{}, backtracking is accomplished by the
+command \texttt{!undo [i]}, where \texttt{i} is the version of the
+constraint system to backtrack to:
+
+\begin{verbatim}
+[1] > !undo 0
+[0] > !ecr 'y
+'y
+\end{verbatim}
+
+After the \texttt{!undo} command, the constraint system reverts to its
+state just before the constraint was added. Since \texttt{'y} is
+unconstrained, its equivalence class representative is itself.
+
+\subsection{Persistence}
+
+Constraint systems can be saved or loaded to disk. The complete
+internal representation of a constraint system is saved, so after
+restoration all operations are legal (including backtracking).
 
 \section{Using IBanshee}
 \label{sec-ibanshee}
@@ -520,15 +632,138 @@ constructor: ref
 \section{Using the Nonspecialized Engine API} 
 \label{sec-nonspec}
 
+In addition to the interactive constraint solver \ibanshee{},
+\banshee{} includes a nonspecialized C library
+(\file{engine/libnsengine.a}) that provides a direct interface to the
+constraint solver.
+
+To use \banshee{} as a nonspecialized library, these steps should
+be followed:
+
+\begin{itemize}
+\item The analysis designer should include the header file
+  \file{engine/nonspec.h} in their application. In general, this
+  should be the only \banshee{} header included.
+\item The client should call \texttt{nonspec\_init} before calling any
+  other \banshee{} functions.
+\item The client should be linked with the libraries
+  \file{engine/libnsengine.a} and \file{libcompat/libregions.a}.
+\end{itemize}
+
+The header \file{engine/nonspec.h} contains the complete
+nonspecialized \banshee{} API.
+
 \section{Using the Engine Generator}
 \label{sec-spec}
 
+One of the major innovations in \banshee{} is
+\emph{specialization}. \banshee{} includes a code generator that
+specializes the constraint back-end for each program analysis. The
+analysis designer describes a set of constructor signatures in a
+specification file, which \banshee{} compiles into a specialized
+constraint resolution engine. Specialization allows checking a host of
+correctness conditions statically, and also improves software
+maintenence. The insight here is that most program analyses only use a
+fixed, static set of non-constant constructors. The \banshee{} code
+generator essentially does partial evaluation of the constraint solver
+with respect to the statically defined constructor signatures.
+
+To use \banshee{} as a nonspecialized library, these steps should
+be followed:
+
+\begin{itemize}
+\item The analysis designer writes a short \emph{specification}
+  describing the signatures of constructors used in the
+  analysis. Other than constants, only the constructors described in
+  the specification will be available (new nonconstant constructors
+  cannot be definedd dynamically).
+\item The analysis designer runs the code generator
+  \file{bin/banshee.exe} on their specification file. This generates a
+  C source file and header file, containing the interfaces for the new
+  specialized engine. 
+\item The analysis designer includes the generated header file (and
+  ideally no other \banshee{} headers) in the client application
+\item The client application calls the appropriate initialization
+  routine (a function whose name ends with \texttt{\_init}) before
+  calling any other \banshee{} function
+\item The analysis designer links their client with
+  \file{engine/libengine.a}, the .o file produced by compiling the
+  generated C source file, and the region library
+  \file{libcompat/libregions.a}.
+\end{itemize}
+
 \subsection{Banshee Specifications}
 
-\subsection{The Generated Interface}
+Banshee specifications contain the same information as \ibanshee{}
+constructor declarations, but the definitions are introduced
+statically, before any constraints or expressions are built. We
+illustrate the syntax with a simple example (from
+\file{lambda/lambda.bsp}
+
+\begin{verbatim}
+specification lambda : LAMBDA =
+ spec
+  data l_type : term = boolean
+		     | integer
+	             | function of l_type * l_type
+end
+\end{verbatim}
+
+In \ibanshee{} syntax, this specification would be roughly identical
+to the following constructor definitions:
+
+\begin{verbatim}
+[0] > boolean : term
+constructor: boolean
+[0] > integer : term
+constructor: integer
+[0] > function(=term,=term) : term
+constructor: function
+\end{verbatim}
+
+Note that the \banshee{} specification file is slightly more
+fine-grained: the \ibanshee{} constructor defintions allow \emph{any}
+expression of sort \texttt{term} to appear as subexpressions to the
+\texttt{function} constructor. However, in the specification file,
+only \texttt{l\_type} expressions can appear in the \texttt{function}
+constructor. Conceptually, each \texttt{data} declaration defines a
+new "type", whereas in \ibanshee{} (and the nonspecialized library)
+each sort is a separate type.
+
+Using a specialized engine has a number of advantages to using the
+nonspecialized engine. Unless the client analysis requires a dynamic
+set of non-constant constructors, we recommend specialization.
+
+See \file{tests/lambda.bsp}, \file{tests/lambda-test.c} and the
+associated \texttt{make} target in the \texttt{tests} directory for a
+complete example.
 
 \section{Using the Dyck CFL Reachability API}
 \label{sec-dyckcfl}
+
+Many program analyses can be reduced to a context free language
+reachability problem over languages of matched parentheses (the
+\emph{Dyck} languages). In \cite{kodumal:pldi04}, we describe an
+efficient reduction from set constraints to Dyck CFL reachability. We
+have implemented this reduction and have included it with \banshee{}.
+
+The API for Dyck CFL reachability using \banshee{} can be found in
+\file{dyckcfl/dyckcfl.h}. To use this API, the following steps should
+be taken:
+
+\begin{itemize}
+\item The analysis designer should include the headers
+  \file{engine/nonspec.h} and \file{dyckcfl/dyckcfl.h}, and ideally,
+  no other \banshee{} headers.
+\item Functions \texttt{nonspec\_init} and \texttt{dyck\_init} should
+  be called first.
+\item The analysis designer should link the libraries
+  \file{engine/libnsengine.a} and \file{libcompat/libregions.a} along
+  with the object file \file{dyckcfl/dyckcfl.o}.
+\end{itemize}
+
+See \file{tests/dyckcfl-test.c} and the associated \texttt{make}
+target in the \texttt{tests} directory for a complete example.
 
 \section{Reference}
 \label{sec-reference}
@@ -536,8 +771,7 @@ constructor: ref
 \subsection{IBanshee Quick Reference}
 \begin{verbatim}
 
-ident            : [A-Z a-z]([A-Z a-z 0-9 _])*
-integers (i)     : [0-9]+
+ident : [A-Z a-z]([A-Z a-z 0-9 _])* integers (i) : [0-9]+
 
 Variables (v)    : '{ident}
 Constructors (c) : {ident}
@@ -572,14 +806,94 @@ Commands         : !help
                    !exit
 \end{verbatim}
 
+\subsection{Grammar for \banshee{} Specifications}
+
+Specification files consist of a single \textit{specification}, drawn from
+the following grammar:
+$$
+\begin{array}{lrl}
+  \id{specification} &\kw{::=}& \kw{specification} ~\id{spcid} ~\kw{:}~ \id{hdrid} ~\kw{=} ~\kw{spec} ~\id{dataspec}~ \kw{end} \\
+  \id{dataspec} & \kw{::=} & 
+  \!\!\begin{array}[t]{rl}\kw{data} \!\!\! & \id{exprid}_1 ~\kw{:}~ \id{sort}_1 \bra{\id{sortopts}} 
+               ~\bra{\kw{=} ~\id{conspec}_1}_1 \cdots \\ 
+               \kw{and}\!\!\! & \id{exprid}_n ~\kw{:}~ \id{sort}_n \bra{\id{sortopts}} ~\bra{\kw{=} ~\id{conspec}_n}_n 
+       \end{array} \\
+  & | & \id{dataspec}_1 ~ \id{dataspec}_2 \\
+  \id{conspec} & \kw{::=} & \id{conid} ~\bra{\kw{of} ~\id{consig}} \\
+               & | & \id{conspec}_1~\kw{|} ~\id{conspec}_2 \\ 
+ \id{consig} & \kw{::=} & \id{bconsig}_0~\kw{*} \cdots \kw{*}~\id{bconsig}_n \\
+  \id{bconsig} & \kw{::=} & \id{vnc} ~\id{exprid} \\
+  \id{vnc} & \kw{::=} & \kw{+} | \kw{-} | \kw{=} \\
+  \id{sortopts} & \kw{::=} & \kw{[} \id{option_1} \kw{,} \cdots \kw{,}\id{option_n} \kw{]} \\
+  \id{sort} & \kw{::=} & \kw{term} ~~|~~ \kw{setIF} ~~|~~ \kw{setST} ~~|~~ \kw{row(}\id{exprid}\kw{)}  \\ 
+ 
+
+\end{array}
+$$
+
+Expression identifiers (\textit{exprid}), constructor identifiers 
+(\textit{conid}), specification identifiers (\textit{spcid}), and header 
+identifiers (\textit{hdrid}) must only be used once in a \texttt{.spec} file. 
+Identifiers consist of an upper- or lowercase letter followed by a sequence 
+of letters, digits, or underscores ('\texttt{\_}').
+
 \bibliography{banshee-manual}\bibliographystyle{abbrv}
 
 \appendix{}
 
-\section{Known Bugs}
+\section{Known Bugs and Limitations}
 \label{app-bugs}
+
+\begin{itemize}
+
+\item If backspace doesn't delete properly in \ibanshee{}, try typing
+  \texttt{stty erase \char94?} at the shell prompt before invoking
+  ibanshee.exe.
+
+\item Projection merging and the DyckCFL API don't work properly (the
+  bug has to do with group projections and merging). TURN OFF
+  projection merging if using the DyckCFL API with globals. If you're
+  not using globals, this won't matter, because group projections
+  won't be used. Projection merging doesn't improve the DyckCFL
+  library's performance, anyway.
+
+\item Banshee ships with two region-based memory management libraries:
+  libcompat and rlib. There is a serious performance bug with
+  rlib. Unfortunately, region-based persistence
+  (serialization/deserialization) is only supported with rlib. You can
+  use rlib by doing: \texttt{make clean all RLIB=1}. Region
+  persistence is otherwise unsupported.
+
+\item Hashset (\file{hashset.c}) sometimes doesn't terminate. By
+  default, banshee doesn't use hashset: it uses a bounds
+  representation based on \file{hash.c} (\file{hash\_bounds.c}, as
+  opposed to the hashset based \file{bounds.c}). However, the
+  hashset-based bounds representation is about twice as fast as the
+  hash-based bounds representation. If you want to try out the
+  hashset-based bounds representation, do \texttt{make clean all check
+    NO\_HASH\_BOUNDS=1}. Note that backtracking hasn't been
+  implemented in hashset, so some of the check targets will fail.
+\end{itemize}
 
 \section{Copyright}
 \label{app-copyright}
+
+This manual is copyright (C) 2005 The Regents of the University of
+California.
+
+\banshee{} is distributed under the BSD license, with the exception of
+the following files:
+
+\begin{itemize}
+\item \file{engine/malloc.c}: see file for license
+\item \file{codegen/OCamlMakefile}: see
+  http://www.ai.univie.ac.at/~markus/home/ocaml\_sources.html for
+  license
+\item \file{cparser/*}: GPL, see cparser/COPYRIGHT. Note that the
+  cparser is a separate application, no code from cparser is linked
+  into \banshee{} itself.
+\end{itemize}
+
+See file \file{COPYRIGHT} for more details.
 
 \end{document}
