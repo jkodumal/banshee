@@ -128,7 +128,7 @@ clean:
 	$(MAKE) -C tests -f ibanshee_test.mk clean
 	$(MAKE) -C ibanshee clean
 	$(MAKE) -C java clean
-	rm -rf *~ data statics offsets extras
+	rm -rf *~ data statics offsets extras banshee*.tar.gz
 
 distrib: clean docs
 	rm -rf $(DISTRIB_DIR)

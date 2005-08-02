@@ -648,11 +648,11 @@ static bool cycle_detect(setst_var goal, setst_var_list path,
 
 gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 {
-  static jcoll tlb_aux(gen_e e,int path_len,setst_var_list path) deletes
+  jcoll tlb_aux(gen_e e,int path_len,setst_var_list path) deletes
     {
       if (setst_is_var(e))
 	{
-	  setst_var_list cycle;
+	  setst_var_list cycle = NULL;
 	  setst_var v = (setst_var)e;
 	  if ( flag_eliminate_cycles_st && cycle_detect(v,path,&cycle) )
 	    {
@@ -723,13 +723,13 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	}
     }
   
-  static gen_e_list tlb(gen_e e)
+  gen_e_list tlb(gen_e e)
     {
       return jcoll_flatten(tlb_dict,
 			   tlb_aux(e,1,new_setst_var_list(tlb_cache_region)) );
     }
   
-  static void match_sinks()
+  void match_sinks()
     {
       gen_e_list_scanner tlb_scanner;
       bounds_scanner sink_scanner;
@@ -778,7 +778,7 @@ gen_e_list setst_tlb(gen_e e,incl_fn_ptr setst_incl) deletes
 	}
     }
   
-  static void iterate(void)
+  void iterate(void)
     {
       setst_var_list_scanner var_scanner;
       setst_var v; 

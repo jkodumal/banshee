@@ -69,7 +69,7 @@ public abstract class FlowGraphNode {
 	cflEngine.makeCloseEdge(getDyckNode(), to.getDyckNode(), index);
     }
 
-    public void makeFieldReadEdge(FlowGraphNode to, String fieldName) {
+    public void addFieldReadEdge(FlowGraphNode to, String fieldName) {
 	cflEngine.makeOpenEdge(getDyckNode(), to.getDyckNode(), 
 			       IndexManager.v().getIndex(fieldName));
     }

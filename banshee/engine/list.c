@@ -500,7 +500,7 @@ struct list *list_sort(struct list *l, comparator_fn cmp)
 		 ((struct list_node_ *)node2)->data);
     }
   
-  long pcount;
+  unsigned long pcount;
   l->head = sort_linked_list(l->head,1,compare,&pcount);
   l->tail = fetch_tail(l->head);
   assert(pcount == l->length);

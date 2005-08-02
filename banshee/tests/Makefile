@@ -117,4 +117,4 @@ check/%:
 
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.dot *~
+	rm -f *.o $(TARGETS) *.exe *.dot *.out *~

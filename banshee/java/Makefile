@@ -27,6 +27,8 @@
 
 OS:=$(shell uname)
 
+CC = gcc
+
 #ifeq ($(OS), Darwin)
 #	jni_dir = /System/Library/Frameworks/JavaVM.framework/Headers 
 # TODO --- this is not a platform agnostic way of finding the jni headers
