@@ -33,7 +33,8 @@
 #include "dyckcfl.h"
 #include "mr_dyckcfl.h"
 
-bool test_dyck_clustering = FALSE;
+bool test_dyck_clustering = TRUE;
+bool test_dyck_contra = TRUE;
 
 static void test_dyck_isomorphism()
 {
@@ -41,6 +42,7 @@ static void test_dyck_isomorphism()
   int indices[2] = {0,1};
   dyck_node nodes[2] = {NULL,NULL};
   dyck_node c0,c1,c2,c3,c4,c5;
+  dyck_node e0,e1,e2,e3,e4,e5;
 //   flag_dyck_print_constraints = 1;
   
   d0 = make_tagged_dyck_node("d0");
@@ -80,6 +82,21 @@ static void test_dyck_isomorphism()
     make_dyck_subtype_edge(c2,c3);
     make_dyck_close_edge_for_cluster(c3,c4,0);
     make_dyck_close_edge_for_cluster(c3,c5,1);
+  }
+
+  if (test_dyck_contra) {
+    e0 = make_tagged_dyck_node("e0");
+    e1 = make_tagged_dyck_node("e1");
+    e2 = make_tagged_dyck_node("e2");
+    e3 = make_tagged_dyck_node("e3");
+    e4 = make_tagged_dyck_node("e4");
+    e5 = make_tagged_dyck_node("e5");
+    
+    make_dyck_contra_open_edge(e0,e1,1);
+    make_dyck_contra_open_edge(e4,e1,2);
+    make_dyck_subtype_edge(e1,e2);
+    make_dyck_contra_close_edge(e2,e3,1);   
+    make_dyck_contra_close_edge(e2,e5,2);
   }
 
   dyck_finished_adding();	// we've finished building the graph
@@ -139,6 +156,13 @@ static void test_dyck_isomorphism()
     assert(!dyck_check_reaches(c1,c2));
     assert(!dyck_check_reaches(c0,c3));
     assert(!dyck_check_reaches(c1,c3));
+  }
+
+  if (test_dyck_contra) {
+    assert(dyck_check_reaches(e3,e0));
+    assert(dyck_check_reaches(e5,e4));
+    assert(!dyck_check_reaches(e3,e4));
+    assert(!dyck_check_reaches(e5,e0));
   }
 
   // Print the closed graph
