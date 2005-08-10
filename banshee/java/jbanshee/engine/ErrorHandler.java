@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  *
  */
-package banshee.engine;
+package jbanshee.engine;
 
 public interface ErrorHandler {
 

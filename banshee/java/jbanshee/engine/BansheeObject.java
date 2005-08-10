@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  *
  */
-package banshee.engine;
+package jbanshee.engine;
 
 /**
  * Represents a pointer to a C-side Banshee object
