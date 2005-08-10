@@ -1,17 +1,21 @@
 This is banshee, a toolkit for constructing constraint-based program
-analyses.  See the user manual in docs/banshee.ps for a complete
-description of banshee.
+analyses.  See the user manual in docs/banshee-manual.pdf for a
+complete description of banshee.
 
-This is a beta release of banshee. Although banshee has been designed
-to solve many kinds of constraints, it has only been extensively
-tested on Andersen's-style points-to analysis.
+This is a beta release of banshee. As such, there may be bugs in the
+system.
 
-To build banshee, the following must be installed: 
+To build banshee, the following must be installed:
 
  --- ocaml (see http://caml.inria.fr)
- --- gcc (should be standard)
- --- indent (should be standard)
- --- python (should be standard)
+ --- gcc
+ --- python 
+ --- indent 
+ --- etags
+ --- flex
+ --- bison
+
+With the exception of ocaml, these programs should be standard.
 
 You can then build banshee by typing 'make' or 'gmake' at the command
 line in this directory. If everything succeeds, the following targets
@@ -38,10 +42,10 @@ information.
 iBanshee (bin/ibanshee.exe) is an interpreter that allows you to
 interactively define constraints and inspect solutions.
 
-'make' will also build the user manual (docs/banshee.ps) a suite of
-small test applications (see tests/README) and the points-to analysis
-application (see cparser/README). Currently, the manual is extremely
-out of date. This will hopefully be remedied soon.
+'make' will also build the user manual (docs/banshee-manual.pdf) a
+suite of small test applications (see tests/README) and the points-to
+analysis application (see cparser/README). Currently, the manual is
+incomplete. This will hopefully be remedied soon.
 
 Other useful make targets:
 
@@ -58,7 +62,7 @@ Other useful make targets:
  --- 'make ibanshee' will build the iBanshee interpreter and dependencies
 
 banshee should build and run on Linux, FreeBSD, Windows (with cygwin)
-and MacOS X. On FreeBSD, make sure to use 'gmake' instead of 'make'
+and MacOS X. On FreeBSD, make sure to use 'gmake' instead of 'make'.
 
 banshee is distributed under the BSD license, with the exception of
 the following files:
