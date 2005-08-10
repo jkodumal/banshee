@@ -27,57 +27,35 @@
  * SUCH DAMAGE.
  *
  */
-package conflux.builder;
+package jbanshee.engine;
 
-import soot.*;
-import soot.util.queue.*;
-import java.util.*;
-import conflux.flowgraph.*;
 
-/** Builds a context-sensitive type-based flow graph
+/**
+ * A nonspecialized constraint engine
  *
  * @author John Kodumal
  */
-public class FlowGraphBuilder {
-    FlowGraph fg;
+public class NonspecEngine implements UnsafeErrorHandler {
+    private static ErrorHandler errorHandler;
 
 
-    public FlowGraphBuilder() {
+    public static void eliminateCycles(boolean value) {
+	UnsafeNonspecEngine.eliminateCycles(value);
+    }
+    
+    public static void mergeProjections(boolean value) {
+	UnsafeNonspecEngine.mergeProjections(value);
+    }
+    
+    public static void occursCheck(boolean value) {
+	UnsafeNonspecEngine.occursCheck(value);
     }
 
-    /** Jimplify all methods; useful for separating Jimplification
-     * time from analysis time
-     */
-    // TODO -- this should look just like the soot version
-    public void preJimplify() {
+    // TODO: have this call the static safe error handler. This will
+    // require user data in expressions, in order to translate from
+    // longs back to the appropriate Java objects
+    public final void unsafeHandleError(long e1, long e2, ErrorKind k) {
     }
 
-    public FlowGraph setup(Map options) {
-	fg = new FlowGraph();
-
-	return fg;
-    }
-
-    /** Fills in the flow graph */
-    public void build() {
-	QueueReader callEdges = ofcg.callGraph().listener();
-	ofcg.build();
-	reachables = ofcg.reachableMethods();
-	reachables.update();
-
-        for( Iterator cIt = Scene.v().getClasses().iterator(); cIt.hasNext(); ) {
-            final SootClass c = (SootClass) cIt.next();
-	    handleClass( c );
-	}
-        Stmt s = null;
-        while(callEdges.hasNext()) {
-            Edge e = (Edge) callEdges.next();
-            //MethodFlowGraph.v( fg, e.tgt() ).addToFlowGraph(null);
-
-            //fg.addCallTarget( e );
-        }
-
-
-    }
 
 }

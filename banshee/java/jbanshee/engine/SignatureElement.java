@@ -27,57 +27,24 @@
  * SUCH DAMAGE.
  *
  */
-package conflux.builder;
-
-import soot.*;
-import soot.util.queue.*;
-import java.util.*;
-import conflux.flowgraph.*;
-
-/** Builds a context-sensitive type-based flow graph
- *
- * @author John Kodumal
- */
-public class FlowGraphBuilder {
-    FlowGraph fg;
+package jbanshee.engine;
 
 
-    public FlowGraphBuilder() {
+public class SignatureElement {
+    VarianceKind variance;
+    SortKind sort;
+
+    public SignatureElement(VarianceKind variance, SortKind sort) {
+	this.variance = variance;
+	this.sort = sort;
     }
 
-    /** Jimplify all methods; useful for separating Jimplification
-     * time from analysis time
-     */
-    // TODO -- this should look just like the soot version
-    public void preJimplify() {
+    public VarianceKind getVariance() {
+	return variance;
     }
 
-    public FlowGraph setup(Map options) {
-	fg = new FlowGraph();
-
-	return fg;
+    public SortKind getSort() {
+	return sort;
     }
-
-    /** Fills in the flow graph */
-    public void build() {
-	QueueReader callEdges = ofcg.callGraph().listener();
-	ofcg.build();
-	reachables = ofcg.reachableMethods();
-	reachables.update();
-
-        for( Iterator cIt = Scene.v().getClasses().iterator(); cIt.hasNext(); ) {
-            final SootClass c = (SootClass) cIt.next();
-	    handleClass( c );
-	}
-        Stmt s = null;
-        while(callEdges.hasNext()) {
-            Edge e = (Edge) callEdges.next();
-            //MethodFlowGraph.v( fg, e.tgt() ).addToFlowGraph(null);
-
-            //fg.addCallTarget( e );
-        }
-
-
-    }
-
 }
+

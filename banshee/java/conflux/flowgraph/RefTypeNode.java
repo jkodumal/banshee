@@ -29,7 +29,7 @@
  */
 package conflux.flowgraph;
 
-import soot.Type;
+import soot.*;
 import java.util.*;
 
 /**

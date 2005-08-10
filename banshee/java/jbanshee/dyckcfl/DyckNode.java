@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2000-2004
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -27,57 +27,18 @@
  * SUCH DAMAGE.
  *
  */
-package conflux.builder;
+package jbanshee.dyckcfl;
 
-import soot.*;
-import soot.util.queue.*;
-import java.util.*;
-import conflux.flowgraph.*;
+public class DyckNode {
+    protected String name;
+    transient long nodeID;
 
-/** Builds a context-sensitive type-based flow graph
- *
- * @author John Kodumal
- */
-public class FlowGraphBuilder {
-    FlowGraph fg;
-
-
-    public FlowGraphBuilder() {
+    DyckNode(String name, long nodeID) {
+	this.name = name;
+	this.nodeID = nodeID;
     }
 
-    /** Jimplify all methods; useful for separating Jimplification
-     * time from analysis time
-     */
-    // TODO -- this should look just like the soot version
-    public void preJimplify() {
+    public String getName() {
+	return name;
     }
-
-    public FlowGraph setup(Map options) {
-	fg = new FlowGraph();
-
-	return fg;
-    }
-
-    /** Fills in the flow graph */
-    public void build() {
-	QueueReader callEdges = ofcg.callGraph().listener();
-	ofcg.build();
-	reachables = ofcg.reachableMethods();
-	reachables.update();
-
-        for( Iterator cIt = Scene.v().getClasses().iterator(); cIt.hasNext(); ) {
-            final SootClass c = (SootClass) cIt.next();
-	    handleClass( c );
-	}
-        Stmt s = null;
-        while(callEdges.hasNext()) {
-            Edge e = (Edge) callEdges.next();
-            //MethodFlowGraph.v( fg, e.tgt() ).addToFlowGraph(null);
-
-            //fg.addCallTarget( e );
-        }
-
-
-    }
-
 }

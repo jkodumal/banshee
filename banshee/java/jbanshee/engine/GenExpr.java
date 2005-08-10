@@ -27,57 +27,21 @@
  * SUCH DAMAGE.
  *
  */
-package conflux.builder;
+package jbanshee.engine;
 
-import soot.*;
-import soot.util.queue.*;
-import java.util.*;
-import conflux.flowgraph.*;
-
-/** Builds a context-sensitive type-based flow graph
+/**
+ * A generic Banshee expression object. All Banshee expressions are
+ * subclasses.
  *
  * @author John Kodumal
  */
-public class FlowGraphBuilder {
-    FlowGraph fg;
 
+public abstract class GenExpr extends BansheeObject {
 
-    public FlowGraphBuilder() {
+    GenExpr(long addr) {
+	super(addr);
     }
 
-    /** Jimplify all methods; useful for separating Jimplification
-     * time from analysis time
-     */
-    // TODO -- this should look just like the soot version
-    public void preJimplify() {
-    }
-
-    public FlowGraph setup(Map options) {
-	fg = new FlowGraph();
-
-	return fg;
-    }
-
-    /** Fills in the flow graph */
-    public void build() {
-	QueueReader callEdges = ofcg.callGraph().listener();
-	ofcg.build();
-	reachables = ofcg.reachableMethods();
-	reachables.update();
-
-        for( Iterator cIt = Scene.v().getClasses().iterator(); cIt.hasNext(); ) {
-            final SootClass c = (SootClass) cIt.next();
-	    handleClass( c );
-	}
-        Stmt s = null;
-        while(callEdges.hasNext()) {
-            Edge e = (Edge) callEdges.next();
-            //MethodFlowGraph.v( fg, e.tgt() ).addToFlowGraph(null);
-
-            //fg.addCallTarget( e );
-        }
-
-
-    }
+    abstract int getStamp();
 
 }

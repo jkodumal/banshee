@@ -51,19 +51,19 @@ all: java jdyckcfl
 .PHONY: java jdyckcfl check
 
 java:
-	javac `find . -name \*.java`
+	javac `find jbanshee -name \*.java`
 
 jdyckcfl: java 
-	javah -jni banshee.dyckcfl.UnsafeDyckCFL
+	javah -jni jbanshee.dyckcfl.UnsafeDyckCFL
 	$(CC) -c -I. -I$(dyckcfl_dir) -I$(engine_dir) -I$(region_dir) -I$(jni_dir) -Ddeletes= \
 	-Dtraditional= -Dsameregion= -Dparentptr= -DNONSPEC -Wall \
-	banshee/dyckcfl/UnsafeDyckCFLImp.c
+	jbanshee/dyckcfl/UnsafeDyckCFLImp.c
 	$(CC) -dynamiclib -o libjdyckcfl.jnilib $(dyckcfl_dir)/dyckcfl.o UnsafeDyckCFLImp.o $(engine_dir)/libnsengine.a $(region_dir)/libregions.a -framework JavaVM
 
 check: java jdyckcfl
-	java banshee.dyckcfl.UnsafeDyckCFL
+	java jbanshee.dyckcfl.UnsafeDyckCFL
 
 clean:
-	rm -f *.o libjdyckcfl.jnilib banshee_dyckcfl_UnsafeDyckCFL.h 
+	rm -f *.o libjdyckcfl.jnilib jbanshee_dyckcfl_UnsafeDyckCFL.h 
 	rm -f `find . -name \*.class`
 	rm -f `find . -name \*~`
