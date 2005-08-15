@@ -60,10 +60,10 @@ public class FlowGraphBuilder {
 
     /** Fills in the flow graph */
     public void build() {
-	QueueReader callEdges = ofcg.callGraph().listener();
-	ofcg.build();
-	reachables = ofcg.reachableMethods();
-	reachables.update();
+	//	QueueReader callEdges = ofcg.callGraph().listener();
+	// ofcg.build();
+	// reachables = ofcg.reachableMethods();
+	// reachables.update();
 
         for( Iterator cIt = Scene.v().getClasses().iterator(); cIt.hasNext(); ) {
             final SootClass c = (SootClass) cIt.next();

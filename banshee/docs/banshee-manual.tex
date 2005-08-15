@@ -888,6 +888,12 @@ of letters, digits, or underscores ('\texttt{\_}').
   hashset-based bounds representation, do \texttt{make clean all check
     NO\_HASH\_BOUNDS=1}. Note that backtracking hasn't been
   implemented in hashset, so some of the check targets will fail.
+
+\item Andersen's analysis requires pre-processed source files. We
+  recommend pre-processing with gcc-2.95, as pre-processing with later
+  versions of GCC may produce output that our C front-end cannot
+  parse. Thanks to Stephen McCamant for this suggestion.
+
 \end{itemize}
 
 \section{Copyright}

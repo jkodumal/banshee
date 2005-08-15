@@ -108,4 +108,10 @@ Known bugs:
      you want to try out the hashset-based bounds representation, do
      'make clean all check NO_HASH_BOUNDS=1'.
 
+ --- Andersen's analysis requires pre-processed source files. We
+     recommend pre-processing with gcc-2.95, as pre-processing with
+     later versions of GCC may produce output that our C front-end
+     cannot parse. Thanks to Stephen McCamant for this suggestion.
+
+
 Send bug reports to jkodumal@cs.berkeley.edu.

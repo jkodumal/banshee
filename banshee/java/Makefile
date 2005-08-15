@@ -53,6 +53,9 @@ all: java jdyckcfl
 java:
 	javac `find jbanshee -name \*.java`
 
+conflux: java
+	javac `find conflux -name \*.java`
+
 jdyckcfl: java 
 	javah -jni jbanshee.dyckcfl.UnsafeDyckCFL
 	$(CC) -c -I. -I$(dyckcfl_dir) -I$(engine_dir) -I$(region_dir) -I$(jni_dir) -Ddeletes= \

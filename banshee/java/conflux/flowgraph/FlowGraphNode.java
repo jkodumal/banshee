@@ -29,7 +29,7 @@
  */
 package conflux.flowgraph;
 
-import banshee.dyckcfl.*;
+import jbanshee.dyckcfl.*;
 import conflux.util.IndexManager;
 import soot.Type; 
 
