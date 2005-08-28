@@ -25,23 +25,23 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-BANSHEE_VERSION := banshee-0.9.1
+BANSHEE_VERSION := banshee-1.0
 DISTRIB_ROOT := /tmp
 DISTRIB_DIR := $(DISTRIB_ROOT)/$(BANSHEE_VERSION)
 
 .PHONY: banshee libcompat codegen engine tests andersen steensgaard \
-	lambda dyckcfl docs points-to install perf ibanshee rlib java distrib \
-#	rca
+	lambda dyckcfl docs points-to install perf ibanshee java distrib \
+#	rca rlib
 
 all: banshee ibanshee tests points-to 
 
-banshee: libcompat codegen engine rlib
+banshee: libcompat codegen engine #rlib
 
 libcompat: 
 	$(MAKE) -C libcompat
 
-rlib:
-	$(MAKE) -C rlib
+#rlib:
+#	$(MAKE) -C rlib
 
 codegen: 
 	$(MAKE) -C codegen
@@ -86,17 +86,17 @@ ifndef NO_BANSHEE_ROLLBACK
 	$(MAKE) -C tests -f pta_test.mk pta-bt-regr
 #	$(MAKE) -C tests -f pta_test.mk pta-persist-regr
 endif
-ifdef RLIB
+#ifdef RLIB
 	$(MAKE) -C tests -f pta_test.mk pta-rpersist-regr
-endif
+#endif
 	$(MAKE) -C tests -f ibanshee_test.mk
 ifndef NO_BANSHEE_ROLLBACK
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-bt
 #	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-persist
 endif
-ifdef RLIB
+#ifdef RLIB
 	$(MAKE) -C tests -f ibanshee_test.mk ibanshee-rpersist
-endif
+#endif
 	@echo "SUCCESS: All check targets passed."
 
 rpersist_check:
@@ -113,7 +113,7 @@ install:
 
 clean:
 	$(MAKE) -C libcompat clean
-	$(MAKE) -C rlib clean
+#	$(MAKE) -C rlib clean
 	$(MAKE) -C codegen clean
 	$(MAKE) -C engine clean
 	$(MAKE) -C rca clean
@@ -189,10 +189,10 @@ distrib: clean docs
 	cp -r libcompat/ $(DISTRIB_DIR)/libcompat/
 	rm -rf $(DISTRIB_DIR)/libcompat/CVS
 # make an rlib directory and copy the sources over
-	mkdir $(DISTRIB_DIR)/rlib
-	cp -r rlib/ $(DISTRIB_DIR)/rlib/
-	rm -rf $(DISTRIB_DIR)/rlib/CVS
-	rm -rf $(DISTRIB_DIR)/rlib/test/
+#	mkdir $(DISTRIB_DIR)/rlib
+#	cp -r rlib/ $(DISTRIB_DIR)/rlib/
+#	rm -rf $(DISTRIB_DIR)/rlib/CVS
+#	rm -rf $(DISTRIB_DIR)/rlib/test/
 # make a steensgaard directory and copy the sources over
 	mkdir $(DISTRIB_DIR)/steensgaard
 	cp steensgaard/*.bsp $(DISTRIB_DIR)/steensgaard/

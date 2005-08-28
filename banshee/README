@@ -93,13 +93,6 @@ Known bugs:
      projections won't be used. Projection merging doesn't improve the
      DyckCFL library's performance, anyway.
 
- --- Banshee ships with two region-based memory management libraries:
-     libcompat and rlib. There is a serious performance bug with
-     rlib. Unfortunately, region-based persistence
-     (serialization/deserialization) is only supported with rlib. You
-     can use rlib by doing: 'make clean all RLIB=1'. Region persistence
-     is otherwise unsupported.
-
  --- Hashset (hashset.c) sometimes doesn't terminate. By default,
      banshee doesn't use hashset: it uses a bounds representation based
      on hash.c (hash_bounds.c, as opposed to the hashset based
