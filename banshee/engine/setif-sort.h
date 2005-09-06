@@ -35,6 +35,7 @@
 #include "banshee.h"
 #include "termhash.h"
 #include "setif-var.h"
+#include "annotations.h"
 
 EXTERN_C_BEGIN
 
@@ -122,6 +123,14 @@ void setif_set_fields(void);
 /* Region persistence */
 void write_module_setif(FILE *f);
 void update_module_setif(translation t, FILE *f);
+
+/* Annotated constraints */
+extern transition_fn transition;
+extern empty_annotation_fn is_empty_annotation;
+extern subsumption_fn subsumed;
+extern eq_annotation_fn eq_annotation;
+
+
 
 /* Stats */
 extern struct setif_stats setif_stats;

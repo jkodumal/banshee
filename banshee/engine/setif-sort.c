@@ -105,6 +105,13 @@ setif_rollback_info setif_current_rollback_info = NULL;
 term_hash setif_hash;
 struct setif_stats setif_stats;
 
+/* Annotation declarations */
+annotation empty_annotation = NULL;
+transition_fn transition = NULL;
+empty_annotation_fn is_empty_annotation = NULL;
+subsumption_fn subsumed = NULL;
+eq_annotation_fn eq_annotation = NULL;
+
 stamp setif_get_stamp(gen_e e) 
 {
 #ifdef NONSPEC
@@ -950,6 +957,43 @@ char *setif_get_constant_name(gen_e e)
   return ((setif_constant_)e)->name;
 }
 
+/* Default implementation of annotations */
+
+bool default_is_empty_annotation(annotation a) {
+  return a == empty_annotation;
+}
+
+bool default_eq_annotation(annotation a1, annotation a2) {
+  assert (empty_annotation == a1 == a2);
+
+  return TRUE;
+}
+
+annotation default_transition(gen_e e1, annotation a1, annotation a2, gen_e e2) {
+  return empty_annotation;
+}
+
+bool default_subsumed(gen_e e1, annotation a1, gen_e e2) {
+  assert (is_empty_annotation(a1));
+
+  if (l_inductive(e1,e2)) { /* _ <= 'x */
+    if (sv_is_lb((setif_var)e2, setif_get_stamp(e1)))
+      return TRUE;
+    else return FALSE;
+  }
+  else if (r_inductive(e1,e2)) { /* 'x <= _ */
+    if (sv_is_ub((setif_var)e1, setif_get_stamp(e2)))
+      return TRUE;
+    else return FALSE;
+  }
+  else { // error! this should be an atomic constraint
+    // handle_error 		/* TODO -- add internal_error to error kinds */
+    assert(FALSE);
+    return TRUE;
+  }
+
+}
+
 void setif_init(void)
 {
   setif_term_region = newregion();
@@ -986,6 +1030,11 @@ void setif_init(void)
 #endif
   wild->st = WILD_TYPE;
   wild->type = WILD_TYPE;  
+
+  transition = default_transition;
+  subsumed = default_subsumed;
+  is_empty_annotation = default_is_empty_annotation;
+  eq_annotation = default_eq_annotation;
 }
 
 
@@ -1677,3 +1726,4 @@ int update_setif_rollback_info(translation t, void *m)
   
   return sizeof(struct setif_rollback_info_);
 }
+

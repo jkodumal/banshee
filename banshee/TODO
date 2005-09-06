@@ -1,4 +1,6 @@
-TODO -*- outline -*-	
+-*- outline -*-	
+
+TODO 
 
 
 * Miscellaneous Tasks
@@ -463,3 +465,66 @@ repository builds with:
 'gmake clean all check'
 
 
+* Annotations
+
+** Modifications to setif-sort
+
+*** Check subsumption
+
+sv_add_lb and sv_add_ub should be replaced with calls to subsumed(...)
+followed by calls to bounds add.
+
+*** Compute the transition
+
+Calls to setif_inclusion should call transition(...) to compute the
+new annotation.
+
+*** Change inclusion signature
+
+Calls to setif_inclusion need a new argument, the annotation. 
+
+*** Change bounds interface
+
+Modify the interface bounds.h to add an annotation parameter. The
+logic in bounds will be extremely simple, delegating operations like
+subsumption check to external functions.
+
+*** Create function pointers
+
+DONE.
+
+There should be settable function pointers for the transition
+function, the equality check function, the empty annotation check
+function, and the subsumption function. 
+
+The default implementations should assert that all annotations are
+empty and do the following:
+
+x 1. Create an empty_annotation variable, set it to null
+
+x 2. Create the following default implementations:
+
+x subsumption: check that the annotation is empty, check bounds
+
+x transition: check that the annotations are empty, propagate the empty
+annotation
+
+x equality check: check that annotations are empty, return TRUE
+
+x empty annotation check: check that the annotation is empty
+
+*** Update con_match functions
+
+Both in the code generator and in nonspec
+
+*** Cycle elimination
+???
+
+*** Projection merging
+???
+
+*** Change the flow for equal exps
+
+Need to handle
+
+'x <=_a 'x
