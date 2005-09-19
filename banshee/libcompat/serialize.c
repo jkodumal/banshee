@@ -337,7 +337,7 @@ void deserialize_pages(int data, int state, translation map, Updater *update) {
   numbytes = read(state, &ps, sizeof(struct page_state));
   while (numbytes != 0) {
     if (numbytes != sizeof(struct page_state)) {
-      fprintf(stderr,"Error: Could not read page state. Bytes read = %d; bytest desired = %lu.\n",numbytes,sizeof(struct page_state));
+      fprintf(stderr,"Error: Could not read page state. Bytes read = %d; bytes desired = %lu.\n",numbytes,(long unsigned int)sizeof(struct page_state));
       exit(1);
     }
     newp = (struct page *) translate_pointer(map, ps.old_address); 
