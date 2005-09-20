@@ -62,6 +62,13 @@ stamp setif_get_stamp(gen_e e);
 void setif_inclusion(con_match_fn_ptr,res_proj_fn_ptr, gen_e_pr_fn_ptr,
 		     gen_e, gen_e) deletes;
 
+void setif_annotated_inclusion(con_match_fn_ptr,res_proj_fn_ptr, 
+			       gen_e_pr_fn_ptr,
+			       gen_e, gen_e, 
+			       annotation) deletes;
+
+
+
 bool setif_proj_merge(setif_var v, gen_e se, get_proj_fn_ptr get_proj,
 		      proj_con_fn_ptr make_proj,fresh_large_fn_ptr fresh_var,
 		      incl_fn_ptr sort_incl, incl_fn_ptr set_incl) deletes;

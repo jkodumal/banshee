@@ -419,7 +419,16 @@ void setif_register_ub_proj(gen_e_list ub_projs, gen_e e) {
 }
 
 void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj, 
-		     gen_e_pr_fn_ptr pr, gen_e e1, gen_e e2) deletes
+		     gen_e_pr_fn_ptr pr, gen_e e1, gen_e e2) 
+{
+  setif_annotated_inclusion(con_match,res_proj, pr, e1, e2, empty_annotation);
+}
+
+
+void setif_annotated_inclusion(con_match_fn_ptr con_match, 
+			       res_proj_fn_ptr res_proj, 
+			       gen_e_pr_fn_ptr pr, gen_e e1, gen_e e2,
+			       annotation a) deletes
 {
   
   void collapse_cycle_lower(region r, setif_var witness, 
@@ -449,8 +458,10 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       assert(sv_get_stamp(witness) == lowest);
       
       bounds_scan(b,&scan_bounds);
+      /* TODO -- what annotation? */
       while (bounds_next(&scan_bounds,&lb))
-	setif_inclusion(con_match,res_proj,pr,lb, (gen_e) witness);
+	setif_annotated_inclusion(con_match,res_proj,pr,lb, (gen_e) witness,
+				  empty_annotation);
       
       bounds_delete(b);
       lazy_invalidate_tlb_cache();
@@ -492,8 +503,10 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       assert(sv_get_stamp(witness) == lowest);
 
       bounds_scan(b,&scan_bounds);
+      /* TODO --- what annotation? */
       while (bounds_next(&scan_bounds,&ub))
-	setif_inclusion(con_match,res_proj,pr,(gen_e) witness, ub);
+	setif_annotated_inclusion(con_match,res_proj,pr,(gen_e) witness, ub,
+				  empty_annotation);
 	
       bounds_delete(b);
       lazy_invalidate_tlb_cache();
@@ -518,6 +531,8 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	  gen_e_list_scanner scan;
 	  gen_e ub;
 	  bounds_scanner scan_bounds;
+	  /* TODO -- need to set a_prime during the bounds lookup */
+	  annotation a_prime = empty_annotation;
 	  
 	  if (setif_is_var(e))
 	    setif_stats.added_succ++;
@@ -530,8 +545,10 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 
 	  bounds_scan(sv_get_ubs(v),&scan_bounds);
 	  while(bounds_next(&scan_bounds,&ub))
-	    setif_inclusion(con_match,res_proj,pr,e,ub);
+	    setif_annotated_inclusion(con_match,res_proj,pr,e, ub,
+				      transition(e ,a_prime, a, ub));
 	  
+	  /* TODO--- what here? */
 	  gen_e_list_scan(sv_get_ub_projs(v),&scan);
 	  while (gen_e_list_next(&scan,&ub))
 	    setif_inclusion(con_match,res_proj,pr,e,ub);
@@ -566,6 +583,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 	  lazy_invalidate_tlb_cache();
 	  
 	  bounds_scan(sv_get_lbs(v),&scan);
+	  /* TODO */
 	  while (bounds_next(&scan,&lb))
 	    setif_inclusion(con_match,res_proj,pr,lb,e);
 
@@ -611,7 +629,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       gen_e_list_scan(exprs,&scan);
       while (gen_e_list_next(&scan,&temp))
 	{
-	  setif_inclusion(con_match,res_proj,pr,temp,e2);
+	  setif_annotated_inclusion(con_match,res_proj,pr,temp,e2,a);
 	}
 
       return;
@@ -627,7 +645,7 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
       gen_e_list_scan(exprs,&scan);
       while (gen_e_list_next(&scan,&temp))
 	{
-	  setif_inclusion(con_match,res_proj,pr,e1,temp);
+	  setif_annotated_inclusion(con_match,res_proj,pr,e1,temp,a);
 	}
 
       return;
@@ -964,7 +982,7 @@ bool default_is_empty_annotation(annotation a) {
 }
 
 bool default_eq_annotation(annotation a1, annotation a2) {
-  assert (empty_annotation == a1 == a2);
+  assert (a1 == a2);
 
   return TRUE;
 }

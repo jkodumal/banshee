@@ -52,7 +52,7 @@ typedef annotation (*transition_fn) (gen_e, annotation, annotation, gen_e);
    subsumes this one. If true, there is no need to add this
    constraint:
 
-   C ^ (e <=_a e') => C if subsumed(e,a,e')
+   C ^ (e <=_a e') => C if subsumed(e, a, e')
                    => C ^ (e <=_a e') otherwise
 
    Note that the constraint must be atomic, so one or both of e and e'
