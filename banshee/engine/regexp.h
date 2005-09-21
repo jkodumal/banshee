@@ -30,15 +30,22 @@
 
 /* Regular expressions */
 
+#include "bool.h"
 
-typedef int bool;
-
-typedef char letter;
+typedef unsigned char letter;
 
 typedef struct regexp_ *regexp;
 
+
+regexp regexp_empty(void);
+
 regexp regexp_star(regexp r);
+
+regexp regexp_append(regexp r1, letter l);
 
 regexp regexp_concat(regexp r1, regexp r2);
 
 bool regexp_inclusion(regexp r1, regexp r2); 
+
+/* Debugging */
+void regexp_print_necessary(regexp r);

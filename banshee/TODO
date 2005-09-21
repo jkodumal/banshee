@@ -481,6 +481,8 @@ new annotation.
 
 *** Change inclusion signature
 
+DONE.
+
 Calls to setif_inclusion need a new argument, the annotation. 
 
 *** Change bounds interface
@@ -488,6 +490,11 @@ Calls to setif_inclusion need a new argument, the annotation.
 Modify the interface bounds.h to add an annotation parameter. The
 logic in bounds will be extremely simple, delegating operations like
 subsumption check to external functions.
+
+Bounds scanning must also return both the bound and the annotation.
+
+Bounds scanner needs fields to be set in bounds.h for all concrete
+implementations.
 
 *** Create function pointers
 
@@ -528,3 +535,29 @@ Both in the code generator and in nonspec
 Need to handle
 
 'x <=_a 'x
+
+*** Add a print annotation function
+
+A simple function that allows you to print an annotation
+
+** Regular annotations
+
+Given e <=_r x <=_r' e', we need to compute the concatenation rr',
+prune, then check for subsumption (does there exist r'' with rr' <=
+r''). If rr' passes prining and subsumption, we need to add the new
+edge and propagate it.
+
+Assume (wlog) we have some atomic constraints x <=_r e, x <=_r' e ...
+We need a representation that allows us to quickly determine whether x
+<=_r'' e is present.
+
+*** Subsumption
+ 
+Need to cheaply compute r <= r' for union-free regular languages r and r'
+
+*** Transition
+
+For x <=_r x', use kleene star.
+Otherwise, use concatenation.
+
+*** Pruning

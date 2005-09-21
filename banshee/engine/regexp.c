@@ -75,7 +75,7 @@ regexp regexp_append(regexp r, letter let) {
   regexp result = regexp_calloc();
   result->length = r->length + 1;
   result->expr = regexp_alloc_str(result->length + 1);
-  strlcpy((char *)result->expr, (char *)r->expr, r->length + 1);
+  strncpy((char *)result->expr, (char *)r->expr, r->length);
   result->expr[result->length-1] = let;
   result->expr[result->length] = 0;
 
@@ -87,9 +87,21 @@ regexp regexp_append(regexp r, letter let) {
 }
 
 /* TODO --- concat two regexps together */
-regexp regexp_concat(regexp r, regexp r1) {
+regexp regexp_concat(regexp r1, regexp r2) {
+  int i;
+  regexp result = regexp_calloc();
+  result->length = r1->length + r2->length;
+  result->expr = regexp_alloc_str(result->length + 1);
+  strncpy((char *)result->expr, (char *)r1->expr, r1->length);
+  strncpy((char *)&result->expr[r1->length], (char *)r2->expr, r2->length);
+  result->expr[result->length] = 0;
+  /* Set the necessary bitvector to be the OR of r1->necessary and
+     r2->necessary */
+  for (i = 0; i < 32; i++) {
+    result->necessary[i] = r1->necessary[i] | r2->necessary[i];
+  }
 
-  return regexp_empty();
+  return result;
 }
 
 /* Make a copy of r, transforming it into r* */
@@ -97,9 +109,10 @@ regexp regexp_star(regexp r) {
   regexp result = regexp_calloc();
   result->length = r->length + 2;
   result->expr = regexp_alloc_str(result->length + 2);
-  strlcpy((char *)result->expr + sizeof(letter)*2, (char *)r->expr, r->length);
+  strncpy((char *)&result->expr[2], (char *)r->expr, r->length);
   result->expr[0] = STAR;
   result->expr[1] = r->length + 1;
+  result->expr[result->length] = 0;
 
   /* The necessary letters bit vector should be all zero (as it needs
      to be) already, since we used calloc  */ 
@@ -115,22 +128,21 @@ int regexp_fast_disinclusion(regexp r1, regexp r2) {
   return -1;  
 }
 
-/* TODO */
 /* Recursive complete inclusion check, using backtracking */
-int regexp_complete_inclusion(regexp r1, regexp r2, unsigned char pos1,
+bool regexp_complete_inclusion(regexp r1, regexp r2, unsigned char pos1,
 			      unsigned char pos2, hash_table visited) {
 
   unsigned int state = (pos1 << (8 * sizeof(unsigned char))) + pos2;
 
   /* case 0: empty/empty */
   if (!r1->expr[pos1] && !r2->expr[pos2]) {
-    return 1;
+    return TRUE;
   }
 
   /* check if this state has been visited. if so, return true. If not,
      insert */
   if (!hash_table_insert(visited, (hash_key)state, 0)) {
-    return 1;	
+    return TRUE;
   }
 
   /* case 1: concat/concat */
@@ -140,7 +152,7 @@ int regexp_complete_inclusion(regexp r1, regexp r2, unsigned char pos1,
       return regexp_complete_inclusion(r1, r2, pos1 + 1, pos2 + 1, visited);
     }
     else {
-      return 0;
+      return FALSE;
     }
   }
 
@@ -191,31 +203,30 @@ static unsigned long state_hash(hash_key key)
 }
 
 
-static bool state_eq(void *ptr1, void *ptr2)
+static bool state_eq(hash_key state1, hash_key state2)
 {
-  return ptr1 == ptr2;
+  return state1 == state2;
 }
-
 
 /* Complete inclusion check. First fast checks to eliminate simple
    cases. Eventually defaults to a complete check */
-int regexp_inclusion(regexp r1, regexp r2) {
+bool regexp_inclusion(regexp r1, regexp r2) {
   /* a hashtable of visited states (positions in the regexps) */
   //  unsigned char visited[8192];
 
   /* Fast equality check */
   if (!strcmp((char *)r1->expr,(char *)r2->expr)) {
-    return 1;
+    return TRUE;
   }		
 
   /* Fast dis-inclusion check */
   else if (regexp_fast_disinclusion(r1, r2)) {
-    return 0;
+    return FALSE;
   }
  
   /* Complete inclusion check */
   else {
-    int result = 0;
+    bool result = FALSE;
     region temp = newregion();
     hash_table visited = make_hash_table(temp, 32, state_hash, state_eq);
     /* TODO: use a worklist instead of recursion for efficiency */
@@ -226,10 +237,10 @@ int regexp_inclusion(regexp r1, regexp r2) {
 
 }
 
-/* Debugging routines  */
-#ifdef DEBUG_REGEXP
+/* Debugging routines */
+
 /* Print out all the necessary letters in r */
-static void regexp_print_necessary(regexp r) {
+void regexp_print_necessary(regexp r) {
   int i;
   printf("Necessary characters in %s:\n", r->expr);
   for (i = 0; i < 256; i++) {
@@ -238,25 +249,3 @@ static void regexp_print_necessary(regexp r) {
     }
   }
 }
-
-/* Test harness */
-int main() {
-  regexp r1 = regexp_empty();
-  regexp r2 = regexp_append(r1, 'a');
-  regexp r3 = regexp_append(r2, 'b');
-  regexp r4 = regexp_star(r1);
-  regexp r5 = regexp_append(r4, 'c');
-
-  regexp_print_necessary(r1);
-  regexp_print_necessary(r2);
-  regexp_print_necessary(r3);
-  regexp_print_necessary(r4);
-  regexp_print_necessary(r5);
-
-  if (regexp_fast_disinclusion(r3, r2)) {
-    printf("Fast disinclusion check works\n");
-  }
-
-  return 0;
-}
-#endif	/* DEBUG_REGEXP */
