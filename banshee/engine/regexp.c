@@ -38,7 +38,7 @@
 typedef unsigned char letter;
 
 /* Kleene star is represented as a marker STAR followed by a pointer
-   indicating how many characters back to jump */
+   indicating how many characters forward to jump */
 static char STAR = 1;
 
 struct regexp_ {
@@ -111,7 +111,7 @@ regexp regexp_star(regexp r) {
   result->expr = regexp_alloc_str(result->length + 2);
   strncpy((char *)&result->expr[2], (char *)r->expr, r->length);
   result->expr[0] = STAR;
-  result->expr[1] = r->length + 1;
+  result->expr[1] = result->length + 1;
   result->expr[result->length] = 0;
 
   /* The necessary letters bit vector should be all zero (as it needs
@@ -238,6 +238,29 @@ bool regexp_inclusion(regexp r1, regexp r2) {
 }
 
 /* Debugging routines */
+
+static void regexp_print_subexpr(regexp r, unsigned char start, 
+				 unsigned char end) {
+  while (start < end && r->expr[start] != STAR) {
+    putchar(r->expr[start]);
+    start++;
+  }
+
+  if (r->expr[start] == STAR) {
+    putchar('(');
+    regexp_print_subexpr(r, start + 2, start + r->expr[start + 1]);
+    putchar(')');
+    putchar('*');
+    regexp_print_subexpr(r, start + r->expr[start+1] + 1, end);
+  }
+}
+
+/* Print out the expression itself */
+void regexp_print_expr(regexp r) {
+  regexp_print_subexpr(r, 0, r->length);
+  fflush(stdout);
+}
+
 
 /* Print out all the necessary letters in r */
 void regexp_print_necessary(regexp r) {

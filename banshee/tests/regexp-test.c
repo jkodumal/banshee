@@ -28,20 +28,37 @@
  *
  */
 
+#include <stdio.h>
 #include "regexp.h"
 
 int main() {
-  regexp r1 = regexp_empty();
-  regexp r2 = regexp_append(r1, 'a');
-  regexp r3 = regexp_append(r2, 'b');
-  regexp r4 = regexp_concat(r1,r2);
-  //regexp r5 = regexp_append(r4, 'c');
+  regexp r1 = regexp_empty(); 	/* r1 = empty */
+  regexp r2 = regexp_append(r1, 'a'); /* r2 = a  */
+  regexp r3 = regexp_append(r2, 'b'); /* r3 = ab */
+  regexp r4 = regexp_concat(r2,r3);   /* r4 = aab */
+  regexp r5 = regexp_concat(r4, r2);  /* r5 = aaba */
+  regexp r6 = regexp_star(r5);	      /* r6 = (aaba)* */
+
+  regexp_print_expr(r1);
+  putchar('\n');
+  regexp_print_expr(r2);
+  putchar('\n');
+  regexp_print_expr(r3);
+  putchar('\n');
+  regexp_print_expr(r4);
+  putchar('\n');
+  regexp_print_expr(r5);
+  putchar('\n');
+  regexp_print_expr(r6);
+  putchar('\n');
+  fflush(stdout);
 
   regexp_print_necessary(r1);
   regexp_print_necessary(r2);
   regexp_print_necessary(r3);
   regexp_print_necessary(r4);
-  //regexp_print_necessary(r5);
+  regexp_print_necessary(r5);
+  regexp_print_necessary(r6);
 
   //  if (regexp_fast_disinclusion(r3, r2)) {
   // printf("Fast disinclusion check works\n");
