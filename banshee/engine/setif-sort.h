@@ -132,12 +132,10 @@ void write_module_setif(FILE *f);
 void update_module_setif(translation t, FILE *f);
 
 /* Annotated constraints */
-extern transition_fn transition;
-extern empty_annotation_fn is_empty_annotation;
-extern subsumption_fn subsumed;
-extern eq_annotation_fn eq_annotation;
-
-
+/* extern transition_fn transition; */
+/* extern empty_annotation_fn is_empty_annotation; */
+/* extern subsumption_fn subsumed; */
+/* extern eq_annotation_fn eq_annotation; */
 
 /* Stats */
 extern struct setif_stats setif_stats;

@@ -491,7 +491,11 @@ Modify the interface bounds.h to add an annotation parameter. The
 logic in bounds will be extremely simple, delegating operations like
 subsumption check to external functions.
 
-Bounds scanning must also return both the bound and the annotation.
+Bounds scanning must also return both the bound and the *list* of
+annotations associated with that bound. Use a list so that seeing
+whether a given bound is even present is constant time (hashing).
+
+Delegate search through the list to the annotations interface.
 
 Bounds scanner needs fields to be set in bounds.h for all concrete
 implementations.

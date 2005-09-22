@@ -262,7 +262,6 @@ void regexp_print_expr(regexp r) {
   fflush(stdout);
 }
 
-
 /* Print out all the necessary letters in r */
 void regexp_print_necessary(regexp r) {
   int i;

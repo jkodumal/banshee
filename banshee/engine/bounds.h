@@ -46,7 +46,7 @@ EXTERN_C_BEGIN
 
 typedef struct annotated_bound_ {
   gen_e e;
-  annotation a;
+  annotations a;
 } annotated_bound;
 
 typedef struct bounds_ *bounds;
@@ -116,8 +116,7 @@ bool annotated_bounds_add(bounds, gen_e, annotation, stamp);
 
 void annotated_bounds_scan(bounds, annotated_bounds_scanner *);
 
-/* Returns an annotated bound filled with null when done */
-annotated_bound annotated_bounds_next(annotated_bounds_scanner *);
+bool annotated_bounds_next(annotated_bounds_scanner *, annotated_bound *);
 
 EXTERN_C_END
 

@@ -28,66 +28,46 @@
  *
  */
 
-#include <stdio.h>
-#include "regions.h"
-#include "hash.h"
-#include "regexp.h"
+#include "annotations.h"
 
-int main() {
+/* Empty annotations */
 
-  region_init();
-  hash_table_init();
-  {
-  regexp r1 = regexp_empty(); 	/* r1 = empty */
-  regexp r2 = regexp_append(r1, 'a'); /* r2 = a  */
-  regexp r3 = regexp_append(r2, 'b'); /* r3 = ab */
-  regexp r4 = regexp_concat(r2,r3);   /* r4 = aab */
-  regexp r5 = regexp_concat(r4, r2);  /* r5 = aaba */
-  regexp r6 = regexp_star(r5);	      /* r6 = (aaba)* */
+struct annotation_ {
+};
 
-  regexp_print_expr(r1);
-  putchar('\n');
-  regexp_print_expr(r2);
-  putchar('\n');
-  regexp_print_expr(r3);
-  putchar('\n');
-  regexp_print_expr(r4);
-  putchar('\n');
-  regexp_print_expr(r5);
-  putchar('\n');
-  regexp_print_expr(r6);
-  putchar('\n');
-  fflush(stdout);
+struct annotations_ {
+};
 
-  //regexp_print_necessary(r1);
-  //regexp_print_necessary(r2);
-  //regexp_print_necessary(r3);
-  //regexp_print_necessary(r4);
-  //regexp_print_necessary(r5);
-  //regexp_print_necessary(r6);
-
-  if (!regexp_inclusion(r1,r1)) {
-    printf("Inclusion (r1,r1) is broken!\n");
-    return 1;
-  }
-  if (regexp_inclusion(r1,r2)) {
-    printf("Disinclusion (r1,r2) is broken!\n");
-    return 1;
-  }
-  if (!regexp_inclusion(r5,r6)) {
-    printf("Inclusion (r5,r6) is broken!\n");
-    return 1;
-  }
-  if (regexp_inclusion(r6,r5)) {
-    printf("Disinclusion (r6,r5) is broken!\n");
-    return 1;
-  }
-
-  //  if (regexp_fast_disinclusion(r3, r2)) {
-  // printf("Fast disinclusion check works\n");
-  // }
-
-  return 0;
-  }
+/* Get the next annotation */
+bool annotation_next(annotations_scanner *scanner, annotation *a) {
+  return FALSE;
 }
 
+/* function that returns true if a is the empty annotation */
+bool is_empty_annotation(annotation a) {
+  return TRUE;
+}
+
+/* function that returns the empty annotation */
+annotation get_empty_annotation(void) {
+  return NULL;
+}
+
+/* function that returns the concatenation of two annotations */
+annotation concat_annotation(annotation a1, annotation a2) {
+  return NULL;
+}
+
+/* function that returns the kleene closure of an annotation  */
+annotation star_annotation(annotation a) {
+  return NULL;
+}
+
+/* function that returns TRUE if one annotation subsumes another */
+bool subsumed_by_annotation(annotation a1, annotation a2) {
+  return TRUE;
+}
+
+/* function that prints an annotation */
+void print_annotation(annotation a) {
+}

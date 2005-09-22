@@ -28,22 +28,42 @@
  *
  */
 
-/* Regular expressions */
+/* Regular expressions. Regexps are immutable--- each operation
+   creates a new regular expression. */
+#ifndef REGEXP_H
+#define REGEXP_H
 
 #include "bool.h"
 
+/* This representation uses unsigned char for letters. 0 and 1 are
+   reserved, so there are effectively 254 available letters  */
 typedef unsigned char letter;
+
 typedef struct regexp_ *regexp;
 
+/* Basic operations */
+
+/* Construct an empty regular expression */
 regexp regexp_empty(void);
+
+/* Given r, return r* */
 regexp regexp_star(regexp r);
-regexp regexp_append(regexp r1, letter l);
+
+/* Given r and letter l, return r * l */
+regexp regexp_append(regexp r, letter l);
+
+/* Given r1 and r2, return r1 * r2 */
 regexp regexp_concat(regexp r1, regexp r2);
+
+/* Return TRUE if r1 <= r2 (every string in r1 is in r2) */
 bool regexp_inclusion(regexp r1, regexp r2); 
 
 /* Debugging */
 
 /* print the necessary characters in r */
 void regexp_print_necessary(regexp r);
+
 /* pretty print the regular expression */
 void regexp_print_expr(regexp r);
+
+#endif	/* REGEXP_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004
+ * Copyright (c) 2005
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,31 +33,38 @@
 
 #include "banshee.h"
 
+/* Generic interface for annotations */
 typedef struct annotation_ *annotation;
 
+/* Some collection of annotations. Must support a scanner
+   interface  */
+typedef struct annotations_ *annotations;
+
+struct annotations_scanner_ {
+  struct list_scanner ls;
+} /* Opaque type! Do not modify fields */;
+
+typedef struct annotations_scanner_ annotations_scanner;
+
+/* Get the next annotation */
+bool annotation_next(annotations_scanner *, annotation *);
+
 /* function that returns true if a is the empty annotation */
-typedef bool (*empty_annotation_fn) (annotation);
+bool is_empty_annotation(annotation a);
 
-/* function that returns true if a and a' are equal annotations  */
-typedef bool (*eq_annotation_fn) (annotation, annotation);
+/* function that returns the empty annotation */
+annotation get_empty_annotation(void);
 
-/* function that computes a new annotation given the current
-   annotations and the lower and upper bounds:
-   
-   C ^ (e <=_a1 <= 'x <=_a2 e') => C ^ (e <=_transition(e,a1,a2,e') e')
- */
-typedef annotation (*transition_fn) (gen_e, annotation, annotation, gen_e);
+/* function that returns the concatenation of two annotations */
+annotation concat_annotation(annotation a1, annotation a2);
 
-/* function that determines whether annother annotated constraint
-   subsumes this one. If true, there is no need to add this
-   constraint:
+/* function that returns the kleene closure of an annotation  */
+annotation star_annotation(annotation a);
 
-   C ^ (e <=_a e') => C if subsumed(e, a, e')
-                   => C ^ (e <=_a e') otherwise
+/* function that returns TRUE if one annotation subsumes another */
+bool subsumed_by_annotation(annotation a1, annotation a2);
 
-   Note that the constraint must be atomic, so one or both of e and e'
-   must be a variable
- */
-typedef bool (*subsumption_fn) (gen_e, annotation, gen_e);
+/* function that prints an annotation */
+void print_annotation(annotation a);
 
 #endif /* ANNOTATIONS_H */
