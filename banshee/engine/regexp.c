@@ -86,7 +86,6 @@ regexp regexp_append(regexp r, letter let) {
   return result;
 }
 
-/* TODO --- concat two regexps together */
 regexp regexp_concat(regexp r1, regexp r2) {
   int i;
   regexp result = regexp_calloc();
@@ -114,8 +113,10 @@ regexp regexp_star(regexp r) {
   result->expr[1] = result->length + 1;
   result->expr[result->length] = 0;
 
-  /* The necessary letters bit vector should be all zero (as it needs
-     to be) already, since we used calloc  */ 
+
+  /* Copy the necessary letters bit vector */
+  memcpy(result->necessary, r->necessary, sizeof(unsigned char) * 32);
+
   return result;
 }
 
@@ -219,8 +220,8 @@ bool regexp_inclusion(regexp r1, regexp r2) {
     return TRUE;
   }		
 
-  /* Fast dis-inclusion check */
-  else if (regexp_fast_disinclusion(r1, r2)) {
+  /* Fast disinclusion check */
+  else if (regexp_fast_disinclusion(r1, r2) == 1) {
     return FALSE;
   }
  
@@ -229,8 +230,8 @@ bool regexp_inclusion(regexp r1, regexp r2) {
     bool result = FALSE;
     region temp = newregion();
     hash_table visited = make_hash_table(temp, 32, state_hash, state_eq);
-    /* TODO: use a worklist instead of recursion for efficiency */
-    result = regexp_complete_inclusion(r1, r2, 1, 1, visited);
+    /* TODO: I'd prefer to use a worklist instead of recursion */
+    result = regexp_complete_inclusion(r1, r2, 0, 0, visited);
     deleteregion(temp);
     return result;
   }

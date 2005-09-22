@@ -29,9 +29,15 @@
  */
 
 #include <stdio.h>
+#include "regions.h"
+#include "hash.h"
 #include "regexp.h"
 
 int main() {
+
+  region_init();
+  hash_table_init();
+  {
   regexp r1 = regexp_empty(); 	/* r1 = empty */
   regexp r2 = regexp_append(r1, 'a'); /* r2 = a  */
   regexp r3 = regexp_append(r2, 'b'); /* r3 = ab */
@@ -60,10 +66,24 @@ int main() {
   regexp_print_necessary(r5);
   regexp_print_necessary(r6);
 
+  if (!regexp_inclusion(r1,r1)) {
+    printf("Inclusion (r1,r1) is broken!\n");
+    return 1;
+  }
+  if (regexp_inclusion(r1,r2)) {
+    printf("Disinclusion (r1,r2) is broken!\n");
+    return 1;
+  }
+  if (!regexp_inclusion(r5,r6)) {
+    printf("Inclusion (r5,r6) is broken!\n");
+    return 1;
+  }
+
   //  if (regexp_fast_disinclusion(r3, r2)) {
   // printf("Fast disinclusion check works\n");
   // }
 
   return 0;
+  }
 }
 
