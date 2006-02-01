@@ -242,7 +242,7 @@ static setif_var_list search_ubs(region r, setif_var v1, setif_var goal)
 	  found = TRUE;
 	  return;
 	}
-      else if (sv_lt(v,goal))
+      else if (sv_lt(goal,v))
 	{
 	  return;
 	}
