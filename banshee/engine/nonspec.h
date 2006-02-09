@@ -274,6 +274,9 @@ void cons_group_add(cons_group g, constructor c);
 /* Create a group projection pattern */
 gen_e setif_group_proj_pat(cons_group g, int i, gen_e e);
 
+/* Create a group constructor expression */
+gen_e setif_group_cons_expr(cons_group g, gen_e *e, int arity);
+
 /*****************************************************************************
  *                                                                           *
  *   Expression Introspection Operations                                     *

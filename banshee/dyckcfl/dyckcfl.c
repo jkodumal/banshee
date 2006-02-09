@@ -288,6 +288,7 @@ void mark_dyck_node_global(dyck_node n)
   assert(n);
   assert(state == dyck_inited);
 
+  my_call_setif_inclusion(setif_group_cons_expr(n_group,&(n->node_variable),1),n->node_variable); 		
   my_call_setif_inclusion(n->node_variable,setif_group_proj_pat(n_group,-1,n->node_variable));
 }
 
