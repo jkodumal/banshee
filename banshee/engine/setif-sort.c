@@ -228,21 +228,19 @@ gen_e_list setif_get_inter(gen_e e)
   return ( (setif_inter_) e)->exprs;
 }
 
-static setif_var_list search_ubs(region r, setif_var v1, setif_var goal)
-{
-  bool found;
-  setif_var_list cycle;
-  
-  void search_ubs_aux(setif_var v)
-    {
-      assert(! found);
+static bool ubs_found;
+static setif_var_list ubs_cycle;
+static setif_var ubs_goal;
 
-      if (sv_eq(v,goal))
+void search_ubs_aux(setif_var v) {
+      assert(! ubs_found);
+
+      if (sv_eq(v,ubs_goal))
 	{
-	  found = TRUE;
+	  ubs_found = TRUE;
 	  return;
 	}
-      else if (sv_lt(goal,v))
+      else if (sv_lt(ubs_goal,v))
 	{
 	  return;
 	}
@@ -258,41 +256,44 @@ static setif_var_list search_ubs(region r, setif_var v1, setif_var goal)
 	    if (setif_is_var(ub))
 	      {
 		search_ubs_aux((setif_var)ub);
-		if (found)
+		if (ubs_found)
 		  {
-		    setif_var_list_cons(v,cycle);
+		    setif_var_list_cons(v,ubs_cycle);
 		    return;
 		  }
 	      }
 	  }
 	}
-    }
-
-  found = FALSE;
-  cycle = new_setif_var_list(r);
-  search_ubs_aux(v1);
-
-  return cycle;
 }
 
-static setif_var_list search_lbs(region r, setif_var v1, setif_var goal)
+static setif_var_list search_ubs(region r, setif_var v1, setif_var goal)
 {
-  bool found;
-  setif_var_list cycle;
  
-  void search_lbs_aux(setif_var v)
-    {
-      assert (! found);
-      if (sv_eq(v,goal))
+  ubs_found = FALSE;
+  ubs_cycle = new_setif_var_list(r);
+  ubs_goal = goal;
+  search_ubs_aux(v1);
+
+  return ubs_cycle;
+}
+
+static bool lbs_found;
+static setif_var_list lbs_cycle;
+static setif_var lbs_goal;
+
+void search_lbs_aux(setif_var v)
+  {
+    assert (! lbs_found);
+    if (sv_eq(v,lbs_goal))
 	{
-	  found = TRUE;
+	  lbs_found = TRUE;
 	  return;
 	}
-      else if (sv_lt(v,goal))
+    else if (sv_lt(v,lbs_goal))
 	{
 	  return;
 	}
-      else
+    else
 	{
 	  bounds_scanner scan;
 	  gen_e lb;
@@ -304,22 +305,26 @@ static setif_var_list search_lbs(region r, setif_var v1, setif_var goal)
 	    if (setif_is_var(lb))
 	      {
 		search_lbs_aux((setif_var)lb);
-		if (found)
+		if (lbs_found)
 		  {
-		    setif_var_list_cons(v,cycle);
+		    setif_var_list_cons(v,lbs_cycle);
 		    return;
 		  }
 	      }
 	  }
 	}
 	
-    }
+  }
 
-  found = FALSE;
-  cycle = new_setif_var_list(r);
+static setif_var_list search_lbs(region r, setif_var v1, setif_var goal)
+{
+
+  lbs_found = FALSE;
+  lbs_cycle = new_setif_var_list(r);
+  lbs_goal = goal;
   search_lbs_aux(v1);
 
-  return cycle; 
+  return lbs_cycle; 
 }
 
 static setif_var_list cycle_detect(region r,setif_var v1,setif_var v2)
@@ -425,13 +430,9 @@ void setif_inclusion(con_match_fn_ptr con_match, res_proj_fn_ptr res_proj,
 }
 
 
-void setif_annotated_inclusion(con_match_fn_ptr con_match, 
+void collapse_cycle_lower(con_match_fn_ptr con_match, 
 			       res_proj_fn_ptr res_proj, 
-			       gen_e_pr_fn_ptr pr, gen_e e1, gen_e e2,
-			       annotation a) deletes
-{
-  
-  void collapse_cycle_lower(region r, setif_var witness, 
+			       gen_e_pr_fn_ptr pr, region r, setif_var witness, 
 			    setif_var_list cycle) deletes
     {
       gen_e lb;
@@ -469,8 +470,11 @@ void setif_annotated_inclusion(con_match_fn_ptr con_match,
       setif_stats.cycles_collapsed_backward++;
       setif_stats.cycles_length_backward += setif_var_list_length(cycle);
     }
-  
-  void collapse_cycle_upper(region r, setif_var witness,
+
+
+  void collapse_cycle_upper(con_match_fn_ptr con_match, 
+				       res_proj_fn_ptr res_proj, 
+				       gen_e_pr_fn_ptr pr, region r, setif_var witness,
 			    setif_var_list cycle) deletes
     {
       gen_e ub;
@@ -514,8 +518,10 @@ void setif_annotated_inclusion(con_match_fn_ptr con_match,
       setif_stats.cycles_collapsed_forward++;
       setif_stats.cycles_length_backward += setif_var_list_length(cycle);
     }
-  
-  void update_lower_bound(setif_var v, gen_e e) deletes
+
+  void update_lower_bound(	con_match_fn_ptr con_match, 
+				       res_proj_fn_ptr res_proj, 
+				       gen_e_pr_fn_ptr pr,setif_var v, gen_e e) deletes
     {
       if (sv_add_lb(v,e,setif_get_stamp(e)))
 	{
@@ -557,7 +563,9 @@ void setif_annotated_inclusion(con_match_fn_ptr con_match,
       
     }
 
-  void update_upper_bound(setif_var v, gen_e e) deletes
+void update_upper_bound(con_match_fn_ptr con_match, 
+				       res_proj_fn_ptr res_proj, 
+				       gen_e_pr_fn_ptr pr, setif_var v, gen_e e) deletes
     {
       if (sv_add_ub(v,e,setif_get_stamp(e)))
 	{
@@ -591,6 +599,14 @@ void setif_annotated_inclusion(con_match_fn_ptr con_match,
       
     }
 
+void setif_annotated_inclusion(con_match_fn_ptr con_match, 
+			       res_proj_fn_ptr res_proj, 
+			       gen_e_pr_fn_ptr pr, gen_e e1, gen_e e2,
+			       annotation a) deletes
+{
+
+
+  
 /*    pr(stdout,e1); */
 /*    fprintf(stdout,"<="); */
 /*    pr(stdout,e2); */
@@ -665,18 +681,18 @@ void setif_annotated_inclusion(con_match_fn_ptr con_match,
 	      setif_var_list cycle = cycle_detect(scratch,v1,v2);
 	      
 	      if (! setif_var_list_empty(cycle))
-		collapse_cycle_upper(scratch,v1,cycle);
+		collapse_cycle_upper(con_match,res_proj,pr,scratch,v1,cycle);
 	      else
-		update_lower_bound(v2,e1);
+		update_lower_bound(con_match,res_proj,pr,v2,e1);
 	      
 	      deleteregion(scratch);
 	    }
 	  
 	  else 
-	    update_lower_bound(v2,e1);
+	    update_lower_bound(con_match,res_proj,pr,v2,e1);
 	}
       else // e1 is a source
-	update_lower_bound(v2,e1);
+	update_lower_bound(con_match,res_proj,pr,v2,e1);
     }
 
   else if ( r_inductive(e1,e2) ) /* 'x <= _ */
@@ -693,22 +709,23 @@ void setif_annotated_inclusion(con_match_fn_ptr con_match,
 	      setif_var_list cycle = cycle_detect_rev(scratch,v1,v2);
 	      
 	      if (! setif_var_list_empty(cycle))
-		collapse_cycle_lower(scratch,v2,cycle);
+		collapse_cycle_lower(con_match,res_proj,pr,
+		scratch,v2,cycle);
 	      else
-		update_upper_bound(v1,e2);
+		update_upper_bound(con_match,res_proj,pr,v1,e2);
 	      
 	      deleteregion(scratch);
 	    }
       
 	  else
-	    update_upper_bound(v1,e2);
+	    update_upper_bound(con_match,res_proj,pr,v1,e2);
 	}
       else // e2 is a sink
 	{
 	  if (flag_merge_projections && res_proj(v1,e2))
 	    return;
 	  else
-	    update_upper_bound(v1,e2);
+	    update_upper_bound(con_match,res_proj,pr,v1,e2);
 	}
     }
 

@@ -610,13 +610,10 @@ gen_e setst_proj_pat(constructor c, int i, gen_e e)
   return make_proj_pat(c,i,e);
 }
 
-/* for proj, sort(e) must be setif */
-gen_e setif_proj(constructor c, int i, gen_e e) 
-{
-  setif_var v;
-  gen_e proj_var, proj;
+static constructor sp_c;
+static int sp_i;
 
-  gen_e nonspec_get_proj(gen_e_list arg1)
+static gen_e nonspec_get_proj(gen_e_list arg1)
     {
       proj_pat pat;
       gen_e_list_scanner scan;
@@ -627,11 +624,20 @@ gen_e setif_proj(constructor c, int i, gen_e e)
 	{
 	  if (! setif_is_pat(temp) ) continue;
 	  pat = (proj_pat)temp;
-	  if ( pat_match(pat->type,c->type) && i == pat->i )
+	  if ( pat_match(pat->type,sp_c->type) && sp_i == pat->i )
 	    return pat->exp;
 	}
       return NULL;
     }
+
+/* for proj, sort(e) must be setif */
+gen_e setif_proj(constructor c, int i, gen_e e) 
+{
+  setif_var v;
+  gen_e proj_var, proj;
+
+  sp_c = c;
+  sp_i = i;
 
   banshee_clock_tick();
 
@@ -927,56 +933,68 @@ static void setst_con_match(gen_e e1, gen_e e2)
     } 
 }
 
-// given x <= proj(c,i,e)
-// proj_merge(region,e,get_proj_i_arg,fresh_large_fn_ptr,
-// sort_inclusion_fn_ptr,set_inclusion)
-static bool setif_res_proj(setif_var v1,gen_e e2)
-{
-  if (setif_is_pat(e2) ) {
-    proj_pat projection_pat;
-  
 
-    gen_e setif_get_proj(gen_e_list arg1)
-      {
+static constructor rp_c;
+static int rp_i;
+static sort_kind rp_s;
+static int rp_type;
+
+static  gen_e setif_get_proj(gen_e_list arg1)
+{
 	gen_e_list_scanner scan;
 	gen_e temp;
 	proj_pat pat;
-	
+
 	gen_e_list_scan(arg1,&scan);
 	while(gen_e_list_next(&scan,&temp))
-	  {
-	    if (!setif_is_pat(temp)) continue;
-	    pat = (proj_pat)temp;
-	    if ( pat->type == ((setif_term)e2)->type && 
-		 pat->i == ((proj_pat)e2)->i)
-	      return pat->exp;
-	  }
+	{
+		if (!setif_is_pat(temp)) continue;
+		pat = (proj_pat)temp;
+		if ( pat->type == rp_type && 
+			pat->i == rp_i)
+			return pat->exp;
+	}
 	return NULL;
-      }
-    
-    gen_e fresh_large(const char *name)
-      {
-	return get_proj_var( ((proj_pat)e2)->exp->sort,TRUE);
-      }
-    
-    void sort_inclusion(gen_e e1, gen_e e2)
-      {
-	if ( projection_pat->variance == vnc_pos )
-	  call_inclusion_ind(e1,e2);
-	else if ( projection_pat->variance == vnc_neg)
-	  call_inclusion_ind(e2,e1);
-	else 
-	  call_unify_ind(e1,e2);
-      }
-    
-    gen_e proj_con(gen_e e)
-      {
-	return make_proj_pat( ((proj_pat)e2)->c, ((proj_pat)e2)->i,e);
-      }
-    
-    projection_pat = (proj_pat)e2;
+}
+
+static gen_e fresh_large(const char *name)
+{
+	return get_proj_var(rp_s,TRUE);
+}
+
+static void sort_inclusion_contra(gen_e e1, gen_e e2) {
+	call_inclusion_ind(e2,e1);
+}
+
+static gen_e proj_con(gen_e e)
+{
+	return make_proj_pat( rp_c, rp_i,e);
+}
+// given x <= proj(c,i,e)
+// proj_merge(region,e,get_proj_i_arg,fresh_large_fn_ptr,
+// sort_inclusion_fn_ptr,set_inclusion)
+static bool setif_res_proj(setif_var v1, gen_e e2)
+{
+  if (setif_is_pat(e2) ) {
+    proj_pat projection_pat = (proj_pat)e2; 
+	incl_fn_ptr sort_inclusion;
+	rp_c = projection_pat->c;
+	rp_i = projection_pat->i;
+	rp_s = projection_pat->exp->sort;
+	rp_type = projection_pat->type;
+	
+	if (projection_pat->variance == vnc_pos) {
+		sort_inclusion = call_inclusion_ind;
+	}
+	else if (projection_pat->variance == vnc_neg) {
+		sort_inclusion = sort_inclusion_contra;
+	}
+	else {
+		sort_inclusion = call_unify_ind;
+	}
+  
     return setif_proj_merge(v1,((proj_pat)e2)->exp,
-			    setif_get_proj,proj_con,
+			    setif_get_proj, proj_con,
 			    fresh_large,sort_inclusion,
 			    setif_inclusion_ind);
   }
