@@ -167,11 +167,12 @@ void nonspec_reset(void);
    will just print a message to stderr. */
 
 /* These are the different error kinds. Keep these in sync with
-   banshee.h */
+   banshee.h and the code generator */
 typedef enum banshee_error_kind
 {
   bek_cons_mismatch, 	        // c(...) <= d(...)
   bek_occurs_check,		// occurs check failed (cyclic unification)
+  bek_context_incompatibility
 } banshee_error_kind;
 
 /* This is the type for error callbacks. Error handling functions are

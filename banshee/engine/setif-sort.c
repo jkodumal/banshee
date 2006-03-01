@@ -928,7 +928,7 @@ gen_e setif_inter(gen_e_list exprs) deletes
 	  struct setif_inter_ *u = 
 	    ralloc(setif_inter_region,struct setif_inter_);
 	  
-	  u->type = UNION_TYPE;
+	  u->type = INTER_TYPE;
 	  u->st = stamp_fresh();
 	  u->exprs = filtered;
 #ifdef NONSPEC

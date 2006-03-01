@@ -657,6 +657,7 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)
   region scratch = NULL;
   hash_table visited = NULL;
   hash_table visited_p = NULL;
+  bool result;
 
   assert (state == dyck_query);
 
@@ -666,10 +667,11 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)
   visited = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
   visited_p = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
 
-  return dyck_check_pn_reaches_aux(n1->node_constant,n2->node_variable,visited,
+  result = dyck_check_pn_reaches_aux(n1->node_constant,n2->node_variable,visited,
 				   visited_p, FALSE, NULL);
-
   deleteregion(scratch);
+
+  return result;
 }
 
 dyck_node_list dyck_reaches(dyck_node n)

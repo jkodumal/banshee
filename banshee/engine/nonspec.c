@@ -155,9 +155,9 @@ typedef struct gcons_expr_
 
 struct decon
 {
-  char *name;
+  const char *name;
   int arity;
-  gen_e *elems;
+  const gen_e *elems;
 };
 
 struct nonspec_stats_
@@ -1316,10 +1316,10 @@ static struct decon deconstruct_expr_aux(constructor c,gen_e e)
 	if ( setif_is_cons_expr(e) && check_cons_match(c,((setif_term)e)->type) )
 	  {
 	    cons_expr ce = (cons_expr)e;
-	    gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
-				       gen_e);
-	    memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
-	    return (struct decon){ce->name,ce->arity,elems};
+	    //gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
+		//		       gen_e);
+	    //memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
+	    return (struct decon){ce->name,ce->arity,ce->exps};
 	  }
 	else goto NONE;
       }
@@ -1329,10 +1329,10 @@ static struct decon deconstruct_expr_aux(constructor c,gen_e e)
 	if ( setst_is_cons_expr(e) && check_cons_match(c,((setst_term)e)->type) )
 	  {
 	    cons_expr ce = (cons_expr)e;
-	    gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
-				       gen_e);
-	    memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
-	    return (struct decon){ce->name,ce->arity,elems};
+	    //gen_e *elems = rarrayalloc(banshee_ptr_region,ce->arity,
+	//			       gen_e);
+	   // memcpy(elems,ce->exps,sizeof(gen_e)*ce->arity);
+	    return (struct decon){ce->name,ce->arity,ce->exps};
 	  }
 	else goto NONE;
       }
