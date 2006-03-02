@@ -570,86 +570,86 @@ bool dyck_check_reaches(dyck_node n1, dyck_node n2)
 // Search for target's pn reachability starting from current, assuming
 // that nodes in visited have already been searched
 static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
-				      hash_table visited_n, 
-				      hash_table visited_p,
-				      bool seen_p,
-				      dyck_node_list all_constants)
+	hash_table visited_n, 
+	hash_table visited_p,
+	bool seen_p,
+	dyck_node_list all_constants)
 {
-  hash_table visited = seen_p ? visited_p : visited_n;
-  
-  // Found the target
-  if (target == NULL && expr_is_constant(current)) {
-    dyck_node n = NULL;
-    assert(all_constants);
-    insist(hash_table_lookup(constant_to_node_map,
-			     (hash_key)current,
-			     (hash_data *)&n));
-    assert(n);
-    dyck_node_list_cons(n, all_constants);
-    
-  }
-  else if (target && expr_eq(target,current)) return TRUE;
-  
-  // Already searched from this point
-  if (hash_table_lookup(visited,(void *)expr_stamp(current),NULL)) return FALSE;
-  
-  // Otherwise, mark this node visited
-  hash_table_insert(visited,(void *)expr_stamp(current),(void *)expr_stamp(current));
+	hash_table visited = seen_p ? visited_p : visited_n;
 
-  // Compute this node's transitive lower bounds
-  {
-    gen_e_list_scanner scan;
-    gen_e next_lb;
-    gen_e_list tlb = setif_tlb(current);
-    
-    // Scan the lower bounds
-    gen_e_list_scan(tlb,&scan);
+// Found the target
+	if (target == NULL && expr_is_constant(current)) {
+		dyck_node n = NULL;
+		assert(all_constants);
+		insist(hash_table_lookup(constant_to_node_map,
+			(hash_key)current,
+			(hash_data *)&n));
+		assert(n);
+		dyck_node_list_cons(n, all_constants);
 
-    while (gen_e_list_next(&scan,&next_lb)) {
-      struct decon contents;
-
-      // If target is null, we're finding all PN reaches
-      if (target == NULL && expr_is_constant(next_lb)) {
-	dyck_node n = NULL;
-	assert(all_constants);
-	insist(hash_table_lookup(constant_to_node_map,
-				 (hash_key)next_lb,
-				 (hash_data *)&n));
-	assert(n);
-	dyck_node_list_cons(n, all_constants);
-      }
-      
-      // Again, we've found the target
-      else if (expr_eq(target,next_lb)) return TRUE;
-
-      // Deconstruct any p's 
-      // and search their contents
-      contents = deconstruct_any_expr(next_lb);
-      
-      if (!seen_p && contents.name && string_eq(contents.name,CONS_OPEN) ) {
-	assert(contents.arity == 1);
-	assert(contents.elems);
-
-	if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
-				      visited_p,FALSE, all_constants)) {
-	  if (target) return TRUE;
 	}
-      }
-      else if (contents.name && string_eq(contents.name,CONS_CLOSE)) {
-	assert(contents.arity == 1);
-	assert(contents.elems);
+	else if (target && expr_eq(target,current)) return TRUE;
 
-	if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
-				      visited_p,TRUE, all_constants)) {
-	  if (target) return TRUE;
-	}
-      }
-      
-   
-    }
-  } 
-  // We didn't find the target on this search
-  return FALSE;
+// Already searched from this point
+	if (hash_table_lookup(visited,(void *)expr_stamp(current),NULL)) return FALSE;
+
+// Otherwise, mark this node visited
+	hash_table_insert(visited,(void *)expr_stamp(current),(void *)expr_stamp(current));
+
+// Compute this node's transitive lower bounds
+	{
+		gen_e_list_scanner scan;
+		gen_e next_lb;
+		gen_e_list tlb = setif_tlb(current);
+
+	// Scan the lower bounds
+		gen_e_list_scan(tlb,&scan);
+
+		while (gen_e_list_next(&scan,&next_lb)) {
+			struct decon contents;
+
+	// If target is null, we're finding all PN reaches
+			if (target == NULL && expr_is_constant(next_lb)) {
+				dyck_node n = NULL;
+				assert(all_constants);
+				insist(hash_table_lookup(constant_to_node_map,
+					(hash_key)next_lb,
+					(hash_data *)&n));
+				assert(n);
+				dyck_node_list_cons(n, all_constants);
+			}
+
+	// Again, we've found the target
+			else if (target != NULL && expr_eq(target,next_lb)) return TRUE;
+
+	// Deconstruct any p's 
+	// and search their contents
+			contents = deconstruct_any_expr(next_lb);
+
+			if (!seen_p && contents.name && string_eq(contents.name,CONS_OPEN) ) {
+				assert(contents.arity == 1);
+				assert(contents.elems);
+
+				if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
+				visited_p,FALSE, all_constants)) {
+					if (target) return TRUE;
+				}
+			}
+			else if (contents.name && string_eq(contents.name,CONS_CLOSE)) {
+				assert(contents.arity == 1);
+				assert(contents.elems);
+
+				if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
+				visited_p,TRUE, all_constants)) {
+					if (target) return TRUE;
+				}
+			}
+
+
+		}
+	} 
+// We didn't find the target on this search
+	return FALSE;
 }
 
 bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)

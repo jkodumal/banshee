@@ -174,7 +174,7 @@ static void test_dyck_isomorphism()
     myassert(!dyck_check_reaches(e3,e4));
     myassert(!dyck_check_reaches(e5,e0));
   }
-
+  dyck_pn_reaches(d9);
   // Print the closed graph
 /*   { */
 /*     FILE *f = fopen("closed_graph.dot","w"); */
