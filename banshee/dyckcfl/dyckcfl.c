@@ -674,7 +674,7 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)
   return result;
 }
 
-dyck_node_list dyck_reaches(dyck_node n)
+dyck_node_list rdyck_reaches(region r, dyck_node n)
 {
   dyck_node_list result;
   gen_e_list_scanner scan;
@@ -684,7 +684,7 @@ dyck_node_list dyck_reaches(dyck_node n)
   
   assert(state == dyck_query);
   
-  result = new_dyck_node_list(dyckregion);
+  result = new_dyck_node_list(r);
 
   gen_e_list_scan(tlb,&scan);
   
@@ -702,7 +702,13 @@ dyck_node_list dyck_reaches(dyck_node n)
 
 }
 
-dyck_node_list dyck_pn_reaches(dyck_node n)
+
+dyck_node_list dyck_reaches(dyck_node n) {
+	return rdyck_reaches(dyckregion, n);
+}
+
+
+dyck_node_list rdyck_pn_reaches(region r, dyck_node n)
 {
   region scratch = NULL;
   hash_table visited = NULL;
@@ -716,7 +722,7 @@ dyck_node_list dyck_pn_reaches(dyck_node n)
   scratch = newregion();
   visited = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
   visited_p = make_hash_table(scratch, 32, ptr_hash, ptr_eq);
-  all_constants = new_dyck_node_list(dyckregion);
+  all_constants = new_dyck_node_list(r);
 
   dyck_check_pn_reaches_aux(NULL, n->node_variable,visited,
 			    visited_p, FALSE, all_constants);
@@ -724,6 +730,10 @@ dyck_node_list dyck_pn_reaches(dyck_node n)
   deleteregion(scratch);
 
   return all_constants;
+}
+
+dyck_node_list dyck_pn_reaches(dyck_node n) {
+	return rdyck_pn_reaches(dyckregion, n);
 }
 
 // Print (in dot format) a representation of the closed CFL graph, w/o

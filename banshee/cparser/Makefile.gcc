@@ -44,19 +44,19 @@ all: parser.exe parser_st.exe parser_ns.exe parser_sg.exe parser_sg_nt.exe
 include Makefile.base
 
 parser.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
-	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
+	$(CC) $(CFLAGS) -o parser.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lengine -lregions -lm
 
 parser_st.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
-	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
+	$(CC) $(CFLAGS) -o parser_st.exe $(LDFLAGS) $(OBJS) ../andersen/andersen_terms_st.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lengine -lregions -lm
 
 parser_ns.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
 	$(CC) $(CFLAGS) -DNONSPEC -o parser_ns.exe $(LDFLAGS) $(OBJS)  ../andersen/andersen_terms_nonspec.o ../andersen/andersen.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lnsengine -lm
 
 parser_sg.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
-	$(CC) $(CFLAGS_SG) -o parser_sg.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms.o ../steensgaard/steensgaard.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
+	$(CC) $(CFLAGS_SG) -o parser_sg.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms.o ../steensgaard/steensgaard.o $(EXTRALIBS) -L$(region_dir) -L../engine -lengine -lregions -lm
 
 parser_sg_nt.exe: $(OBJS) #../engine/libengine.a $(region_dir)/libregions.a
-	$(CC) $(CFLAGS_SG) -o parser_sg_nt.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms_notag.o ../steensgaard/steensgaard_notag.o $(EXTRALIBS) -L$(region_dir) -L../engine -lregions -lengine -lm
+	$(CC) $(CFLAGS_SG) -o parser_sg_nt.exe $(LDFLAGS) $(OBJS) ../steensgaard/steensgaard_terms_notag.o ../steensgaard/steensgaard_notag.o $(EXTRALIBS) -L$(region_dir) -L../engine -lengine -lregions -lm
 
 
 clean:

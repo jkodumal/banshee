@@ -147,12 +147,14 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2);
 
 // Return the list of nodes that reach this node
 dyck_node_list dyck_reaches(dyck_node n);
+dyck_node_list rdyck_reaches(region r, dyck_node n);
 
 // Return the list of nodes that PN reach this node
 /* TODO -- an ugly corner case-- some nodes might appear multiple times if
    they reach by more than one of P, N, and M
 */
 dyck_node_list dyck_pn_reaches(dyck_node n);
+dyck_node_list rdyck_pn_reaches(region r, dyck_node n);
 
 /*****************************************************************************
  *                                                                           *
