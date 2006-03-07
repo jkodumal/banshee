@@ -28,8 +28,8 @@
 OCAMLMAKEFILE = OcamlMakefile
 
 SOURCES = cgen.mli cgen.ml engspec.ml spec_to_c.mli spec_to_c.ml \
-	 sort_utils.ml  set_sort.mli set_sort.ml row_sort.ml setst_sort.mli \
-	 setst_sort.ml term_sort.ml parser.mly lexer.mll build.ml \
+	 sort_utils.ml  set_sort.mli set_sort.ml row_sort.ml \
+	  term_sort.ml parser.mly lexer.mll build.ml \
 
 LIBS = str
 

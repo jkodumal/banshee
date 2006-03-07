@@ -52,7 +52,7 @@ rule token = parse
 					 :> Engspec.sort_gen) }
 | "set"                         { SORT(Set_sort.setsort) }
 | "setIF"                       { SORT(Set_sort.setsort) }
-| "setST"                       { SORT(Setst_sort.setstsort) }
+(* | "setST"                       { SORT(Setst_sort.setstsort) } *)
 | "term"                        { SORT(Term_sort.termsort) } 
 | '+'                           { POS }
 | '-'                           { NEG }
@@ -62,6 +62,8 @@ rule token = parse
 | '('                           { LPAREN }
 | ')'                           { RPAREN }
 | '*'                           { CROSS }
+| '<'							{ LANGLE }
+| '>'							{ RANGLE }
 | '%'                           { comment lexbuf }
 | ident                         { IDENT(Lexing.lexeme lexbuf) }  
 and comment = parse

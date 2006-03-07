@@ -34,6 +34,8 @@ open Spec_to_c
 
 open Sort_utils
 
+let cfst ((a,b,c) : conid) = a
+
 let gen_flags = ref true
 
 class setsort_gen =
@@ -260,18 +262,19 @@ class setsort_gen =
 	
     method private gen_nullary_ops 
 	(file : file) (hdr : header) (e : exprid) (c : conid) = 
-      let names =  [|c;e ^ "_is_"^c|] in
+	  let cname = cfst c in
+      let names =  [|(cfst c);e ^ "_is_"^(cfst c)|] in
       let args =  (Array.map args [|[];[etype e]|]) in
       let rets = [|etype e;bool|] in
-      let b1 = [Return ("(gen_e)&" ^ c ^ "_")] in 
-      let b2 = [Return ("((setif_term)arg1)->type == "  ^ c ^ "_.st")] in
+      let b1 = [Return ("(gen_e)&" ^ cname ^ "_")] in 
+      let b2 = [Return ("((setif_term)arg1)->type == "  ^ cname ^ "_.st")] in
       let bodies = [|b1;b2|] in
-      file#add_macro (define_val (String.uppercase c ^ "_")
+      file#add_macro (define_val (String.uppercase cname ^ "_")
 			(this#get_new_type()) );
-      file#add_gdecl (var ~init:("{" ^ (String.uppercase c) ^ "_," 
-				 ^ (String.uppercase c) ^ "_}")
+      file#add_gdecl (var ~init:("{" ^ (String.uppercase cname) ^ "_," 
+				 ^ (String.uppercase cname) ^ "_}")
 			(no_qual (Struct "setif_term"))
-		      ( c ^ "_" ) (None));
+		      ( cname ^ "_" ) (None));
       for i = 0 to 1 do
 	let p,f =  gen_proto_and_fun (Array.get rets i,
 				      Array.get names i,
@@ -283,7 +286,7 @@ class setsort_gen =
     method private gen_res_proj (file : file) (e : exprid) sigs = 
       let name = e ^ "_res_proj" in
       let args = args [no_qual (Ident "setif_var");gen_e_type] in
-      let gen_case c n (e',v) =
+      let gen_case (c, is_param, grp_opt) n (e',v) =
 	let incl = match v with
 	| NEGvariance -> e' ^ "_inclusion_ind_contra"
 	| NOvariance -> e' ^ "_unify_ind"
@@ -316,7 +319,7 @@ class setsort_gen =
 	(file : file) (e : exprid) (sigs : databody) = 
       let name = e ^ "_con_match" in
       let args = args [gen_e_type; gen_e_type] in
-      let gen_proj_case c n (e',v) = 
+      let gen_proj_case (c,is_param, grp_opt) n (e',v) = 
 	let incl = match v with
 	| NEGvariance -> e' ^ "_inclusion_ind_contra"
 	| NOvariance -> e' ^ "_unify_ind"
@@ -346,16 +349,16 @@ class setsort_gen =
 	in
 	(String.uppercase (c ^ "_"),Compound con_cases)
       in
-      let gen_other (c,n) =
-	let result = ref ([] : (ident * statement) list) in
-	for i = (n-1) downto 0 do
-	  result := 
-	    (String.uppercase (c ^ "PROJ" ^ (int_to_string i) ^ "_"),
-	     Return "")::(!result)
-	done; (!result) in
-      let gen_others c (others : (conid * int) list) = 
-	foldr (function (x,acc) -> (gen_other x) @ acc) []
-          (List.filter (function (c',_) -> not (c' = c)) others) in
+      let gen_other ((c,is_param, grp_opt),n) =
+		let result = ref ([] : (ident * statement) list) in
+			for i = (n-1) downto 0 do
+	  		result := 
+	    	(String.uppercase (c ^ "PROJ" ^ (int_to_string i) ^ "_"),
+	     	Return "")::(!result)
+			done; (!result) in
+      let gen_others (c,is_param, grp_opt) (others : (conid * int) list) = 
+		foldr (function (x,acc) -> (gen_other x) @ acc) []
+          (List.filter (function ((c',is_param',grp_opt'),_) -> not (c' = c)) others) in
       let gen_inner_switch ((c,consig_opt),others) = match consig_opt with
       |	Some consig ->
 	let proj_cases = 
@@ -366,12 +369,12 @@ class setsort_gen =
 		(int_to_string (!counter)) b)
 	    consig
 	in
-	(String.uppercase c ^ "_",
+	(String.uppercase (cfst c) ^ "_",
 	 Switch ("((setif_term)arg2)->type",
-		 (gen_con_case c consig)::(proj_cases) @ 
+		(gen_con_case (cfst c) consig)::(proj_cases) @ 
 		 (gen_others c others),
 		 Expr "handle_error(arg1,arg2,bek_cons_mismatch);") )
-      |	None -> (String.uppercase c ^ "_",
+      |	None -> (String.uppercase (cfst c) ^ "_",
 		 Expr "if (((setif_term)arg1)->type != ((setif_term)arg2)->type) handle_error(arg1,arg2,bek_cons_mismatch);  ";)
       in
       let body conids = 
@@ -516,7 +519,7 @@ class setsort_gen =
       file#add_fdefs [f1;f2]
 
     method private gen_sig_ops 
-	(file : file) (hdr : header) (e : exprid) (c : conid) (s : consig) = 
+	(file : file) (hdr : header) (e : exprid) ((c,is_param, grp_opt) : conid) (s : consig) = 
       this#gen_constructor file hdr e c s;
       this#gen_deconstructor file hdr e c s;
       let rec gen_sig_ops' bconsigs n = match bconsigs with 
@@ -533,7 +536,7 @@ class setsort_gen =
       hdr#add_gdecl (struct_decl (c ^ "_decon") decon_flds);
       gen_sig_ops' s 0
       
-    method private gen_pr_fun (file : file) (hdr : header) e b = 
+    method private gen_pr_fun (file : file) (hdr : header) e (b:databody) = 
       let pr_name = e ^ "_print" in 
       let pr_args = args [file_type;etype e] in
       let pr_ret = void in
@@ -571,7 +574,7 @@ class setsort_gen =
 	  Expr ("fprintf(arg1,setif_get_constant_name(arg2));") ] 
 	@ [union_statement] @ [inter_statement]
       in  
-      let gen_proj_case c e' n =
+      let gen_proj_case (c,is_param, grp_opt) e' n =
 	(String.uppercase c ^ "PROJ" ^ n ^ "_",
 	 Compound 
 	   [ Expr ("fprintf(arg1,\"Proj[" ^ c ^ "," ^ n ^ ",\");");
@@ -579,7 +582,7 @@ class setsort_gen =
 		   c ^ "Proj" ^ n ^ "_ *)arg2)->f0);");
 	     Expr ("fprintf(arg1,\"]\");") ] )
       in
-      let gen_con_case (c,consig) = 
+      let gen_con_case ((c,is_param, grp_opt),consig) = 
 	let gen_con_rest e' n = 
 	  [ Expr ("fprintf(arg1,\",\");");
 	    Expr (e' ^ "_print(arg1,((struct " ^ c ^ "_ *)arg2)->f" ^ n ^ ");") ]

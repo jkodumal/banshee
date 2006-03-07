@@ -36,6 +36,9 @@ open Sort_utils
 
 exception Variance of string
 
+
+let cfst ((a,b,c) : conid) = a
+
 (* generate a list of short circuited ors *)
 let rec gen_short_ors  = function
   | [ h ] -> h
@@ -255,7 +258,7 @@ class termsort_gen =
       file#add_fdef f
 	
     method private gen_nullary_ops 
-	(file : file) (hdr : header) (e : exprid) (c : conid) = 
+	(file : file) (hdr : header) (e : exprid) ((c,is_param, grp_opt) : conid) = 
       let names =  [|c;e ^ "_is_"^c|] in
       let args =  (Array.map args [|[];[etype e]|]) in
       let rets = [|etype e;bool|] in
@@ -302,7 +305,7 @@ class termsort_gen =
 	in
 	(String.uppercase (c ^ "_"),(Compound con_cases))
       in
-      let gen_inner_switch ((c,consig_opt),others) = match consig_opt with
+      let gen_inner_switch (((c,is_param, grp_opt),consig_opt),others) = match consig_opt with
       |	Some consig ->
 	  (String.uppercase c ^ "_",
 	   Switch ("((gen_term)arg2)->type",
@@ -328,8 +331,8 @@ class termsort_gen =
 
     method private gen_sig_ops 
 	(file : file) (hdr : header) (e : exprid) (c : conid) (s : consig) = 
-      this#gen_constructor file hdr e c s;
-      this#gen_deconstructor file hdr e c s;
+      this#gen_constructor file hdr e (cfst c) s;
+      this#gen_deconstructor file hdr e (cfst c) s;
       let rec gen_sig_ops' bconsigs n = match bconsigs with 
       | (e',_) :: t  -> 
 	  gen_sig_ops' t (n+1)
@@ -337,9 +340,9 @@ class termsort_gen =
       let flds = fields (List.map (function (e,_) -> no_qual (Ident e)) s) in
       let decon_flds = 
 	decon_fields (List.map (function (e,_) ->no_qual (Ident e)) s) in
-      file#add_gdecl (struct_decl (c ^"_") flds);
-      file#add_gdecl (struct_decl (c ^ "_decon") decon_flds);
-      hdr#add_gdecl (struct_decl (c ^ "_decon") decon_flds);
+      file#add_gdecl (struct_decl ((cfst c )^"_") flds);
+      file#add_gdecl (struct_decl ((cfst c )^ "_decon") decon_flds);
+      hdr#add_gdecl (struct_decl ((cfst c) ^ "_decon") decon_flds);
       gen_sig_ops' s 0
       
     method private gen_occurs_check (file : file) (hdr : header) e b =
@@ -349,7 +352,7 @@ class termsort_gen =
       let var_case = 
 	("VAR_TYPE",Return ("(term_get_stamp((gen_e)arg1) == term_get_stamp(ecr))")) 
       in
-      let gen_con_case (c, consig) =
+      let gen_con_case ((c,is_param, grp_opt), consig) =
 	let gen_con_body consig = 
 	  let counter = ref (-1) in 
 	  match consig with 
@@ -386,7 +389,7 @@ class termsort_gen =
 	  Expr ("fprintf(arg1,\"1\");");
 	  Expr ("fprintf(arg1,term_get_constant_name(ecr));") ] 
       in  
-      let gen_con_case (c,consig) = 
+      let gen_con_case ((c,is_param, grp_opt),consig) = 
 	let gen_con_rest e' n = 
 	  [ Expr ("fprintf(arg1,\",\");");
 	    Expr (e' ^ "_print(arg1,((struct " ^ c ^ "_ *)ecr)->f" ^ n ^ ");") ]

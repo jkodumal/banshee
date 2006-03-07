@@ -253,7 +253,7 @@ class setstsort_gen =
 	
    (* TODO -- verify that this is correct *)
    method private gen_nullary_ops 
-	(file : file) (hdr : header) (e : exprid) (c : conid) = 
+	(file : file) (hdr : header) (e : exprid) ((c,is_param) : conid) = 
       let names =  [|c;c ^ "_decon"|] in
       let args =  (Array.map args [|[];[etype e]|]) in
       let rets = [|etype e;bool|] in
@@ -315,9 +315,9 @@ class setstsort_gen =
 	    (String.uppercase (c ^ "PROJ" ^ (int_to_string i) ^ "_"),
 	     Return "")::(!result)
 	done; (!result) in
-      let gen_others c (others : (conid * int) list) = 
+      let gen_others (c,is_param) (others : (conid * int) list) = 
 	foldr (function (x,acc) -> (gen_other x) @ acc) []
-          (List.filter (function (c',_) -> not (c' = c)) others) in
+          (List.filter (function ((c',is_param'),_) -> not (c' = c)) others) in
       let gen_inner_switch ((c,consig_opt),others) = match consig_opt with
       |	Some consig ->
 	let proj_cases = 

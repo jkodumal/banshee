@@ -35,7 +35,7 @@ let r x = List.rev x
 %token EOF
 %token <string> IDENT
 %token <Engspec.sort_gen> SORT
-%token POS NEG OR COLON EQ LPAREN RPAREN CROSS
+%token POS NEG OR COLON EQ LPAREN RPAREN CROSS LANGLE RANGLE 
 %token SPECIFICATION SPEC END DATA OF AND 
 %start engspec
 %type <Engspec.engspec> engspec
@@ -45,7 +45,7 @@ let r x = List.rev x
 %type <Engspec.exprid * Engspec.sort_gen * Engspec.databody> and_elt
 %type <Engspec.databody> conspec_option
 %type <Engspec.databody> conspec
-%type <Engspec.conid *Engspec.consig option> conid
+%type <Engspec.conid * Engspec.consig option> conid
 %type <Engspec.bconsig list> consig
 %type <Engspec.bconsig> bconsig
 
@@ -84,8 +84,10 @@ conspec :
 ;
 
 conid :
-	| IDENT OF consig { ($1,Some (r $3) ) }
-	| IDENT           { ($1,None) }
+	| IDENT OF consig { (($1, false, None),Some (r $3) ) }
+	| IDENT           { (($1, false, None),None) }
+	| IDENT LANGLE IDENT RANGLE { (($3, true, Some $1),None) } /*  allow user to specify an optional group name for these constructors */
+	| IDENT LANGLE IDENT RANGLE OF consig { (($3, true, Some $1),Some (r $6) ) } /*  allow user to specify an optional group name for these constructors */
 ;
 
 consig :  bconsig { [$1] }

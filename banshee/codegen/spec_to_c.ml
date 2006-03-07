@@ -30,6 +30,8 @@
 
 open Cgen
 open Engspec
+
+let cfst ((a,b,c) : conid) = a
       
 let foldr f =
   let rec localfun y l =
@@ -76,11 +78,11 @@ module Env : ENV =
       |	Some _ -> raise (Duplicate (error e))
     let lookup_conid c m = 
       try 
-	(match (List.find (function C(c') -> c = c' | _ -> false) m) with
+	(match (List.find (function C(c') -> (cfst c) = (cfst c') | _ -> false) m) with
 	| _ -> true ) with
       |	_ -> false
     let insert_conid (c,m) = 
-      if (lookup_conid c m) then raise (Duplicate (error c)) else C c :: m
+      if (lookup_conid c m) then raise (Duplicate (error (cfst c))) else C c :: m
     let empty_env = []
     let plus (m1,m2) = 
       foldl (function (E(e,s),m) -> insert_exprid(e,s,m) 
@@ -98,7 +100,7 @@ let gen_dataspec env dataspec header source =
       let env' = Env.insert_exprid(e,s,env) in
       foldl (function (c,env) -> Env.insert_conid(c,env)) env' (conids body))
       Env.empty_env dataspec in
-  let env'' = Env.plus (env,env') in
+  (*let env'' = Env.plus (env,env') in*)
   let _ = 
     List.map (function (e,s,body) -> 
       (gen_opaque_type e header; 
