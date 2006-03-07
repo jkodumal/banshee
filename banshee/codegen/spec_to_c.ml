@@ -65,6 +65,9 @@ module Env : ENV =
       |	C of conid
     type map = res list
     exception Duplicate of string 
+	let match_gopt = function
+		| Some name, Some name' -> name = name'
+		| _ -> false
     let error e = e ^ " is multiply defined" 
     let lookup_exprid e m = 
       try 
@@ -76,9 +79,9 @@ module Env : ENV =
       match (lookup_exprid e m) with
       | None -> E(e,s) :: m
       |	Some _ -> raise (Duplicate (error e))
-    let lookup_conid c m = 
+    let lookup_conid (c,_,g) m = 
       try 
-	(match (List.find (function C(c') -> (cfst c) = (cfst c') | _ -> false) m) with
+	(match (List.find (function C((c',_,g')) ->( match_gopt(g,g') or (c = c')) | _ -> false) m) with
 	| _ -> true ) with
       |	_ -> false
     let insert_conid (c,m) = 
@@ -139,9 +142,10 @@ let gen_preamble env sigid header source  =
   let inc11 = include_header true "banshee_region_persist_kinds.h" in
   let flag =
     var (no_qual Int) "flag_hash_cons" (Some Extern) ; in 
-  header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9;inc10;flag];
+  header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9;inc10];
   source#add_includes [start_cmnt;inc1;inc2;inc3;inc4;inc5;inc6;inc7;inc8;inc10;inc11];
-  header#add_macro (macro "EXTERN_C_BEGIN")
+  header#add_macro (macro "EXTERN_C_BEGIN");
+  header#add_gdecls [flag]
 
 let gen_postamble env strid header source (sorts : (exprid*sort_gen) list) = 
   let return = void in

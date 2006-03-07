@@ -171,8 +171,8 @@ void nonspec_reset(void);
 typedef enum banshee_error_kind
 {
   bek_cons_mismatch, 	        // c(...) <= d(...)
-  bek_occurs_check,		// occurs check failed (cyclic unification)
-  bek_context_incompatibility
+  bek_occurs_check,	         	// occurs check failed (cyclic unification)
+  bek_context_incompatibility   // expression occurs in an invalid context (e.g. x \cup y <= z)
 } banshee_error_kind;
 
 /* This is the type for error callbacks. Error handling functions are

@@ -27,6 +27,6 @@
 
 specification dyckcfl_terms : DYCKCFL_TERMS =
   spec
-    data node_T : set = n_group<O> of +node_T
+    data node_T : set = NGroup<O> of +node_T
                       | P of +node_T
   end
