@@ -1726,7 +1726,7 @@ void print_analysis_results() deletes
   while(hash_table_next(&hs, (hash_key*)&name, (hash_data *)&ttype)) {
     assert(ttype);
     assert(name);
-    contents_type_list_cons(pta_get_contents(ttype),ptset_list);
+    contents_type_list_cons(pta_get_contents((T)ttype), ptset_list);
     num_vars++;
   }
 

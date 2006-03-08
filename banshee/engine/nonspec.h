@@ -270,7 +270,11 @@ cons_group make_cons_group(const char *name, sig_elt s[], int arity);
 
 /* Add a constructor to a cons group. Must have the same signature as
    the group, and be a setif constructor */
-void cons_group_add(cons_group g, constructor c);
+//void cons_group_add(cons_group g, constructor c);
+
+/* Request an indexed constructor from a cons group. Uses hash consing so if an
+	index is requested multiple times the same constructor is retrieved */
+constructor cons_group_get_constructor(cons_group group, int index);
 
 /* Create a group projection pattern */
 gen_e setif_group_proj_pat(cons_group g, int i, gen_e e);

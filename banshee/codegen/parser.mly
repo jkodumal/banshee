@@ -28,6 +28,8 @@
  *
  */
 
+/* NOTE: DO NOT extend the syntax to allow $ as a valid token. the code generator uses $ to find and trigger substitutions */
+
 %{
 open Engspec
 let r x = List.rev x
@@ -86,8 +88,7 @@ conspec :
 conid :
 	| IDENT OF consig { (($1, false, None),Some (r $3) ) }
 	| IDENT           { (($1, false, None),None) }
-	| IDENT LANGLE IDENT RANGLE { (($3, true, Some $1),None) } /*  allow user to specify an optional group name for these constructors */
-	| IDENT LANGLE IDENT RANGLE OF consig { (($3, true, Some $1),Some (r $6) ) } /*  allow user to specify an optional group name for these constructors */
+	| IDENT LANGLE IDENT RANGLE OF consig { (($3, true, Some $1),Some (r $6) ) } /*  user specifies a group name for these constructors */
 ;
 
 consig :  bconsig { [$1] }

@@ -207,6 +207,17 @@ class setsort_gen =
       hdr#add_gdecl p;
       file#add_fdef f
 
+  (* TODO parameterized constructors *)
+  method private gen_param_constructor file hdr e c consig grp = 
+	let query_decl =
+		"bool $EXPRID_is_$CONSTRUCTOR($EXPRID e, int index);" in
+	      let query_defn = 
+		"bool $EXPRID_is_$CONSTRUCTOR($EXPRID e, int index)\n\
+		 {\n \
+		    return ((setif_term)e)->type == $TYPE && ((setif_param_constructor)e)->index == index  ;\n\
+		 }\n" in
+		()
+
   method private gen_constructor file hdr e c consig = 
       let query_decl = 
 	"bool $EXPRID_is_$CONSTRUCTOR($EXPRID e);" in
@@ -520,7 +531,7 @@ class setsort_gen =
 
     method private gen_sig_ops 
 	(file : file) (hdr : header) (e : exprid) ((c,is_param, grp_opt) : conid) (s : consig) = 
-      this#gen_constructor file hdr e c s;
+      if (is_param) then (this#gen_param_constructor file hdr e c s grp_opt) else (this#gen_constructor file hdr e c s);
       this#gen_deconstructor file hdr e c s;
       let rec gen_sig_ops' bconsigs n = match bconsigs with 
       | (e',_) :: t  -> 

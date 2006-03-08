@@ -75,6 +75,8 @@ static void test_dyck_isomorphism()
   make_dyck_close_edge(d8,d9,3);
   mark_dyck_node_global(d8);
 
+
+
 //   flag_dyck_print_constraints = 1;
 
   // Clustering test

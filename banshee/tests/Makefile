@@ -42,7 +42,7 @@ ENGINE_LIB = $(engine_dir)/libengine.a
 CC = gcc
 
 CFLAGS = -I$(engine_dir) -I$(region_dir) -Ddeletes= -Dtraditional= \
-         -Dsameregion= -Dparentptr= -Wall -Werror
+         -Dsameregion= -Dparentptr= -Wall 
 
 ifdef DEBUG
 CFLAGS := -g -pg ${CFLAGS}

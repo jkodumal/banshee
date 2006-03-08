@@ -33,7 +33,7 @@
 #include "nonspec.h"
 #include "hash.h"
 
-#define CONS_OPEN "open"
+#define CONS_OPEN "ngroup"
 #define CONS_CLOSE "close"
 #define CONS_OPEN_CLUSTER "opencluster"
 
@@ -79,14 +79,15 @@ static FILE *dotfile = NULL;
 static hash_table constant_to_node_map = NULL;
 static hash_table clustered_indices = NULL;
 static hash_table unclustered_indices = NULL;
-static hash_table built_constructors = NULL; 
-static hash_table built_contra_constructors = NULL;
+// static hash_table built_constructors = NULL; 
+// static hash_table built_contra_constructors = NULL;
 /* static hash_table built_co_contra_constructors = NULL; */
 static region dyckregion = NULL;
 static dyck_state state;
 static constructor p_constructor = NULL;
 static bool pn_reach = FALSE;
 static cons_group n_group = NULL;
+static cons_group n_contra_group = NULL;
 static cons_group n_cluster_group = NULL;
 
 int flag_dyck_print_constraints = 0;
@@ -111,6 +112,7 @@ static void my_call_setif_inclusion(gen_e e1, gen_e e2)
   call_setif_inclusion(e1,e2);
 }
 
+/*
 static constructor get_constructor_aux(int index, vnc_kind vnc) {
   constructor result = NULL;
   hash_table built = (vnc == vnc_pos) ? built_constructors : built_contra_constructors;
@@ -130,27 +132,17 @@ static constructor get_constructor_aux(int index, vnc_kind vnc) {
   assert(hash_table_lookup(built,(void *)index,NULL));
   assert(result);
   return result;
-
 }
+*/
 
-/* static constructor get_co_contra_constructor(int index) { */
-/*   constructor result = NULL; */
-/*   hash_table built = built_co_contra_constructors; */
-  
-/*   sig_elt c_sig[2] = {{vnc_pos,setif_sort},{vnc_neg,setif_sort}}; */
-
-/*   // Check the hash to see if the constructor has been built yet */
-/*   // If not, build the constructor */
-/*   if (!hash_table_lookup(built,(void *)index,(hash_data *)&result)) { */
-/*     result = make_constructor(CONS_OPEN,setif_sort,c_sig,2); */
-/*     // Hash it so that it can be be retrieved later */
-/*     hash_table_insert(built,(void *)index,result); */
-/*   } */
-
-/*   assert(hash_table_lookup(built,(void *)index,NULL)); */
-/*   assert(result); */
-/*   return result; */
-/* } */
+static constructor get_constructor_aux(int index, vnc_kind vnc) {
+	constructor result = NULL;
+	cons_group g = (vnc == vnc_pos) ? n_group : n_contra_group;
+	result = cons_group_get_constructor(g, index);
+	assert(result);
+	
+	return result;
+}
 
 static constructor get_constructor(int index) 
 {
@@ -169,7 +161,8 @@ static constructor get_contra_constructor(int index) {
 
 void dyck_init(bool pn)
 {
-  sig_elt p_sig[1] = {{vnc_pos,setif_sort}};
+  sig_elt co_sig[1] = {{vnc_pos,setif_sort}};
+  sig_elt contra_sig[1] = {{vnc_neg,setif_sort}};
 
   assert(state == dyck_raw);
   
@@ -181,15 +174,16 @@ void dyck_init(bool pn)
   fprintf(dotfile,"size=\"8,10\";\n");
 #endif
   pn_reach = pn;
-  n_group = make_cons_group("ngroup",p_sig,1);
-  n_cluster_group = make_cons_group("nclustergroup",p_sig,-1);
+  n_group = make_cons_group(CONS_OPEN,co_sig,1);
+  n_contra_group = make_cons_group("ncontragroup",contra_sig,1);
+  n_cluster_group = make_cons_group("nclustergroup",co_sig,-1);
   clustered_indices = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   unclustered_indices = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
-  built_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
+  //built_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   /* built_co_contra_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq); */
-  built_contra_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
+  //built_contra_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   constant_to_node_map = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
-  p_constructor = make_constructor(CONS_CLOSE,setif_sort,p_sig,1);
+  p_constructor = make_constructor(CONS_CLOSE,setif_sort,co_sig,1);
   all_nodes = new_dyck_node_list(dyckregion);
   state = dyck_inited;
 }
@@ -199,9 +193,9 @@ void dyck_reset(void)
   deleteregion(dyckregion);
   clustered_indices = NULL;
   unclustered_indices = NULL;
-  built_constructors = NULL;
+  // built_constructors = NULL;
   /* built_co_contra_constructors = NULL; */
-  built_contra_constructors = NULL;
+  // built_contra_constructors = NULL;
   dyckregion = NULL;
   pn_reach = FALSE;
   p_constructor = NULL;

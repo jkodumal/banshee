@@ -88,12 +88,13 @@ struct cons_group_
   char *name;
   sig_elt *sig;
   int gid;
+  hash_table built_constructors; // a mapping from ints to gconstructors
 };
 
 typedef struct cons_group_ *cons_group;
 
-DECLARE_LIST(cons_group_list,cons_group);
-DEFINE_LIST(cons_group_list,cons_group);
+// DECLARE_LIST(cons_group_list,cons_group);
+// DEFINE_LIST(cons_group_list,cons_group);
 DECLARE_LIST(sig_elt_list, sig_elt_ptr);
 DEFINE_NONPTR_LIST(sig_elt_list, sig_elt_ptr);
 
@@ -104,10 +105,22 @@ struct constructor_
   int arity;
   char *name;
   sig_elt *sig;
-  cons_group_list groups;
+  cons_group g;
+};
+
+struct gconstructor_
+{
+  sort_kind sort;
+  int type;
+  int arity;
+  char *name;
+  sig_elt *sig;
+  cons_group g;	
+  int index;
 };
 
 typedef struct constructor_ *constructor;
+typedef struct gconstructor_ *gconstructor;
 
 typedef struct proj_pat_
 {
@@ -405,14 +418,12 @@ static bool pat_match(int t1, int t2)
 
 static bool gpat_match(cons_expr ce, gproj_pat pat)
 {
-  assert(ce->c->groups);
-  return cons_group_list_member(ce->c->groups,pat->g);
+  return (ce->c->g == pat->g);
 }
 
 static bool gcons_match(gcons_expr ge, proj_pat pat)
 {
-  assert(pat->c->groups);
-  return cons_group_list_member(pat->c->groups,ge->g);
+  return (pat->c->g == ge->g);
 }
 
 // group proj / group cons match case
@@ -462,12 +473,13 @@ constructor make_constructor(const char *name,sort_kind sort, sig_elt s[],
   c->arity = arity;
   c->name = rstrdup(banshee_nonptr_region,name);
   c->sig = sig;
-
+  c->g = NULL;
+/*
   if (sort == setif_sort) {
     c->groups = new_persistent_cons_group_list();
   }
   else c->groups = NULL;
-
+*/
   return c;
 }
 
@@ -493,12 +505,13 @@ constructor make_constructor_from_list(const char*name, sort_kind sort,
   c->name = rstrdup(banshee_nonptr_region,name);
   c->sig = sig;
   c->type = new_type();
-
+  c->g = NULL;
+/*
   if (sort == setif_sort) { 
     c->groups = new_persistent_cons_group_list();
   }
   else c->groups = NULL;
-
+*/
   return c;
 }
 
@@ -730,6 +743,15 @@ gen_e setst_proj(constructor c, int i, gen_e e)
   return NULL;
 }
 
+static bool type_match(cons_expr c1, cons_expr c2) {
+	if (c1->c->g != NULL) {
+		gconstructor g1 = (gconstructor)c1->c;
+		gconstructor g2 = (gconstructor)c2->c;
+		return (g1 == g2);
+	}
+	else return (c1->type == c2->type);
+}
+
 static void setif_con_match(gen_e e1, gen_e e2)
 {
    // case where e1 is a gcons expr 
@@ -749,7 +771,7 @@ static void setif_con_match(gen_e e1, gen_e e2)
 		else call_unify_ind(gc->exps[i], p->exp);
  	}
    // and e2 is a gproj pat
-   if (setif_is_gcons_expr(e1) && setif_is_gpat(e2) && 
+   else if (setif_is_gcons_expr(e1) && setif_is_gpat(e2) && 
        gcons_gpat_match((gcons_expr)e1, (gproj_pat)e2)) {
 	  	gcons_expr gc = (gcons_expr)e1;
 	    gproj_pat p = (gproj_pat)e2;
@@ -785,9 +807,9 @@ static void setif_con_match(gen_e e1, gen_e e2)
    else if (setif_is_gcons_expr(e1) && setif_is_cons_expr(e2))	{
 	   gcons_expr gc = (gcons_expr)e1;
 	   cons_expr c = (cons_expr)e2;
-	   if (!cons_group_list_member(c->c->groups,gc->g)) {
+	   if (c->c->g != gc->g) {
 		handle_error(e1,e2,bek_cons_mismatch);
-		}
+	   }
 	   else {
 		  int i;
 		  for (i = 0; i < c->arity; i++)
@@ -863,7 +885,7 @@ static void setif_con_match(gen_e e1, gen_e e2)
       cons_expr c1 = (cons_expr)e1,
 	c2 = (cons_expr)e2;
       
-      if (c1->type != c2->type)
+      if (!type_match(c1,c2))
 	{
 	  handle_error(e1,e2,bek_cons_mismatch);
 	}
@@ -1380,7 +1402,6 @@ void nonspec_init(void)
   cons_group_region = newregion();
   constructor_region = newregion();
   cons_expr_region = newregion();
-  cons_group_region = newregion();
   proj_pat_region = newregion();
   gproj_pat_region = newregion();
   gen_e_ptr_region = newregion();
@@ -1404,7 +1425,6 @@ void nonspec_reset(void)
   cons_group_region = newregion();
   constructor_region = newregion();
   cons_expr_region = newregion();
-  cons_group_region = newregion();
   proj_pat_region = newregion();
   gproj_pat_region = newregion();
   gen_e_ptr_region = newregion();
@@ -1717,10 +1737,32 @@ cons_group make_cons_group(const char *name, sig_elt s[], int arity)
   g->name = rstrdup(banshee_nonptr_region,name);
   g->sig = sig;
   g->gid = next_gid++;
+  g->built_constructors = make_hash_table(cons_group_region,32,stamp_hash, stamp_eq);
 
   return g;
 }
 
+constructor cons_group_get_constructor(cons_group g, int index) {
+	gconstructor result = NULL;
+	assert(g);
+	if (!hash_table_lookup(g->built_constructors,(hash_key)index,(hash_data *)&result)) {
+		result = ralloc(constructor_region,struct constructor_);
+
+	 result->type = new_type();
+	 result->sort = setif_sort;
+   	 result->arity = g->arity;
+	 result->name = g->name;
+	 result->sig = g->sig;
+     result->index = index;
+	 result->g = g;
+	 hash_table_insert(g->built_constructors,(hash_key)index,(hash_data)result);
+	}
+	assert(result);
+	return (constructor)result;
+}
+
+
+/*
 void cons_group_add(cons_group g, constructor c)
 {
   int i;
@@ -1746,8 +1788,9 @@ void cons_group_add(cons_group g, constructor c)
   assert(c->groups);
   cons_group_list_cons(g,c->groups);
 }
+*/
 
-// TODO
+
 static gen_e make_group_cons_expr(cons_group g, gen_e *exps, int arity) {
   gcons_expr result;
   int i;
@@ -2392,9 +2435,8 @@ bool constructor_serialize(FILE *f, void *obj)
   fwrite((void *)&c->arity, sizeof(int), 1, f);
   string_data_serialize(f,c->name);
   fwrite((void *)c->sig, sizeof(sig_elt), c->arity, f);
-  fwrite((void *)&c->groups, sizeof(cons_group_list), 1, f);
 
-  serialize_banshee_object(c->groups, list);
+  serialize_banshee_object(c->g, list);
 
   return TRUE;
 }
@@ -2408,14 +2450,13 @@ void *constructor_deserialize(FILE *f)
   c->name = (char *)string_data_deserialize(f);
   c->sig = rarrayalloc(permanent, c->arity, sig_elt);
   fread((void *)c->sig, sizeof(sig_elt), c->arity, f);
-  fread((void *)&c->groups, sizeof(cons_group_list), 1, f);
 
   return c;
 }
 
 bool constructor_set_fields(void *obj)
 {
-  deserialize_set_obj((void **)&((constructor)obj)->groups);
+  deserialize_set_obj((void **)&((constructor)obj)->g);
   return TRUE;
 }
 
@@ -2544,7 +2585,7 @@ int update_constructor(translation t, void *m)
 
   update_pointer(t, (void **)&c->name);
   update_pointer(t, (void **)&c->sig);
-  update_pointer(t, (void **)&c->groups);
+  update_pointer(t, (void **)&c->g);
 
   return sizeof(struct constructor_);
 }
