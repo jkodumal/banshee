@@ -67,12 +67,27 @@ let fields l =
   [(no_qual Int, "type");(no_qual (Ident "stamp"), "st")] @ 
   (fields_aux l Int32.zero) 
 
+let gfields l g =
+  let rec fields_aux l n = match l with
+  | h :: t -> (h,"f" ^ Int32.to_string n)::(fields_aux t (Int32.succ n))
+  | [] -> [] 
+  in
+  [(no_qual Int, "type");(no_qual (Ident "stamp"), "st");(no_qual Int, "index")] @ 
+  (fields_aux l Int32.zero)
+
 let decon_fields l =
   let rec fields_aux l n = match l with
   | h :: t -> (h,"f" ^ Int32.to_string n)::(fields_aux t (Int32.succ n))
   | [] -> [] 
   in
   (fields_aux l Int32.zero)
+
+let gdecon_fields l =
+  let rec fields_aux l n = match l with
+  | h :: t -> (h,"f" ^ Int32.to_string n)::(fields_aux t (Int32.succ n))
+  | [] -> [] 
+  in
+  [(no_qual Int, "index")]@(fields_aux l Int32.zero)
 
 let decon_struct arity = 
   let str = ref "c->f0" in 

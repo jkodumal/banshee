@@ -88,7 +88,7 @@ conspec :
 conid :
 	| IDENT OF consig { (($1, false, None),Some (r $3) ) }
 	| IDENT           { (($1, false, None),None) }
-	| IDENT LANGLE IDENT RANGLE OF consig { (($3, true, Some $1),Some (r $6) ) } /*  user specifies a group name for these constructors */
+	| IDENT LANGLE IDENT RANGLE OF consig { (($3, true, Some $1),Some (r $6) ) } /*  user specifies a group name for parameterized constructors */
 ;
 
 consig :  bconsig { [$1] }

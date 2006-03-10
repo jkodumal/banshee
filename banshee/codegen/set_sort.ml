@@ -211,12 +211,63 @@ class setsort_gen =
   method private gen_param_constructor file hdr e c consig grp = 
 	let query_decl =
 		"bool $EXPRID_is_$CONSTRUCTOR($EXPRID e, int index);" in
-	      let query_defn = 
+	let query_defn = 
 		"bool $EXPRID_is_$CONSTRUCTOR($EXPRID e, int index)\n\
 		 {\n \
-		    return ((setif_term)e)->type == $TYPE && ((setif_param_constructor)e)->index == index  ;\n\
-		 }\n" in
-		()
+		    return ((setif_term)e)->type == $TYPE && ((setif_param_constructor)e)->index == index;\n\
+		 }\n" 
+	in
+	let arity = List.length consig in
+	let last_index = int_to_string(arity + 1) in
+    let num_args = int_to_string (arity + 2) in
+    let ret = (etype e) in 
+    let name =  c in
+	let ctype = this#get_new_type() in	
+	let gtype = this#get_new_type() in
+	let args =
+		(args ((no_qual Int) ::(List.map (function (x,_) -> no_qual (Ident x)) consig))) in
+	let body1 = [ Expr ("struct " ^ c ^ "_ *ret;");
+			    Expr ("stamp s[" ^ num_args ^ "];");
+			    Expr ("s[0] = " ^ (String.uppercase (c^"_;")));
+			    Expr ("s[" ^ last_index ^ "] = arg1;" ) ] in
+	let gen_s e n = 
+				Expr ("s[" ^ (int_to_string n) ^"] = "  
+				      ^ e ^ "_get_stamp((gen_e)arg" ^(int_to_string n) ^");") in
+	let n = ref 0 in
+	let body2 = List.rev (
+				foldl (function ((x,y),acc) -> n := !n + 1; (gen_s x (!n)):: acc)
+				  [] consig ) in
+	let body3 = [ Expr ("if ((ret = (struct " ^ c ^ "_ *)" ^ 
+						  "term_hash_find(" ^ hash ^ ",s," 
+						  ^ num_args ^ ")) == NULL)\n{");
+					    Expr ("ret = ralloc(" ^region ^",struct " ^ c ^ "_);");
+					    Expr ("ret->type = s[0];");
+					    Expr ("ret->st = stamp_fresh();");
+						Expr ("ret->index = arg1;");] in
+	let gen_body n = 
+						Expr ("ret->f" ^ (int_to_string n) ^ 
+						      " = arg" ^ (int_to_string (n+1)) ^";") in
+	let body4 : statement list ref = ref [] in
+	let _ = 
+			for i = 1 to (arity) do
+			(body4 := (gen_body i)::(!body4)) done in
+	let body5 = [ Expr ("term_hash_insert(" ^ hash ^ ",(gen_e)ret,s," ^ 
+					 num_args ^ ");\n}");
+				    Return ( parens e ^ "ret");] in
+	let body = body1 @ body2 @ body3 @ (List.rev !body4) @ body5 in
+	let p,f = gen_proto_and_fun ~quals:[] (ret,name,args,body) in
+	let names = 
+			[("$CONSTRUCTOR",c);("$EXPRID",e);("$TYPE",ctype)] in
+	file#add_macro (define_val (String.uppercase (c ^ "_")) 
+					ctype);
+	file#add_macro (define_val (String.uppercase (grp ^ "_")) 
+									gtype);  		
+	hdr#add_gdecl (decl_substitution names query_decl);
+	file#add_fdef (def_substitution names query_defn);
+	hdr#add_gdecl p;
+	file#add_gdecl p;
+ 	file#add_fdef f			
+	
 
   method private gen_constructor file hdr e c consig = 
       let query_decl = 
@@ -531,7 +582,10 @@ class setsort_gen =
 
     method private gen_sig_ops 
 	(file : file) (hdr : header) (e : exprid) ((c,is_param, grp_opt) : conid) (s : consig) = 
-      if (is_param) then (this#gen_param_constructor file hdr e c s grp_opt) else (this#gen_constructor file hdr e c s);
+	  (match grp_opt with 
+		| Some grp -> (this#gen_param_constructor file hdr e c s grp) 
+		| None ->  begin (this#gen_constructor file hdr e c s) end)
+	  ;
       this#gen_deconstructor file hdr e c s;
       let rec gen_sig_ops' bconsigs n = match bconsigs with 
       | (e',_) :: t  -> 
@@ -539,9 +593,14 @@ class setsort_gen =
 	  this#gen_pat_ops file hdr e e' c (int_to_string n);
 	  gen_sig_ops' t (n+1)
       |	[] -> () in
-      let flds = fields (List.map (function (e,_) -> no_qual (Ident e)) s) in
-      let decon_flds = 
-	decon_fields (List.map (function (e,_) ->no_qual (Ident e)) s) in
+	  let flds = match grp_opt with
+		| Some grp -> gfields ((List.map (function (e,_) -> no_qual (Ident e)) s)) grp
+		| None -> fields ((List.map (function (e,_) -> no_qual (Ident e)) s)) 
+	  in
+      let decon_flds = match grp_opt with
+  		| Some grp -> gdecon_fields (List.map (function (e,_) ->no_qual (Ident e)) s) 
+        | None -> decon_fields (List.map (function (e,_) ->no_qual (Ident e)) s) 
+      in
       file#add_gdecl (struct_decl (c ^"_") flds);
       file#add_gdecl (struct_decl (c ^ "_decon") decon_flds);
       hdr#add_gdecl (struct_decl (c ^ "_decon") decon_flds);
