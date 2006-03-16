@@ -67,7 +67,7 @@ let fields l =
   [(no_qual Int, "type");(no_qual (Ident "stamp"), "st")] @ 
   (fields_aux l Int32.zero) 
 
-let gfields l g =
+let gfields l =
   let rec fields_aux l n = match l with
   | h :: t -> (h,"f" ^ Int32.to_string n)::(fields_aux t (Int32.succ n))
   | [] -> [] 
