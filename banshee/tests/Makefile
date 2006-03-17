@@ -34,6 +34,7 @@ lambda_dir = ../lambda
 DYCKCFL_EXTRA_OBJS = $(dyckcfl_dir)/dyckcfl.o $(dyckcfl_dir)/mr_dyckcfl.o
 LAMBDA_EXTRA_OBJS = $(lambda_dir)/lambda.o
 
+DYCKCFL_SPEC_EXTRA_OBJS = $(dyckcfl_dir)/dyckcfl_terms.o $(dyckcfl_dir)/dyckcfl_spec.o
 
 REGION_LIB = $(region_dir)/libregions.a
 NSENGINE_LIB = $(engine_dir)/libnsengine.a
@@ -52,7 +53,7 @@ TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
 EXES = lambda-test.exe dyckcfl-random-test.exe \
        uf-bt-test.exe persist-test.exe dyckcfl-test.exe regexp-test.exe \
-	region-persist-test.exe
+	region-persist-test.exe dyckcfl-spec-test.exe
 
 TARGETS =  $(EXES) 
 
@@ -62,6 +63,9 @@ all: $(TARGETS)
 
 lambda-test.exe: lambda-test.c $(LAMBDA_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LIB)
 	$(CC) $(CFLAGS) -I$(lambda_dir) -o $@ $(LAMBDA_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lengine -lregions -lm
+
+dyckcfl-spec-test.exe: dyckcfl-test.c $(DYCKCFL_SPEC_EXTRA_OBJS) $(ENGINE_LIB) $(REGION_LIB)
+	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DSPEC -o $@ $(DYCKCFL_SPEC_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lengine -lregions -lm
 
 dyckcfl-test.exe: dyckcfl-test.c $(DYCKCFL_EXTRA_OBJS) $(NSENGINE_LIB) $(REGION_LIB)
 	$(CC) $(CFLAGS) -I$(dyckcfl_dir) -DNONSPEC -o $@ $(DYCKCFL_EXTRA_OBJS) $< -L$(region_dir) -L$(engine_dir) -lnsengine -lregions -lm 

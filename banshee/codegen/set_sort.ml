@@ -269,10 +269,14 @@ class setsort_gen =
 	let gen_s e n =     
 				Expr ("s[" ^ (int_to_string n) ^"] = "  
 				      ^ e ^ "_get_stamp((gen_e)arg" ^(int_to_string n) ^");") in
-	let n = ref 0 in
+	let n = ref 1 in
 	let body2 = List.rev (
 				foldl (function ((x,y),acc) -> n := !n + 1; (gen_s x (!n)):: acc)
 				  [] consig ) in
+	let n = ref 0 in
+	let gbody2 = List.rev (
+							foldl (function ((x,y),acc) -> n := !n + 1; (gen_s x (!n)):: acc)
+							  [] consig ) in
 	let gen_body3 str i = [ Expr ("if ((ret = (struct " ^ str ^ "_ *)" ^ 
 						  "term_hash_find(" ^ hash ^ ",s," 
 						  ^ i ^ ")) == NULL)\n{");
@@ -300,7 +304,7 @@ class setsort_gen =
 					 i ^ ");\n}");
 				    Return ( parens e ^ "ret");] in
 	let body = body1 @ body2 @ body3 @ (List.rev !body4) @ (gen_body5 num_args) in
-	let gbody = gbody1 @ body2 @ gbody3 @ (List.rev !gbody4) @ (gen_body5 last_index) in
+	let gbody = gbody1 @ gbody2 @ gbody3 @ (List.rev !gbody4) @ (gen_body5 last_index) in
 	let p,f = gen_proto_and_fun ~quals:[] (ret,name,args,body) in
 	let gp,gf = gen_proto_and_fun ~quals:[] (ret,grp,gargs,gbody) in
 	let names = 

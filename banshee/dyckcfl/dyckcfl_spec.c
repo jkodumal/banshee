@@ -33,9 +33,6 @@
 #include "dyckcfl_terms.h"
 #include "hash.h"
 
-#define CONS_OPEN "ngroup"
-#define CONS_CLOSE "close"
-
 //  #define DYCK_DOT_DEBUG		
 
 /*****************************************************************************
@@ -97,8 +94,10 @@ static void my_call_node_T_inclusion(node_T e1, node_T e2)
 
 void dyck_init(bool pn)
 {
+  dyckcfl_terms_init();
   dyckregion = newregion();
-
+  
+  flag_merge_projections = FALSE;
 #ifdef DYCK_DOT_DEBUG
   dotfile = fopen("dyckcfl-test.dot","w");
   fprintf(dotfile,"digraph G {\n");

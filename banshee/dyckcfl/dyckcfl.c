@@ -144,7 +144,7 @@ void dyck_init(bool pn)
   assert(state == dyck_raw);
   
   dyckregion = newregion();
-
+  flag_merge_projections = FALSE;
 #ifdef DYCK_DOT_DEBUG
   dotfile = fopen("dyckcfl-test.dot","w");
   fprintf(dotfile,"digraph G {\n");
