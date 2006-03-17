@@ -28,6 +28,8 @@
  *
  *)
 
+
+(* TODO if constructor is in all caps things break *)
 open Cgen
 open Engspec
 open Spec_to_c
@@ -65,6 +67,7 @@ class setsort_gen =
 	 $EXPRID $EXPRID_zero(void);\n\
 	 $EXPRID $EXPRID_one(void);\n\
          $EXPRID $EXPRID_wild(void);\n\
+     int $EXPRID_get_stamp($EXPRID e);\n\
 	 $EXPRID $EXPRID_fresh(const char *name);\n\
 	 $EXPRID $EXPRID_union($EXPRID_list exprs);\n\
 	 $EXPRID $EXPRID_inter($EXPRID_list exprs);\n\
@@ -140,7 +143,8 @@ class setsort_gen =
 	 bool $EXPRID_is_constant($EXPRID e, const char *name) \n\
 	 {\n \
 	   if (setif_is_constant(e))\n\
-	       return (! strcmp(name,setif_get_constant_name(e)));\n\
+		   if (!name) return TRUE;\n\
+	       else return (! strcmp(name,setif_get_constant_name(e)));\n\
 	   else return FALSE;\n\
          }\n\n\
 	 $EXPRID_list $EXPRID_tlb($EXPRID e) \n\
@@ -236,7 +240,7 @@ class setsort_gen =
 	let query_defn = 
 		"bool $EXPRID_is_$CONSTRUCTOR($EXPRID e, int index)\n\
 		 {\n \
-		    return ((setif_term)e)->type == $TYPE && ((struct $CONSTRUCTOR_)e)->index == index;\n\
+		    return ((setif_term)e)->type == $TYPE && ((struct $CONSTRUCTOR_ *)e)->index == index;\n\
 		 }\n" 
 	in
 	let gquery_decl =
@@ -280,16 +284,23 @@ class setsort_gen =
 	let gbody3 = (gen_body3 grp last_index) in
 	let gen_body n = 
 						Expr ("ret->f" ^ (int_to_string n) ^ 
-						      " = arg" ^ (int_to_string (n+1)) ^";") in
+						      " = arg" ^ (int_to_string (n+2)) ^";") in
+	let gen_gbody n = 
+												Expr ("ret->f" ^ (int_to_string n) ^ 
+												      " = arg" ^ (int_to_string (n+1)) ^";") in
+	let gbody4 : statement list ref = ref [] in
+							let _ = 
+									for i = 0 to (arity-1) do
+									(gbody4 := (gen_gbody i)::(!gbody4)) done in					
 	let body4 : statement list ref = ref [] in
 	let _ = 
-			for i = 1 to (arity) do
+			for i = 0 to (arity-1) do
 			(body4 := (gen_body i)::(!body4)) done in
 	let gen_body5 i = [ Expr ("term_hash_insert(" ^ hash ^ ",(gen_e)ret,s," ^ 
 					 i ^ ");\n}");
 				    Return ( parens e ^ "ret");] in
 	let body = body1 @ body2 @ body3 @ (List.rev !body4) @ (gen_body5 num_args) in
-	let gbody = gbody1 @ body2 @ gbody3 @ (List.rev !body4) @ (gen_body5 last_index) in
+	let gbody = gbody1 @ body2 @ gbody3 @ (List.rev !gbody4) @ (gen_body5 last_index) in
 	let p,f = gen_proto_and_fun ~quals:[] (ret,name,args,body) in
 	let gp,gf = gen_proto_and_fun ~quals:[] (ret,grp,gargs,gbody) in
 	let names = 
@@ -396,7 +407,7 @@ class setsort_gen =
 	| POSvariance -> e' ^ "_inclusion_ind" in
 		match grp_opt with 
 			| Some grp -> begin
-							let set = c ^ "_index" ^ n ^ " = ((struct " ^ c ^ "Proj" ^ n ^ "_ *)arg2)->index;" in
+							let set = c ^ "_index_" ^ n ^ " = ((struct " ^ c ^ "Proj" ^ n ^ "_ *)arg2)->index;" in
 							let ret = "setif_proj_merge(arg1," ^ "(gen_e)((struct " ^
 						  c ^ "Proj" ^ n ^ "_ *)arg2)->f0,get_" ^ c ^ "_proj" ^ n ^ 
 						  "_arg," ^ c ^ "_pat" ^ n ^ "_con_clos, (fresh_large_fn_ptr)" ^ e' ^
@@ -822,7 +833,7 @@ class setsort_gen =
 		    Expr ("ret->type = " ^ macro ^ ";");
 		    Expr ("ret->st = stamp_fresh();");
 		    Expr ("ret->f0 = arg1;");
-			Expr ("ret->index = arg2");
+			Expr ("ret->index = arg2;");
 		    Expr ("term_hash_insert(" ^ hash ^ ",(gen_e)ret,s,3);\n}");
 		    Return ( (parens e) ^ "ret");
 		  ]  in
@@ -913,10 +924,10 @@ class setsort_gen =
 		in 
 		match grp_opt with
 			| Some grp -> begin
-							this#gen_param_constructor file hdr e c s grp;
-							this#gen_param_deconstructor file hdr e c s grp;
 							gen_fields_and_dfields c true; 
 							gen_fields_and_dfields grp false; 
+							this#gen_param_constructor file hdr e c s grp;
+							this#gen_param_deconstructor file hdr e c s grp;
 							gen_group_sig_ops grp s 0;
 							gen_param_sig_ops c s 0
 						  end
@@ -926,7 +937,8 @@ class setsort_gen =
 					  	gen_fields_and_dfields c false;  
 						gen_sig_ops' c s 0;
 					  end
-     
+					
+    (* TODO update for param constructors *)
     method private gen_pr_fun (file : file) (hdr : header) e (b:databody) = 
       let pr_name = e ^ "_print" in 
       let pr_args = args [file_type;etype e] in

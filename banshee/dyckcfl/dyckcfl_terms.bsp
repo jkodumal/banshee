@@ -27,6 +27,7 @@
 
 specification dyckcfl_terms : DYCKCFL_TERMS =
   spec
-    data node_T : set = NGroup<O> of +node_T
-                      | P of +node_T
+    data node_T : set = NGroup<OPos> of +node_T
+					  | NContraGroup<ONeg> of -node_T
+                      | Pos of +node_T
   end

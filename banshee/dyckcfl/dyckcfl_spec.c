@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004
+ * Copyright (c) 2006
  *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,11 @@
 
 #include <assert.h>	
 #include "dyckcfl.h"
-#include "nonspec.h"
+#include "dyckcfl_terms.h"
 #include "hash.h"
 
 #define CONS_OPEN "ngroup"
 #define CONS_CLOSE "close"
-#define CONS_OPEN_CLUSTER "opencluster"
 
 //  #define DYCK_DOT_DEBUG		
 
@@ -45,25 +44,13 @@
  *                                                                           *
  *****************************************************************************/
 
-/* NOTE: the states aren't relevant. This solver is completely online */
-typedef enum {dyck_raw = 0, dyck_inited = 0, dyck_query = 0} dyck_state;
-
 struct dyck_node_ {
-  gen_e node_constant;
-  gen_e node_variable;
+  node_T node_constant;
+  node_T node_variable;
   char *unique_name;
 };
 
-// An open constructor cluster
-struct cluster_cons_ {
-  constructor c;
-  int length;
-  int *indices;
-};
-
-typedef struct cluster_cons_ *cluster_cons;
-
-DEFINE_NONPTR_LIST(dyck_node_list,dyck_node);
+DEFINE_NONPTR_LIST(dyck_node_list, dyck_node);
 
 /*****************************************************************************
  *                                                                           *
@@ -77,18 +64,9 @@ static FILE *dotfile = NULL;
 
 // A map from indices to the clustered open constructor containing that index 
 static hash_table constant_to_node_map = NULL;
-static hash_table clustered_indices = NULL;
-static hash_table unclustered_indices = NULL;
-// static hash_table built_constructors = NULL; 
-// static hash_table built_contra_constructors = NULL;
-/* static hash_table built_co_contra_constructors = NULL; */
+
 static region dyckregion = NULL;
-static dyck_state state;
-static constructor p_constructor = NULL;
 static bool pn_reach = FALSE;
-static cons_group n_group = NULL;
-static cons_group n_contra_group = NULL;
-static cons_group n_cluster_group = NULL;
 
 int flag_dyck_print_constraints = 0;
 
@@ -100,35 +78,16 @@ static dyck_node_list all_nodes = NULL;
  *                                                                           *
  *****************************************************************************/
 
-static void my_call_setif_inclusion(gen_e e1, gen_e e2)
+static void my_call_node_T_inclusion(node_T e1, node_T e2)
 {
-  assert(state == dyck_inited);
   if (flag_dyck_print_constraints) {
-    expr_print(stdout,e1);
+    node_T_print(stdout, e1);
     printf(" <= " );
-    expr_print(stdout,e2);
+    node_T_print(stdout, e2);
     printf("\n");
   }
-  call_setif_inclusion(e1,e2);
-}
-
-static constructor get_constructor_aux(int index, vnc_kind vnc) {
-	constructor result = NULL;
-	cons_group g = (vnc == vnc_pos) ? n_group : n_contra_group;
-	result = cons_group_get_constructor(g, index);
-	assert(result);
-	
-	return result;
-}
-
-static constructor get_constructor(int index) 
-{
-  return get_constructor_aux(index, vnc_pos);
-}
-
-static constructor get_contra_constructor(int index) {
-  return get_constructor_aux(index, vnc_neg);
-}
+  node_T_inclusion(e1, e2);
+} 
 
 /*****************************************************************************
  *                                                                           *
@@ -138,11 +97,6 @@ static constructor get_contra_constructor(int index) {
 
 void dyck_init(bool pn)
 {
-  sig_elt co_sig[1] = {{vnc_pos,setif_sort}};
-  sig_elt contra_sig[1] = {{vnc_neg,setif_sort}};
-
-  assert(state == dyck_raw);
-  
   dyckregion = newregion();
 
 #ifdef DYCK_DOT_DEBUG
@@ -150,34 +104,18 @@ void dyck_init(bool pn)
   fprintf(dotfile,"digraph G {\n");
   fprintf(dotfile,"size=\"8,10\";\n");
 #endif
+
   pn_reach = pn;
-  n_group = make_cons_group(CONS_OPEN,co_sig,1);
-  n_contra_group = make_cons_group("ncontragroup",contra_sig,1);
-  n_cluster_group = make_cons_group("nclustergroup",co_sig,-1);
-  clustered_indices = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
-  unclustered_indices = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
-  //built_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
-  /* built_co_contra_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq); */
-  //built_contra_constructors = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
   constant_to_node_map = make_hash_table(dyckregion, 32, ptr_hash, ptr_eq);
-  p_constructor = make_constructor(CONS_CLOSE,setif_sort,co_sig,1);
   all_nodes = new_dyck_node_list(dyckregion);
-  state = dyck_inited;
 }
 
 void dyck_reset(void)
 {
   deleteregion(dyckregion);
-  clustered_indices = NULL;
-  unclustered_indices = NULL;
-  // built_constructors = NULL;
-  /* built_co_contra_constructors = NULL; */
-  // built_contra_constructors = NULL;
   dyckregion = NULL;
   pn_reach = FALSE;
-  p_constructor = NULL;
   all_nodes = NULL;
-  state = dyck_raw;
 }
 
 /*****************************************************************************
@@ -191,18 +129,16 @@ dyck_node make_tagged_dyck_node(const char *name)
   static int count = 0;
   char unique_name[512];
   dyck_node result = ralloc(dyckregion,struct dyck_node_);
-  assert(state == dyck_inited);
 
   snprintf(unique_name,512,"%s_%d",name,count++);
-  result->node_constant = setif_constant(unique_name);
-  result->node_variable = setif_fresh(name);
+  result->node_constant = node_T_constant(unique_name);
+  result->node_variable = node_T_fresh(name);
   result->unique_name = rstrdup(dyckregion,unique_name);
-  my_call_setif_inclusion(result->node_constant, result->node_variable);
+  my_call_node_T_inclusion(result->node_constant, result->node_variable);
 
   dyck_node_list_cons(result, all_nodes);
   hash_table_insert(constant_to_node_map, (hash_key) result->node_constant,
 		    (hash_data)result);
-
 
   return result;
 }
@@ -212,29 +148,25 @@ dyck_node make_untagged_dyck_node(const char *name)
   static int count = 0;
   char unique_name[512];
   dyck_node result = ralloc(dyckregion,struct dyck_node_);
-  assert(state == dyck_inited);
 
   snprintf(unique_name,512,"%s_%d",name,count++);
-  result->node_constant = setif_constant(unique_name);
-  result->node_variable = setif_fresh(name);
+  result->node_constant = node_T_constant(unique_name);
+  result->node_variable = node_T_fresh(name);
   result->unique_name = rstrdup(dyckregion,unique_name);
 
   dyck_node_list_cons(result, all_nodes);
   hash_table_insert(constant_to_node_map, (hash_key) result->node_constant,
 		    (hash_data)result);
-
-
   return result;
 }
 
 dyck_node make_tagged_empty_dyck_node(const char *name)
 {
   dyck_node result = ralloc(dyckregion,struct dyck_node_);
-  assert(state == dyck_inited);
-  result->node_constant = setif_zero();
-  result->node_variable = setif_fresh(name);
+  result->node_constant = node_T_zero();
+  result->node_variable = node_T_fresh(name);
   // switch the inclusion, since putting 0 in the lower bounds has no effect
-  my_call_setif_inclusion(result->node_variable, result->node_constant);
+  my_call_node_T_inclusion(result->node_variable, result->node_constant);
 
   dyck_node_list_cons(result, all_nodes);
 
@@ -244,10 +176,9 @@ dyck_node make_tagged_empty_dyck_node(const char *name)
 dyck_node make_tagged_universal_dyck_node(const char *name)
 {
   dyck_node result = ralloc(dyckregion,struct dyck_node_);
-  assert(state == dyck_inited);
-  result->node_constant = setif_one();
-  result->node_variable = setif_fresh(name);
-  my_call_setif_inclusion(result->node_constant, result->node_variable);
+  result->node_constant = node_T_one();
+  result->node_variable = node_T_fresh(name);
+  my_call_node_T_inclusion(result->node_constant, result->node_variable);
 
   dyck_node_list_cons(result, all_nodes);
 
@@ -257,16 +188,14 @@ dyck_node make_tagged_universal_dyck_node(const char *name)
 void mark_dyck_node_global(dyck_node n)
 {
   assert(n);
-  assert(state == dyck_inited);
 
-  my_call_setif_inclusion(setif_group_cons_expr(n_group,&(n->node_variable),1),n->node_variable); 		
-  my_call_setif_inclusion(n->node_variable,setif_group_proj_pat(n_group,-1,n->node_variable));
+  my_call_node_T_inclusion(NGroup(n->node_variable),n->node_variable); 		
+  my_call_node_T_inclusion(n->node_variable,NGroup_pat0(n->node_variable));
 }
 
 void make_dyck_subtype_edge(dyck_node n1, dyck_node n2)
 {
-  assert(state == dyck_inited);
-  my_call_setif_inclusion(n1->node_variable, n2->node_variable);
+  my_call_node_T_inclusion(n1->node_variable, n2->node_variable);
 
 #ifdef DYCK_DOT_DEBUG
   fprintf(dotfile,"\"%s\" -> \"%s\" [label=\"s\"];\n",n1->unique_name,n2->unique_name);
@@ -275,12 +204,8 @@ void make_dyck_subtype_edge(dyck_node n1, dyck_node n2)
 
 void make_dyck_open_edge(dyck_node n1, dyck_node n2, int index)
 {
-  gen_e exps[1];
-  constructor c = get_constructor(index);
-  assert(state == dyck_inited);
-  exps[0] = n1->node_variable;
   // Make the constructed term and add the inclusion constraint
-  my_call_setif_inclusion(constructor_expr(c,exps,1), n2->node_variable);
+  my_call_node_T_inclusion( OPos(index, n1->node_variable), n2->node_variable);
 
 #ifdef DYCK_DOT_DEBUG
   fprintf(dotfile,"\"%s\" -> \"%s\" [label=\"(_%d\"];\n",n1->unique_name,n2->unique_name,index);
@@ -289,12 +214,8 @@ void make_dyck_open_edge(dyck_node n1, dyck_node n2, int index)
 
 // Make an (_{index} contravariant edge between n1 and n2
 void make_dyck_contra_open_edge(dyck_node n1, dyck_node n2, int index) {
-  gen_e exps[1];
-  constructor c = get_contra_constructor(index);
-  assert(state == dyck_inited);
-  exps[0] = n1->node_variable;
   // Make the constructed term and add the inclusion constraint
-  my_call_setif_inclusion(constructor_expr(c,exps,1), n2->node_variable);
+  my_call_node_T_inclusion(ONeg(index,n1->node_variable), n2->node_variable);
 
 #ifdef DYCK_DOT_DEBUG
   fprintf(dotfile,"\"%s\" -> \"%s\" [label=\"(^%d\"];\n",n1->unique_name,n2->unique_name,index);
@@ -305,21 +226,13 @@ void make_dyck_contra_open_edge(dyck_node n1, dyck_node n2, int index) {
 // n-edges for pn reachability (until a better method is devised)
 static void make_dyck_p_edge(dyck_node n1, dyck_node n2)
 {
-  gen_e exps[1];
-  assert(state == dyck_inited);
-  assert(p_constructor);
-
-  exps[0] = n1->node_variable;
-
-  my_call_setif_inclusion(constructor_expr(p_constructor,exps,1),n2->node_variable);
+  my_call_node_T_inclusion(Pos(n1->node_variable),n2->node_variable);
 }
 
 
 void make_dyck_close_edge(dyck_node n1, dyck_node n2, int index)
 {
-  constructor c = get_constructor(index);
-  assert(state == dyck_inited);
-  my_call_setif_inclusion(n1->node_variable,setif_proj_pat(c, 0, n2->node_variable));
+  my_call_node_T_inclusion(n1->node_variable,OPos_pat0(n2->node_variable,index));
   if (pn_reach) make_dyck_p_edge(n1, n2);
 
 #ifdef DYCK_DOT_DEBUG
@@ -329,137 +242,13 @@ void make_dyck_close_edge(dyck_node n1, dyck_node n2, int index)
 
 void make_dyck_contra_close_edge(dyck_node n1, dyck_node n2, int index) 
 {
-  constructor c = get_contra_constructor(index);
-  assert(state == dyck_inited);
-  my_call_setif_inclusion(n1->node_variable,setif_proj_pat(c, 0, n2->node_variable));
+  my_call_node_T_inclusion(n1->node_variable,ONeg_proj0(n2->node_variable,index));
   /* TODO : check */
   // if (pn_reach) make_dyck_p_edge(n1, n2);
 
 #ifdef DYCK_DOT_DEBUG
   fprintf(dotfile,"\"%s\" -> \"%s\" [label=\")^%d\"];\n",n1->unique_name,n2->unique_name,index);
 #endif
-}
-
-// FIX: Clusters must be the same size. 
-void make_clustered_dyck_open_edges(dyck_node n1s[], dyck_node n2,
-				    int indices[], int length)
-{
-  // This is a degenerate cluster: mark it as such and go on
-  if (length == 1) {
-    hash_table_insert(unclustered_indices, (void *)indices[0], 
-		      (void *) indices[0]);
-    make_dyck_open_edge(n1s[0],n2,indices[0]);
-  }
-  else {
-    cluster_cons last_result = NULL, result = NULL;
-    int i,j;
-    gen_e exprs[length];
-
-    // Safety check: if any of the indices occured before, they must
-    // have occurred in a cluster with exactly the same indices
-    for (i = 0; i < length; i++) {
-      if (hash_table_lookup(clustered_indices, (void *)indices[i], (hash_data *)&result)) {
-	if (last_result) { assert(last_result == result); }
-	last_result = result;
-#ifdef DYCK_DOT_DEBUG
-	fprintf(dotfile,"\"%s\" -> \"%s\" [label=\"(_%d\"];\n",n1s[i]->unique_name,n2->unique_name,indices[i]);
-#endif
-      }
-    }
-
-    // Safety check: no index should appear more than once 
-    for (i = 0; i < length; i++) {
-      exprs[i] = n1s[i]->node_variable;
-      for (j = i+1; j < length; j++) {
-	assert(indices[i] != indices[j]);
-      }
-    }
-  
-    // First time we've seen this cluster, so make a constructor for it
-    if (result == NULL) {
-      sig_elt oc_sig[length];
-      for (i = 0; i < length; i++) {
-	oc_sig[i].variance = vnc_pos;
-	oc_sig[i].sort = setif_sort;
-      }
-      result = ralloc(dyckregion, struct cluster_cons_);
-      result->c = make_constructor(CONS_OPEN_CLUSTER,setif_sort,oc_sig,length);
-      result->length = length;
-      result->indices = rarrayalloc(dyckregion,length,int);
-      rarraycopy(result->indices,indices,length,int);
-
-      for (i = 0; i < length; i++) {
-	hash_table_insert(clustered_indices, (void *)indices[i], result);
-      }
-
-    }
-    // This cluster isn't the same size as the last, so make
-    // a declustered version
-    if (result->length != length) {
-      printf("Warning: forced to uncluster a length %d cluster.\n",length);
-      for (i = 0; i < length; i++) {
-	hash_table_insert(unclustered_indices, (void *)indices[i], 
-			  (void *) indices[i]);
-	make_dyck_open_edge(n1s[i],n2,indices[i]);
-      }
-
-    }
-    else {
-      my_call_setif_inclusion(constructor_expr(result->c,exprs,length), 
-			      n2->node_variable);
-    }
-  }
-}
-
-static bool is_unclustered_index(int index)
-{
-  return hash_table_lookup(unclustered_indices,(void *)index,NULL);
-}
-
-static cluster_cons get_cluster_constructor(int index)
-{
-  cluster_cons result = NULL;
-
-  hash_table_lookup(clustered_indices,(void *)index,(hash_data *) &result);
-
-  // FIX : put a warning here, if the thing doesn't exist
-
-  return result;
-}
-
-static int get_position_of(cluster_cons cc, int index)
-{
-  int i;
-  for (i = 0; i < cc->length; i++) {
-    if (cc->indices[i] == index) return i; 
-  }
-  assert(0);
-  return -1;
-}
-
-void make_dyck_close_edge_for_cluster(dyck_node n1, dyck_node n2, int index)
-{
-  cluster_cons cc = get_cluster_constructor(index);
-
-  assert(state == dyck_inited);
-
-  if (cc) {
-    my_call_setif_inclusion(n1->node_variable,
-			    setif_proj_pat(cc->c, 
-					   get_position_of(cc,index),
-					   n2->node_variable));
-  }
-  // If at any point we unclustered the index, we also have to 
-  // make a close edge
-  if (is_unclustered_index(index)) {
-    make_dyck_close_edge(n1,n2,index);
-  }
-  else if (pn_reach) make_dyck_p_edge(n1, n2);
-
-
-#ifdef DYCK_DOT_DEBUG
-  fprintf(dotfile,"\"%s\" -> \"%s\" [label=\")_%d\"];\n",n1->unique_name,n2->unique_name,index);
-#endif  
 }
 
 /*****************************************************************************
@@ -470,8 +259,6 @@ void make_dyck_close_edge_for_cluster(dyck_node n1, dyck_node n2, int index)
 
 void dyck_finished_adding()
 {
-  assert(state == dyck_inited);
-  state = dyck_query;
 
 #ifdef DYCK_DOT_DEBUG
   fprintf(dotfile,"\n}");
@@ -483,18 +270,15 @@ void dyck_finished_adding()
 
 bool dyck_check_reaches(dyck_node n1, dyck_node n2)
 {  
-  gen_e_list_scanner scan;
-  gen_e next_lb;
+  node_T_list_scanner scan;
+  node_T next_lb;
   // compute the transitive lower bounds of n2
-  gen_e_list tlb = setif_tlb(n2->node_variable);
-  
-  assert(state == dyck_query);
+  node_T_list tlb = node_T_tlb(n2->node_variable);
   
   // check whether n1's constant is a member of n2
-  gen_e_list_scan(tlb,&scan);
-  
-  while (gen_e_list_next(&scan,&next_lb)) {
-    if (expr_eq(n1->node_constant,next_lb)) return TRUE;
+  node_T_list_scan(tlb,&scan);
+  while (node_T_list_next(&scan,&next_lb)) {
+    if (node_T_eq(n1->node_constant,next_lb)) return TRUE;
   }
 
   return FALSE;
@@ -502,7 +286,7 @@ bool dyck_check_reaches(dyck_node n1, dyck_node n2)
 
 // Search for target's pn reachability starting from current, assuming
 // that nodes in visited have already been searched
-static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
+static bool dyck_check_pn_reaches_aux(node_T target, node_T current,
 	hash_table visited_n, 
 	hash_table visited_p,
 	bool seen_p,
@@ -511,7 +295,7 @@ static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
 	hash_table visited = seen_p ? visited_p : visited_n;
 
 // Found the target
-	if (target == NULL && expr_is_constant(current)) {
+	if (target == NULL && node_T_is_constant(current,NULL)) {
 		dyck_node n = NULL;
 		assert(all_constants);
 		insist(hash_table_lookup(constant_to_node_map,
@@ -519,30 +303,30 @@ static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
 			(hash_data *)&n));
 		assert(n);
 		dyck_node_list_cons(n, all_constants);
-
 	}
-	else if (target && expr_eq(target,current)) return TRUE;
+	else if (target && node_T_eq(target,current)) return TRUE;
 
 // Already searched from this point
-	if (hash_table_lookup(visited,(void *)expr_stamp(current),NULL)) return FALSE;
+	if (hash_table_lookup(visited,(void *)node_T_get_stamp(current),NULL)) return FALSE;
 
 // Otherwise, mark this node visited
-	hash_table_insert(visited,(void *)expr_stamp(current),(void *)expr_stamp(current));
+	hash_table_insert(visited,(void *)node_T_get_stamp(current),(void *)node_T_get_stamp(current));
 
 // Compute this node's transitive lower bounds
 	{
-		gen_e_list_scanner scan;
-		gen_e next_lb;
-		gen_e_list tlb = setif_tlb(current);
+		node_T_list_scanner scan;
+		node_T next_lb;
+		node_T_list tlb = node_T_tlb(current);
 
 	// Scan the lower bounds
-		gen_e_list_scan(tlb,&scan);
+		node_T_list_scan(tlb,&scan);
 
-		while (gen_e_list_next(&scan,&next_lb)) {
-			struct decon contents;
+		while (node_T_list_next(&scan,&next_lb)) {
+			struct OPos_decon o_contents;
+			struct Pos_decon p_contents;
 
 	// If target is null, we're finding all PN reaches
-			if (target == NULL && expr_is_constant(next_lb)) {
+			if (target == NULL && node_T_is_constant(next_lb,NULL)) {
 				dyck_node n = NULL;
 				assert(all_constants);
 				insist(hash_table_lookup(constant_to_node_map,
@@ -553,26 +337,20 @@ static bool dyck_check_pn_reaches_aux(gen_e target, gen_e current,
 			}
 
 	// Again, we've found the target
-			else if (target != NULL && expr_eq(target,next_lb)) return TRUE;
+			else if (target != NULL && node_T_eq(target,next_lb)) return TRUE;
 
-	// Deconstruct any p's 
+	// Deconstruct any constructors
 	// and search their contents
-			contents = deconstruct_any_expr(next_lb);
-
-			if (!seen_p && contents.name && string_eq(contents.name,CONS_OPEN) ) {
-				assert(contents.arity == 1);
-				assert(contents.elems);
-
-				if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
+			o_contents = OPos_decon(next_lb);
+			p_contents = Pos_decon(next_lb);
+			if (!seen_p && o_contents.f0 ) {
+				if (dyck_check_pn_reaches_aux(target,o_contents.f0,visited_n,
 				visited_p,FALSE, all_constants)) {
 					if (target) return TRUE;
 				}
 			}
-			else if (contents.name && string_eq(contents.name,CONS_CLOSE)) {
-				assert(contents.arity == 1);
-				assert(contents.elems);
-
-				if (dyck_check_pn_reaches_aux(target,contents.elems[0],visited_n,
+			else if (p_contents.f0) {
+				if (dyck_check_pn_reaches_aux(target,p_contents.f0,visited_n,
 				visited_p,TRUE, all_constants)) {
 					if (target) return TRUE;
 				}
@@ -592,7 +370,6 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)
   hash_table visited_p = NULL;
   bool result;
 
-  assert (state == dyck_query);
 
   if (!pn_reach) fail("PN reachability not enabled.");
 
@@ -610,19 +387,18 @@ bool dyck_check_pn_reaches(dyck_node n1, dyck_node n2)
 dyck_node_list rdyck_reaches(region r, dyck_node n)
 {
   dyck_node_list result;
-  gen_e_list_scanner scan;
-  gen_e next_lb;
+  node_T_list_scanner scan;
+  node_T next_lb;
   // compute the transitive lower bounds of n
-  gen_e_list tlb = setif_tlb(n->node_variable);
+  node_T_list tlb = node_T_tlb(n->node_variable);
   
-  assert(state == dyck_query);
   
   result = new_dyck_node_list(r);
 
-  gen_e_list_scan(tlb,&scan);
+  node_T_list_scan(tlb,&scan);
   
-  while (gen_e_list_next(&scan,&next_lb)) {
-    if (expr_is_constant(next_lb)) {
+  while (node_T_list_next(&scan,&next_lb)) {
+    if (node_T_is_constant(next_lb,NULL)) {
       dyck_node next_node = NULL;
       insist(hash_table_lookup(constant_to_node_map, 
 			       (hash_key)next_lb, (hash_data *)&next_node));
@@ -632,9 +408,7 @@ dyck_node_list rdyck_reaches(region r, dyck_node n)
   }
 
   return result;
-
 }
-
 
 dyck_node_list dyck_reaches(dyck_node n) {
 	return rdyck_reaches(dyckregion, n);
@@ -648,7 +422,6 @@ dyck_node_list rdyck_pn_reaches(region r, dyck_node n)
   hash_table visited_p = NULL;
   dyck_node_list all_constants = NULL;
 
-  assert (state == dyck_query);
 
   if (!pn_reach) fail("PN reachability not enabled.");
 
@@ -676,7 +449,6 @@ void dyck_print_closed_graph(FILE *f)
   dyck_node_list_scanner anscan;
   dyck_node next_node;
 
-  assert(state == dyck_query);
   fprintf(f,"digraph G {\n");
   fprintf(f,"size=\"8,10\";\n");
 
@@ -684,17 +456,17 @@ void dyck_print_closed_graph(FILE *f)
   dyck_node_list_scan(all_nodes,&anscan);
   
   while(dyck_node_list_next(&anscan,&next_node)) {
-    gen_e_list_scanner scan;
-    gen_e next_lb;
+    node_T_list_scanner scan;
+    node_T next_lb;
     
-    gen_e_list tlb = setif_tlb(next_node->node_variable);
-    gen_e_list_scan(tlb,&scan);
-    while (gen_e_list_next(&scan,&next_lb)) {
-      if (expr_is_constant(next_lb)) {
+    node_T_list tlb = node_T_tlb(next_node->node_variable);
+    node_T_list_scan(tlb,&scan);
+    while (node_T_list_next(&scan,&next_lb)) {
+      if (node_T_is_constant(next_lb,NULL)) {
 	fprintf(f,"\"");
-	expr_print(f,next_lb);
+	node_T_print(f,next_lb);
 	fprintf(f,"\" -> \"");
-	expr_print(f,next_node->node_constant);
+	node_T_print(f,next_node->node_constant);
 	fprintf(f,"\" [label=\"%s\"];\n","s");
       }
     }
