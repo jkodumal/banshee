@@ -602,7 +602,7 @@ class setsort_gen =
 	  in
       let body conids = 
       	(Switch("((setif_term)arg1)->type",(List.map gen_inner_switch conids) @ (List.map gen_inner_group_switch (List.filter (function | ((cn,_,Some grp),_),_ -> true | _-> false) conids)), 
-		Expr "handle_error(arg1,arg2,bek_cons_mismatch);"))
+		Return ""))
       in
       let conids' = (foldl 
 		       (function ((c,sig_opt),acc) -> 
