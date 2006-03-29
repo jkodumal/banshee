@@ -45,7 +45,7 @@ banshee_exe = ../bin/banshee.exe
 
 DYCKCFL = dyckcfl
 
-TARGETS =  $(DYCKCFL).o mr_$(DYCKCFL).o $(DYCKCFL)_terms.h $(DYCKCFL)_spec.o $(DYCKCFL)_terms.o
+TARGETS =  $(DYCKCFL).o mr_$(DYCKCFL).o $(DYCKCFL)_terms.h $(DYCKCFL)_spec.o $(DYCKCFL)_terms.o $(DYCKCFL)_terms.c
 
 TAGFILES = $(wildcard *.c) $(wildcard *.h)
 
@@ -86,4 +86,4 @@ TAGS: $(TAGFILES)
 #	$(CC) -dynamiclib -o libjdyckcfl.jnilib dyckcfl.o JDyckCFLImp.o $(engine_dir)/libnsengine.a $(region_dir)/libregions.a -framework JavaVM
 
 clean:
-	rm -f $(TARGETS) *~ JDyckCFL.class JDyckCFLImp.o libjdyckcfl.jnilib
+	rm -f $(TARGETS) *~ JDyckCFL.class JDyckCFLImp.o libjdyckcfl.jnilib 
