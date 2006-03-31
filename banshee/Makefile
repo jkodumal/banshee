@@ -25,7 +25,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-BANSHEE_VERSION := banshee-1.0
+BANSHEE_VERSION := banshee-1.02
 DISTRIB_ROOT := /tmp
 DISTRIB_DIR := $(DISTRIB_ROOT)/$(BANSHEE_VERSION)
 
@@ -168,6 +168,7 @@ distrib: clean docs
 	mkdir $(DISTRIB_DIR)/dyckcfl
 	cp dyckcfl/*.c $(DISTRIB_DIR)/dyckcfl/
 	cp dyckcfl/*.h $(DISTRIB_DIR)/dyckcfl/
+	cp dyckcfl/*.bsp $(DISTRIB_DIR)/dyckcfl/
 	cp dyckcfl/Makefile $(DISTRIB_DIR)/dyckcfl/
 # make an ibanshee directory and copy the sources over
 	mkdir $(DISTRIB_DIR)/ibanshee
@@ -230,6 +231,61 @@ distrib: clean docs
 	cp Makefile $(DISTRIB_DIR)/
 	cp README $(DISTRIB_DIR)/
 	cp COPYRIGHT $(DISTRIB_DIR)/
+# get rid of all .svn dirs
+	rm -rf $(DISTRIB_DIR)/.svn
+	rm -rf $(DISTRIB_DIR)/andersen/.svn
+	rm -rf $(DISTRIB_DIR)/bin/.svn
+	rm -rf $(DISTRIB_DIR)/codegen/.svn
+	rm -rf $(DISTRIB_DIR)/cparser/.svn
+	rm -rf $(DISTRIB_DIR)/cparser/mobj/.svn
+	rm -rf $(DISTRIB_DIR)/docs/.svn
+	rm -rf $(DISTRIB_DIR)/dyckcfl/.svn
+	rm -rf $(DISTRIB_DIR)/engine/.svn
+	rm -rf $(DISTRIB_DIR)/experiments/.svn
+	rm -rf $(DISTRIB_DIR)/experiments/logs/.svn
+	rm -rf $(DISTRIB_DIR)/ibanshee/.svn
+	rm -rf $(DISTRIB_DIR)/java/.svn
+	rm -rf $(DISTRIB_DIR)/java/banshee/.svn
+	rm -rf $(DISTRIB_DIR)/java/banshee/engine/.svn
+	rm -rf $(DISTRIB_DIR)/java/conflux/.svn
+	rm -rf $(DISTRIB_DIR)/java/conflux/builder/.svn
+	rm -rf $(DISTRIB_DIR)/java/conflux/flowgraph/.svn
+	rm -rf $(DISTRIB_DIR)/java/conflux/util/.svn
+	rm -rf $(DISTRIB_DIR)/java/jbanshee/.svn
+	rm -rf $(DISTRIB_DIR)/java/jbanshee/dyckcfl/.svn
+	rm -rf $(DISTRIB_DIR)/java/jbanshee/engine/.svn
+	rm -rf $(DISTRIB_DIR)/lambda/.svn
+	rm -rf $(DISTRIB_DIR)/libcompat/.svn
+	rm -rf $(DISTRIB_DIR)/rca/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/0/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/1/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/2/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/3/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/4/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/5/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/6/.svn
+	rm -rf $(DISTRIB_DIR)/rlib/test/7/.svn
+	rm -rf $(DISTRIB_DIR)/steensgaard/.svn
+	rm -rf $(DISTRIB_DIR)/tests/.svn
+	rm -rf $(DISTRIB_DIR)/tests/delta/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.cor/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc/bt/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc/persist/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc/rpersist/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc.cor/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc.cor/bt/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc.cor/persist/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.ibc.cor/rpersist/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.programs/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.programs/cqual.preproc/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.programs/espresso.preproc/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.programs/li.preproc/.svn
+	rm -rf $(DISTRIB_DIR)/tests/test.programs/ML-typecheck.preproc/.svn
 #tar and zip the distrib directory
 	cd $(DISTRIB_ROOT); tar cfz $(BANSHEE_VERSION).tar.gz $(BANSHEE_VERSION)
-	mv $(DISTRIB_ROOT)/$(BANSHEE_VERSION).tar.gz . 
+	mv $(DISTRIB_ROOT)/$(BANSHEE_VERSION).tar.gz .
+
+	 

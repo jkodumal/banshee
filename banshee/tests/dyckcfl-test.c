@@ -53,9 +53,12 @@ static void myassert(int a) {
 static void test_dyck_isomorphism()
 {
   dyck_node d0,d1,d2,d3,d4,d5,d6,d7,d8,d9;
+
+#ifndef SPEC
   int indices[2] = {0,1};
   dyck_node nodes[2] = {NULL,NULL};
   dyck_node c0,c1,c2,c3,c4,c5;
+#endif /* SPEC */
   dyck_node e0,e1,e2,e3,e4,e5;
 //   flag_dyck_print_constraints = 1;
   

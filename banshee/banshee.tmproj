@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>codegen/set_sort.ml</string>
+	<string>dyckcfl/dyckcfl_terms.bsp</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -36,6 +36,20 @@
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
+		</dict>
+		<key>Makefile</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>80</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>59</integer>
 		</dict>
 		<key>TODO</key>
 		<dict>
@@ -98,28 +112,28 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>26</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>293</integer>
+				<integer>39</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>279</integer>
+			<integer>15</integer>
 		</dict>
 		<key>dyckcfl/Makefile</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>95</integer>
+				<integer>114</integer>
 				<key>line</key>
 				<integer>47</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>23</integer>
+			<integer>35</integer>
 		</dict>
 		<key>dyckcfl/dyckcfl.c</key>
 		<dict>
@@ -147,7 +161,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>47</integer>
+			<integer>0</integer>
 		</dict>
 		<key>dyckcfl/dyckcfl_spec.c</key>
 		<dict>
@@ -161,53 +175,37 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>173</integer>
+			<integer>0</integer>
 		</dict>
 		<key>dyckcfl/dyckcfl_terms.bsp</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>27</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>31</integer>
+				<integer>33</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>dyckcfl/dyckcfl_terms.c</key>
+		<key>dyckcfl/mr_dyckcfl.c</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>12</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>273</integer>
+				<integer>0</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>241</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>7</integer>
-				<key>line</key>
-				<integer>273</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>12</integer>
-				<key>line</key>
-				<integer>273</integer>
-			</dict>
+			<integer>0</integer>
 		</dict>
-		<key>dyckcfl/dyckcfl_terms.h</key>
+		<key>dyckcfl/mr_dyckcfl.h</key>
 		<dict>
 			<key>caret</key>
 			<dict>
@@ -247,7 +245,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<key>engine/bfix.c</key>
 		<dict>
@@ -361,6 +359,20 @@
 			<key>firstVisibleLine</key>
 			<integer>110</integer>
 		</dict>
+		<key>engine/hashset.h</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>0</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
 		<key>engine/list.h</key>
 		<dict>
 			<key>caret</key>
@@ -380,30 +392,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>14</integer>
+				<integer>5</integer>
 				<key>line</key>
-				<integer>1706</integer>
+				<integer>875</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>1679</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>4</integer>
-				<key>line</key>
-				<integer>1706</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>14</integer>
-				<key>line</key>
-				<integer>1706</integer>
-			</dict>
+			<integer>825</integer>
 		</dict>
 		<key>engine/nonspec.h</key>
 		<dict>
@@ -424,14 +420,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>2</integer>
+				<integer>5</integer>
 				<key>line</key>
-				<integer>526</integer>
+				<integer>635</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>498</integer>
+			<integer>610</integer>
 		</dict>
 		<key>engine/stamp.h</key>
 		<dict>
@@ -508,14 +504,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>38</integer>
+				<integer>14</integer>
 				<key>line</key>
-				<integer>206</integer>
+				<integer>60</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>182</integer>
+			<integer>28</integer>
 		</dict>
 		<key>tests/ibanshee_test.mk</key>
 		<dict>
@@ -539,15 +535,19 @@
 		<string>dyckcfl/dyckcfl_terms.bsp</string>
 		<string>dyckcfl/dyckcfl_spec.c</string>
 		<string>tests/ibanshee_test.mk</string>
-		<string>dyckcfl/dyckcfl_terms.c</string>
+		<string>dyckcfl/mr_dyckcfl.c</string>
+		<string>engine/hashset.h</string>
+		<string>engine/banshee.h</string>
 		<string>tests/Makefile</string>
 		<string>tests/dyckcfl-test.c</string>
-		<string>dyckcfl/dyckcfl_terms.h</string>
 		<string>dyckcfl/dyckcfl.h</string>
 		<string>dyckcfl/dyckcfl.c</string>
+		<string>Makefile</string>
+		<string>dyckcfl/mr_dyckcfl.h</string>
 		<string>dyckcfl/Makefile</string>
 		<string>andersen/Makefile</string>
 		<string>engine/setif-sort.c</string>
+		<string>engine/nonspec.h</string>
 		<string>engine/nonspec.c</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
