@@ -92,9 +92,11 @@ module Env : ENV =
 	  | (C c,m) -> insert_conid(c,m)) m1 m2
     let exprids_with_sorts env =  foldl(function (E (e,s), a) -> (e,s) :: a
       | (C _, a) -> a) [] env
-  end
+  end                 
 
 let gen_opaque_type exprid header = header#add_tdecl (opaque exprid)
+
+let gen_soln_entry_type exprid header = header#add_tdecl (struct_decl (exprid ^ "_entry_") [( no_qual (Ident exprid), "e");(no_qual (Ident "annotation"), "a")] );( header#add_tdecl( typedef (no_qual (Pointer (no_qual (Struct (exprid ^ "_entry_"))))) (exprid ^ "_entry")))
 
 let gen_dataspec env dataspec header source = 
   let conids body = List.map (function (a,b) -> a) body in 
@@ -107,6 +109,7 @@ let gen_dataspec env dataspec header source =
   let _ = 
     List.map (function (e,s,body) -> 
       (gen_opaque_type e header; 
+	   gen_soln_entry_type e header;
        s#gen_sort_ops source header e;
        s#gen_con_ops source header (e,body))) dataspec
 (*
@@ -140,9 +143,10 @@ let gen_preamble env sigid header source  =
   let inc9 = include_header true  "linkage.h" in
   let inc10 = include_header true "hash.h" in
   let inc11 = include_header true "banshee_region_persist_kinds.h" in
+  let inc12 = include_header true "annotations.h" in
   let flag =
     var (no_qual Int) "flag_hash_cons" (Some Extern) ; in 
-  header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9;inc10];
+  header#add_includes [start_cmnt;hdr_ifndef;hdr_def;inc1;inc5;inc6;inc9;inc10;inc12];
   source#add_includes [start_cmnt;inc1;inc2;inc3;inc4;inc5;inc6;inc7;inc8;inc10;inc11];
   header#add_macro (macro "EXTERN_C_BEGIN");
   header#add_gdecls [flag]

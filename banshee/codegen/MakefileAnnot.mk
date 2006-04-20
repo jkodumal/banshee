@@ -1,4 +1,4 @@
-# Copyright (c) 2000-2004
+# Copyright (c) 2006
 #      The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,11 @@
 
 OCAMLMAKEFILE = OcamlMakefile
 
-SOURCES = cgen.mli cgen.ml engspec.ml spec_to_c.mli spec_to_c.ml \
-	 sort_utils.ml  set_sort.mli set_sort.ml row_sort.ml \
-	  term_sort.ml parser.mly lexer.mll build.ml
+SOURCES = cgen.mli cgen.ml fsm.mli fsm.ml fsm_to_c.mli fsm_to_c.ml annot_parser.mly annot_lexer.mll annot.ml \
+
 LIBS = str
 
-RESULT = ../bin/banshee.exe
+RESULT = ../bin/annotations.exe
 
 TRASH = *~
 

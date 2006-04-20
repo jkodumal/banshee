@@ -37,6 +37,9 @@ open Sort_utils
 exception Variance of string
 
 
+
+(* TODO propagate annotations properly in inclusion functions *)
+
 let cfst ((a,b,c) : conid) = a
 
 (* generate a list of short circuited ors *)

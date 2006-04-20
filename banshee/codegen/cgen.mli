@@ -45,6 +45,7 @@ type ctype =
   | Enum of ident
   | Void
   | Ident of ident
+  | Array of ctype * int
 and qctype = ctype * qual list
       
 type storage = 

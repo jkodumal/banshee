@@ -33,6 +33,8 @@ open Engspec
 open Spec_to_c 
 open Sort_utils
   
+(* TODO propagate annotations properly in inclusion functions *)
+
 class row_sort_gen (e' : exprid) =
   object (this)
     inherit fixed_sort_gen
@@ -132,6 +134,11 @@ class row_sort_gen (e' : exprid) =
 			       EPRIME_zero(), row1,row2);\n\
          }\n\n\
          void EXPRID_inclusion_ind_contra(EXPRID row1, EXPRID row2) \n\
+         {\n\
+         flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion_ind,\
+			       EPRIME_zero(), row2,row1);\n\
+         }\n\n\
+		void EXPRID_annotated_inclusion_ind_contra(EXPRID row1, EXPRID row2,annotation a) \n\
          {\n\
          flowrow_inclusion(EPRIME_fresh,EPRIME_get_stamp,EPRIME_inclusion_ind,\
 			       EPRIME_zero(), row2,row1);\n\
