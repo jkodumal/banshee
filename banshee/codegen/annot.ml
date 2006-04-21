@@ -33,7 +33,7 @@ let _ =
   let filename = try (Array.get Sys.argv 1) with
   | _ -> print_string "Usage : annotations <filename> [outfile] "; exit 1 in
   let outfile = ( try (Array.get Sys.argv 2) with
-  | _ ->  Filename.chop_extension filename) in
+  | _ ->  Filename.basename (Filename.chop_extension filename)) in
   let h_file = outfile ^ ".h" and c_file = outfile ^ ".c" in
   let input_file = try (open_in filename) with | _ -> 
     print_string "Error opening annotations file"; exit 1 in 

@@ -93,6 +93,7 @@ class type file =
   end
     
 val decl_substitution : (string * string) list -> string -> decl  
+val decl_verbatim : string -> decl
 val comment : string -> decl
 val block_comment : string ->decl 
 val blank : decl
@@ -116,6 +117,7 @@ val qctype_to_string : qctype -> string
 val def_substitution : (string * string) list -> string -> def
 val func : ?dec:(declarator) -> func -> def
 val compound_def : def list -> def 
+val def_verbatim : string -> def
 
 (* printing *)
 val decl_to_string : decl -> string

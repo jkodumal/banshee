@@ -210,16 +210,17 @@ let assign_states (automaton: fsm) =
 let gen_delta_tab tbl n header source =
 	let table = ref "{" in
 	for i = 0 to n-1 do
-		let row = ref "" in
+		let row = ref "{" in
 			begin
 				for j = 0 to n-1 do
-					row := !row ^ "f_" ^string_of_int(tbl.(i).(j)) ^", "
+					row := !row ^ "&f_val_" ^string_of_int(tbl.(i).(j)) ^", "
 				done;
-				table := !table ^ "\n" ^ !row;
+				table := !table ^ "\n" ^ (String.sub (!row) 0 (String.length (!row)-2)) ^"},";
 			end
 	done;
+	let sz = string_of_int n in
 	table := !table ^ "}";
-	source#add_gdecl (var ~init:!table (no_qual (Array (Array(Int,n),n))) "annot_transitions" None)
+	source#add_gdecl (decl_verbatim ("annotation annot_transitions[" ^ sz ^ "][" ^ sz ^ "] =" ^ !table ^";") )
 
 (* TODO instantiation functions *)
 let gen_param_singletons ptab header source =
@@ -229,7 +230,7 @@ let gen_param_singletons ptab header source =
 		    let typ3 = no_qual (Struct "annotation_") in
 			let initial = "f_" ^ istr in
 			let initial2 = "&f_val_" ^ istr in
-		    let initial3 = "{ANNOTATION_PARAM, " ^ istr ^"}" in
+		    let initial3 = "(struct annotation_){annot_param, " ^ istr ^"}" in
 			let hdr_decl = "annotation $SYMBOL_param_annotation(char *name);" in
 			let names = [("$SYMBOL",s);("$VAR",v)] in 
 		begin 
@@ -246,21 +247,21 @@ let gen_singletons symtab header source =
 		    let typ3 = no_qual (Struct "annotation_") in
 			let initial = "f_" ^ istr in
 			let initial2 = "&f_val_" ^ istr in
-		    let initial3 = "{ANNOTATION_SINGLETON, " ^ istr ^"}" in
+		    let initial3 = "(struct annotation_){annot_singleton, " ^ istr ^"}" in
 		begin 
 			header#add_tdecl (var typ s (Some Extern));
 			source#add_gdecl (var ~init:initial3 typ3 ("f_val_" ^ istr) (None));
 			source#add_gdecl (var ~init:initial2 typ ("f_" ^ istr) (None));
-			source#add_gdecl (var ~init:initial typ s (None))
+			source#add_gdecl (var ~init:initial2 typ s (None))
 		end
 	in H.iter gen_singleton symtab
 	
 let gen_rep_funs fset index header source = 
-	let _ = debug_rep_funs (Array.of_list fset) in
+(*	let _ = debug_rep_funs (Array.of_list fset) in *)
 	let ind = ref index in
 	let gen_rep_fun i = 
 		let istr = string_of_int i in
-    	let initial1 = "{ANNOTATION_SINGLETON, " ^ istr ^"}" in
+    	let initial1 = "{annot_singleton, " ^ istr ^"}" in
 		let initial2 = "&f_val_" ^ istr in	    
 		let typ1 = no_qual (Struct "annotation_") in
 	    let typ2 = no_qual (Ident "annotation") in
@@ -273,10 +274,46 @@ let gen_rep_funs fset index header source =
 	
 let gen_preamble header source =
 	let h1 = include_header true "annotations.h" in
-	let h2 = include_header true "banshee_persist_kinds.h" in
-	let h3 = include_header true "gen_annotations.h" in
+	let h2 = include_header true "banshee_persist_kinds.h" in	
+	let h3 = include_header true "spec-annotations.h" in 
+(*	let enum_decl = decl_verbatim "typedef enum annot_kind_ {annot_singleton, annot_param, annot_env} annot_kind;" in     
+	let annot_decl = 
+		decl_verbatim "struct annotation_ {\n\
+			annot_kind k;\n\
+			int id;\n\
+		};\n"
+	in
+	let pannot_decl = 
+		decl_verbatim "typedef struct param_annot_ {\n\
+			annot_kind k;\n\
+			int id;\n\
+			char *name;\n\
+		} param_annot;\n"
+	in
+	let env_decl =
+		decl_verbatim "typedef struct env_annot_ {\n\
+			annot_kind k;\n\
+			int id;\n\
+			hashtable instances;\n\
+			annotation residual;\n\
+			} env_annot;\n"
+	in
+*)
+	let composition_defn =
+		def_verbatim 
+		"annotation singleton_composition(annotation f, annotation g) {\n\
+	   	 	return annot_transitions[f->id][g->id];\n\
+		}"
+	in
 	begin
-		source#add_includes [h3;h2;h1]
+		header#add_includes [h1];
+		source#add_includes [h1;h2;h3];
+(*		source#add_tdecl enum_decl;
+		source#add_tdecl annot_decl;
+		source#add_tdecl pannot_decl;
+		source#add_tdecl env_decl;
+*)
+		source#add_fdef  composition_defn;
 	end
 
 let to_c (automaton: fsm) =
@@ -293,7 +330,7 @@ let to_c (automaton: fsm) =
 	let n = Array.length rep_funs0 in
 	let _ = gen_rep_funs (dropn n fset) n header source in
 	let _ = gen_delta_tab delta_tbl (List.length fset) header source in	
-	let _ = debug_rep_funs (Array.of_list fset) in 
+(*	let _ = debug_rep_funs (Array.of_list fset) in *)
 	(header, source)
 
 let fsm_to_c automaton h_file c_file = 

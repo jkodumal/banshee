@@ -231,6 +231,10 @@ let compound_decl l = foldr (function x,y -> x ^ lf ^ y) "" l
     
 let line = lf
     
+let decl_verbatim s = s
+	
+let def_verbatim s = s
+	
 let struct_decl id members = 
   let build_body ((typ,name),acc) = 
     lf ^(qctype_to_string typ) ^ sp ^ name ^ semi  ^ acc

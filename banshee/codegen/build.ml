@@ -33,7 +33,7 @@ let _ =
   let filename = try (Array.get Sys.argv 1) with
   | _ -> print_string "Usage : banshee <filename> [outfile] "; exit 1 in
   let outfile = ( try (Array.get Sys.argv 2) with
-  | _ ->  Filename.chop_extension filename) in
+  | _ ->  Filename.basename(Filename.chop_extension filename)) in
 (*  let _ =  
     if (Filename.check_suffix filename ".spec") 
     then ()
